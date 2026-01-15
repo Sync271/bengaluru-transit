@@ -258,4 +258,102 @@ describe("InfoAPI", () => {
 			await expect(client.info.getAboutData()).rejects.toThrow();
 		});
 	});
+
+	describe("getEmergencyMessages", () => {
+		it("should fetch emergency messages successfully", async () => {
+			const mockRawResponse = {
+				data: [
+					{
+						id: 1,
+						message_english:
+							"Currently we are tracking 6287 buses and the Fleet Integration is in progress.",
+						message_kannada:
+							"ಪ್ರಸ್ತುತ ನಾವು 6287 ಬಸ್\u200cಗಳನ್ನು ಟ್ರ್ಯಾಕ್ ಮಾಡುತ್ತಿದ್ದೇವೆ ಮತ್ತು ಫ್ಲೀಟ್ ಇಂಟಿಗ್ರೇಷನ್ ಪ್ರಗತಿಯಲ್ಲಿದೆ.",
+						isdisplay: 1,
+						display_key: "Home_screen",
+					},
+					{
+						id: 2,
+						message_english:
+							"Default results displayed are within the next hour. For further details, use the filter functionality.",
+						message_kannada:
+							"ಇಲ್ಲಿನ ವಿವರ ಮುಂದಿನ 1 ಗಂಟೆಯೊಳಗಿನ  ಫಲಿತಾಂಶಗಳನ್ನು ಒಳಗೊಂಡಿದೆ. ಹೆಚ್ಚಿನ ವಿವರಗಳಿಗಾಗಿ, ಫಿಲ್ಟರನ್ನು ಬಳಸಿ",
+						isdisplay: 1,
+						display_key: "Journey_Planner",
+					},
+				],
+				Message: "",
+				Issuccess: true,
+				exception: null,
+				RowCount: 0,
+				responsecode: 200,
+			};
+
+			nock(baseURL)
+				.post("/WebAPI/GetEmergencyMessage_v1")
+				.reply(200, mockRawResponse);
+
+			const result = await client.info.getEmergencyMessages();
+
+			expect(result.success).toBe(true);
+			expect(result.items).toHaveLength(2);
+			expect(result.items[0].id).toBe(1);
+			expect(result.items[0].messageEnglish).toContain("6287 buses");
+			expect(result.items[0].messageKannada).toBeDefined();
+			expect(result.items[0].isDisplay).toBe(true);
+			expect(result.items[0].displayKey).toBe("Home_screen");
+			expect(result.items[1].id).toBe(2);
+			expect(result.items[1].displayKey).toBe("Journey_Planner");
+		});
+
+		it("should convert isdisplay 0 to false", async () => {
+			const mockRawResponse = {
+				data: [
+					{
+						id: 1,
+						message_english: "Test message",
+						message_kannada: "ಪರೀಕ್ಷಾ ಸಂದೇಶ",
+						isdisplay: 0,
+						display_key: "Test",
+					},
+				],
+				Message: "",
+				Issuccess: true,
+				exception: null,
+				RowCount: 0,
+				responsecode: 200,
+			};
+
+			nock(baseURL)
+				.post("/WebAPI/GetEmergencyMessage_v1")
+				.reply(200, mockRawResponse);
+
+			const result = await client.info.getEmergencyMessages();
+
+			expect(result.items[0].isDisplay).toBe(false);
+		});
+
+		it("should validate response schema and throw on invalid data", async () => {
+			const invalidResponse = {
+				data: "invalid",
+				Message: "Success",
+			};
+
+			nock(baseURL)
+				.post("/WebAPI/GetEmergencyMessage_v1")
+				.reply(200, invalidResponse);
+
+			await expect(client.info.getEmergencyMessages()).rejects.toThrow(
+				"Invalid emergency messages response"
+			);
+		});
+
+		it("should handle API errors", async () => {
+			nock(baseURL)
+				.post("/WebAPI/GetEmergencyMessage_v1")
+				.reply(500, { message: "Internal Server Error" });
+
+			await expect(client.info.getEmergencyMessages()).rejects.toThrow();
+		});
+	});
 });

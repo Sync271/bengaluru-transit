@@ -108,6 +108,30 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 			},
 			{ timeout: 30000 }
 		);
+
+		it(
+			"should fetch emergency messages from real API",
+			async () => {
+				const result = await client.info.getEmergencyMessages();
+
+				expect(result).toBeDefined();
+				expect(result.success).toBe(true);
+				expect(result.items).toBeInstanceOf(Array);
+				if (result.items.length > 0) {
+					expect(result.items[0]).toHaveProperty("messageEnglish");
+					expect(result.items[0]).toHaveProperty("messageKannada");
+					expect(result.items[0]).toHaveProperty("isDisplay");
+					expect(result.items[0]).toHaveProperty("displayKey");
+				}
+
+				// Print formatted response
+				console.log("\n🚨 Emergency Messages Response:");
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+				console.log(JSON.stringify(result, null, 2));
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+			},
+			{ timeout: 30000 }
+		);
 	});
 
 	describe("Client Configuration", () => {

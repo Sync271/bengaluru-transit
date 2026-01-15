@@ -3,6 +3,7 @@ import {
 	rawHelplineResponseSchema,
 	rawServiceTypesResponseSchema,
 	rawAboutDataResponseSchema,
+	rawEmergencyMessagesResponseSchema,
 } from "../schemas/info";
 import type { BaseClient } from "../client/base-client";
 import type {
@@ -12,11 +13,16 @@ import type {
 	ServiceTypesResponse,
 	ServiceTypeDataItem,
 	AboutDataResponse,
+	EmergencyMessagesResponse,
+	EmergencyMessageDataItem,
 } from "../types/info";
 import type { z } from "zod";
 
 type RawServiceTypesResponse = z.infer<typeof rawServiceTypesResponseSchema>;
 type RawAboutDataResponse = z.infer<typeof rawAboutDataResponseSchema>;
+type RawEmergencyMessagesResponse = z.infer<
+	typeof rawEmergencyMessagesResponseSchema
+>;
 
 /**
  * Transform raw BMTC API response to clean, normalized format
@@ -78,6 +84,28 @@ function transformAboutDataResponse(
 		},
 		message: raw.Message,
 		success: raw.Issuccess,
+	};
+}
+
+/**
+ * Transform raw emergency messages API response to clean, normalized format
+ */
+function transformEmergencyMessagesResponse(
+	raw: RawEmergencyMessagesResponse
+): EmergencyMessagesResponse {
+	return {
+		items: raw.data.map(
+			(item): EmergencyMessageDataItem => ({
+				id: item.id,
+				messageEnglish: item.message_english,
+				messageKannada: item.message_kannada,
+				isDisplay: item.isdisplay === 1,
+				displayKey: item.display_key,
+			})
+		),
+		message: raw.Message,
+		success: raw.Issuccess,
+		rowCount: raw.RowCount,
 	};
 }
 
@@ -151,5 +179,29 @@ export class InfoAPI {
 
 		// Transform to clean, normalized format
 		return transformAboutDataResponse(rawResponse);
+	}
+
+	/**
+	 * Get emergency messages (English and Kannada)
+	 * @returns List of emergency messages with display settings in normalized format
+	 */
+	async getEmergencyMessages(): Promise<EmergencyMessagesResponse> {
+		const response = await this.client
+			.getClient()
+			.post("GetEmergencyMessage_v1", {
+				json: {},
+			});
+
+		const data = await response.json<unknown>();
+
+		// Validate raw response with Zod schema
+		const rawResponse = validate(
+			rawEmergencyMessagesResponseSchema,
+			data,
+			"Invalid emergency messages response"
+		);
+
+		// Transform to clean, normalized format
+		return transformEmergencyMessagesResponse(rawResponse);
 	}
 }

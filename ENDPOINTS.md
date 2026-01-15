@@ -7,6 +7,7 @@ This file tracks the progress of implementing wrappers for BMTC API endpoints.
 - [x] `/GetHelplineData` - Get BMTC helpline information
 - [x] `/GetAllServiceTypes` - Get all service types (AC, Non AC, etc.)
 - [x] `/GetAboutData` - Get about data including URLs and airport information
+- [x] `/GetEmergencyMessage_v1` - Get emergency messages (English and Kannada)
 
 ## In Progress 🚧
 
@@ -14,7 +15,6 @@ _None currently_
 
 ## Pending Endpoints 📋
 
-- [ ] `/GetEmergencyMessage_v1` - Get emergency messages
 - [ ] `/NearbyStations_v2` - Find nearby bus stations
 - [ ] `/ListVehicles` - List vehicles
 - [ ] `/VehicleTripDetails_v2` - Get vehicle trip details
@@ -32,8 +32,8 @@ _None currently_
 
 ## Total Progress
 
-- **Completed:** 3 / 18 (17%)
-- **Remaining:** 15 endpoints
+- **Completed:** 4 / 18 (22%)
+- **Remaining:** 14 endpoints
 
 ---
 

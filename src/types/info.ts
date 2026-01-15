@@ -105,3 +105,35 @@ export interface AboutDataResponse {
 	message: string;
 	success: boolean;
 }
+
+/**
+ * Raw emergency message data item from BMTC API
+ */
+export interface RawEmergencyMessageDataItem {
+	id: number;
+	message_english: string;
+	message_kannada: string;
+	isdisplay: number;
+	display_key: string;
+}
+
+/**
+ * Clean, normalized emergency message data item
+ */
+export interface EmergencyMessageDataItem {
+	id: number;
+	messageEnglish: string;
+	messageKannada: string;
+	isDisplay: boolean;
+	displayKey: string;
+}
+
+/**
+ * Clean, normalized emergency messages response
+ */
+export interface EmergencyMessagesResponse {
+	items: EmergencyMessageDataItem[];
+	message: string;
+	success: boolean;
+	rowCount: number;
+}

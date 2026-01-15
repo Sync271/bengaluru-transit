@@ -72,3 +72,26 @@ export const rawAboutDataResponseSchema = z.object({
 	RowCount: z.number(),
 	responsecode: z.number(),
 });
+
+/**
+ * Schema for raw emergency message data item from BMTC API
+ */
+export const rawEmergencyMessageDataItemSchema = z.object({
+	id: z.number(),
+	message_english: z.string(),
+	message_kannada: z.string(),
+	isdisplay: z.number(),
+	display_key: z.string(),
+});
+
+/**
+ * Schema for raw emergency messages API response from BMTC API
+ */
+export const rawEmergencyMessagesResponseSchema = z.object({
+	data: z.array(rawEmergencyMessageDataItemSchema),
+	Message: z.string(),
+	Issuccess: z.boolean(),
+	exception: z.unknown().nullish(),
+	RowCount: z.number(),
+	responsecode: z.number(),
+});
