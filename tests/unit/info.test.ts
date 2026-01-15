@@ -1,20 +1,17 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import nock from "nock";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { BMTCClient } from "../../src/client/bmtc-client";
+import type { KyInstance } from "ky";
 
 describe("InfoAPI", () => {
 	let client: BMTCClient;
-	const baseURL = "https://bmtcmobileapi.karnataka.gov.in";
+	let mockPost: ReturnType<typeof vi.fn>;
 
 	beforeEach(() => {
-		nock.cleanAll();
-		nock.disableNetConnect();
 		client = new BMTCClient();
-	});
-
-	afterEach(() => {
-		nock.enableNetConnect();
-		nock.cleanAll();
+		// Mock the ky client's post method
+		mockPost = vi.fn();
+		const kyClient = client.getClient() as unknown as KyInstance;
+		vi.spyOn(kyClient, "post").mockImplementation(mockPost);
 	});
 
 	describe("getHelplineData", () => {
@@ -35,7 +32,10 @@ describe("InfoAPI", () => {
 				responsecode: 200,
 			};
 
-			nock(baseURL).post("/WebAPI/GetHelplineData").reply(200, mockRawResponse);
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
 
 			const result = await client.info.getHelplineData();
 
@@ -71,7 +71,10 @@ describe("InfoAPI", () => {
 				responsecode: 200,
 			};
 
-			nock(baseURL).post("/WebAPI/GetHelplineData").reply(200, mockRawResponse);
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
 
 			const result = await client.info.getHelplineData();
 
@@ -87,7 +90,10 @@ describe("InfoAPI", () => {
 				Message: "Success",
 			};
 
-			nock(baseURL).post("/WebAPI/GetHelplineData").reply(200, invalidResponse);
+			// Mock the response with invalid data
+			mockPost.mockResolvedValue({
+				json: async () => invalidResponse,
+			} as Response);
 
 			await expect(client.info.getHelplineData()).rejects.toThrow(
 				"Invalid helpline response"
@@ -95,9 +101,13 @@ describe("InfoAPI", () => {
 		});
 
 		it("should handle API errors", async () => {
-			nock(baseURL)
-				.post("/WebAPI/GetHelplineData")
-				.reply(500, { message: "Internal Server Error" });
+			// Mock an error response
+			const error = new Error("Internal Server Error");
+			(error as any).response = {
+				status: 500,
+				json: async () => ({ message: "Internal Server Error" }),
+			};
+			mockPost.mockRejectedValue(error);
 
 			await expect(client.info.getHelplineData()).rejects.toThrow();
 		});
@@ -125,9 +135,10 @@ describe("InfoAPI", () => {
 				responsecode: 200,
 			};
 
-			nock(baseURL)
-				.post("/WebAPI/GetAllServiceTypes")
-				.reply(200, mockRawResponse);
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
 
 			const result = await client.info.getAllServiceTypes();
 
@@ -157,9 +168,10 @@ describe("InfoAPI", () => {
 				responsecode: 200,
 			};
 
-			nock(baseURL)
-				.post("/WebAPI/GetAllServiceTypes")
-				.reply(200, mockRawResponse);
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
 
 			const result = await client.info.getAllServiceTypes();
 
@@ -174,9 +186,10 @@ describe("InfoAPI", () => {
 				Message: "Success",
 			};
 
-			nock(baseURL)
-				.post("/WebAPI/GetAllServiceTypes")
-				.reply(200, invalidResponse);
+			// Mock the response with invalid data
+			mockPost.mockResolvedValue({
+				json: async () => invalidResponse,
+			} as Response);
 
 			await expect(client.info.getAllServiceTypes()).rejects.toThrow(
 				"Invalid service types response"
@@ -184,9 +197,13 @@ describe("InfoAPI", () => {
 		});
 
 		it("should handle API errors", async () => {
-			nock(baseURL)
-				.post("/WebAPI/GetAllServiceTypes")
-				.reply(500, { message: "Internal Server Error" });
+			// Mock an error response
+			const error = new Error("Internal Server Error");
+			(error as any).response = {
+				status: 500,
+				json: async () => ({ message: "Internal Server Error" }),
+			};
+			mockPost.mockRejectedValue(error);
 
 			await expect(client.info.getAllServiceTypes()).rejects.toThrow();
 		});
@@ -217,7 +234,10 @@ describe("InfoAPI", () => {
 				responsecode: 200,
 			};
 
-			nock(baseURL).post("/WebAPI/GetAboutData").reply(200, mockRawResponse);
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
 
 			const result = await client.info.getAboutData();
 
@@ -243,7 +263,10 @@ describe("InfoAPI", () => {
 				Message: "Success",
 			};
 
-			nock(baseURL).post("/WebAPI/GetAboutData").reply(200, invalidResponse);
+			// Mock the response with invalid data
+			mockPost.mockResolvedValue({
+				json: async () => invalidResponse,
+			} as Response);
 
 			await expect(client.info.getAboutData()).rejects.toThrow(
 				"Invalid about data response"
@@ -251,9 +274,13 @@ describe("InfoAPI", () => {
 		});
 
 		it("should handle API errors", async () => {
-			nock(baseURL)
-				.post("/WebAPI/GetAboutData")
-				.reply(500, { message: "Internal Server Error" });
+			// Mock an error response
+			const error = new Error("Internal Server Error");
+			(error as any).response = {
+				status: 500,
+				json: async () => ({ message: "Internal Server Error" }),
+			};
+			mockPost.mockRejectedValue(error);
 
 			await expect(client.info.getAboutData()).rejects.toThrow();
 		});
@@ -289,9 +316,10 @@ describe("InfoAPI", () => {
 				responsecode: 200,
 			};
 
-			nock(baseURL)
-				.post("/WebAPI/GetEmergencyMessage_v1")
-				.reply(200, mockRawResponse);
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
 
 			const result = await client.info.getEmergencyMessages();
 
@@ -324,9 +352,10 @@ describe("InfoAPI", () => {
 				responsecode: 200,
 			};
 
-			nock(baseURL)
-				.post("/WebAPI/GetEmergencyMessage_v1")
-				.reply(200, mockRawResponse);
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
 
 			const result = await client.info.getEmergencyMessages();
 
@@ -339,9 +368,10 @@ describe("InfoAPI", () => {
 				Message: "Success",
 			};
 
-			nock(baseURL)
-				.post("/WebAPI/GetEmergencyMessage_v1")
-				.reply(200, invalidResponse);
+			// Mock the response with invalid data
+			mockPost.mockResolvedValue({
+				json: async () => invalidResponse,
+			} as Response);
 
 			await expect(client.info.getEmergencyMessages()).rejects.toThrow(
 				"Invalid emergency messages response"
@@ -349,9 +379,13 @@ describe("InfoAPI", () => {
 		});
 
 		it("should handle API errors", async () => {
-			nock(baseURL)
-				.post("/WebAPI/GetEmergencyMessage_v1")
-				.reply(500, { message: "Internal Server Error" });
+			// Mock an error response
+			const error = new Error("Internal Server Error");
+			(error as any).response = {
+				status: 500,
+				json: async () => ({ message: "Internal Server Error" }),
+			};
+			mockPost.mockRejectedValue(error);
 
 			await expect(client.info.getEmergencyMessages()).rejects.toThrow();
 		});

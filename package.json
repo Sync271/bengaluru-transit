@@ -23,6 +23,11 @@
 		"test:watch": "vitest",
 		"test:ui": "vitest --ui",
 		"test:integration": "cross-env RUN_REAL_API_TESTS=true vitest run tests/integration/real-api.test.ts --pool=forks --poolOptions.forks.singleFork=true",
+		"test:integration:helpline": "cross-env RUN_REAL_API_TESTS=true TEST_ENDPOINT=helpline vitest run tests/integration/real-api.test.ts --pool=forks --poolOptions.forks.singleFork=true",
+		"test:integration:service": "cross-env RUN_REAL_API_TESTS=true TEST_ENDPOINT=service vitest run tests/integration/real-api.test.ts --pool=forks --poolOptions.forks.singleFork=true",
+		"test:integration:about": "cross-env RUN_REAL_API_TESTS=true TEST_ENDPOINT=about vitest run tests/integration/real-api.test.ts --pool=forks --poolOptions.forks.singleFork=true",
+		"test:integration:emergency": "cross-env RUN_REAL_API_TESTS=true TEST_ENDPOINT=emergency vitest run tests/integration/real-api.test.ts --pool=forks --poolOptions.forks.singleFork=true",
+		"test:integration:vehicle": "cross-env RUN_REAL_API_TESTS=true TEST_ENDPOINT=vehicle vitest run tests/integration/real-api.test.ts --pool=forks --poolOptions.forks.singleFork=true",
 		"test:unit": "vitest run tests/unit",
 		"prepublishOnly": "npm run build && npm run test:unit"
 	},
@@ -50,6 +55,7 @@
 	},
 	"devDependencies": {
 		"@types/node": "^22.10.2",
+		"@vitest/ui": "^2.1.8",
 		"cross-env": "^10.1.0",
 		"nock": "^13.5.5",
 		"typescript": "^5.7.2",
