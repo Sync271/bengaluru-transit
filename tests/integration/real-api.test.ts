@@ -58,7 +58,7 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 		it.skipIf(!shouldRunTest("helpline"))(
 			"should fetch helpline data from real API",
 			async () => {
-				const result = await client.info.getHelplineData();
+				const result = await client.info.getHelpline();
 
 				expect(result).toBeDefined();
 				expect(result.success).toBe(true);
@@ -79,7 +79,7 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 		it.skipIf(!shouldRunTest("service"))(
 			"should fetch service types from real API",
 			async () => {
-				const result = await client.info.getAllServiceTypes();
+				const result = await client.info.getServiceTypes();
 
 				expect(result).toBeDefined();
 				expect(result.success).toBe(true);
@@ -100,7 +100,7 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 		it.skipIf(!shouldRunTest("about"))(
 			"should fetch about data from real API",
 			async () => {
-				const result = await client.info.getAboutData();
+				const result = await client.info.getAbout();
 
 				expect(result).toBeDefined();
 				expect(result.success).toBe(true);
@@ -148,7 +148,7 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 		it.skipIf(!shouldRunTest("vehicle"))(
 			"should list vehicles from real API",
 			async () => {
-				const result = await client.vehicles.listVehicles({
+				const result = await client.vehicles.searchVehicles({
 					vehicleRegNo: "KA57f183",
 				});
 
@@ -173,7 +173,7 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 		it.skipIf(!shouldRunTest("vehicle"))(
 			"should get vehicle trip details from real API",
 			async () => {
-				const result = await client.vehicles.getVehicleTripDetails({
+				const result = await client.vehicles.getVehicleTrip({
 					vehicleId: 21537,
 				});
 
@@ -225,7 +225,7 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 					language: "kn",
 				});
 
-				const result = await kannadaClient.info.getHelplineData();
+				const result = await kannadaClient.info.getHelpline();
 
 				expect(result).toBeDefined();
 				expect(result.success).toBe(true);

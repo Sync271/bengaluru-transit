@@ -1,9 +1,9 @@
 import { validate } from "../utils/validation";
 import {
-	rawListVehiclesResponseSchema,
-	listVehiclesParamsSchema,
-	rawVehicleTripDetailsResponseSchema,
-	vehicleTripDetailsParamsSchema,
+	rawSearchVehiclesResponseSchema,
+	searchVehiclesParamsSchema,
+	rawVehicleTripResponseSchema,
+	vehicleTripParamsSchema,
 } from "../schemas/vehicles";
 import {
 	createStopFeature,
@@ -12,21 +12,21 @@ import {
 } from "../utils/geojson";
 import type { BaseClient } from "../client/base-client";
 import type {
-	ListVehiclesResponse,
+	SearchVehiclesResponse,
 	VehicleDataItem,
-	RawListVehiclesResponse,
-	ListVehiclesParams,
-	VehicleTripDetailsResponse,
-	RawVehicleTripDetailsResponse,
-	VehicleTripDetailsParams,
+	RawSearchVehiclesResponse,
+	SearchVehiclesParams,
+	VehicleTripResponse,
+	RawVehicleTripResponse,
+	VehicleTripParams,
 } from "../types/vehicles";
 
 /**
- * Transform raw list vehicles API response to clean, normalized format
+ * Transform raw search vehicles API response to clean, normalized format
  */
-function transformListVehiclesResponse(
-	raw: RawListVehiclesResponse
-): ListVehiclesResponse {
+function transformSearchVehiclesResponse(
+	raw: RawSearchVehiclesResponse
+): SearchVehiclesResponse {
 	return {
 		items: raw.data.map(
 			(item): VehicleDataItem => ({
@@ -42,11 +42,11 @@ function transformListVehiclesResponse(
 }
 
 /**
- * Transform raw vehicle trip details API response to clean, normalized format
+ * Transform raw vehicle trip API response to clean, normalized format
  */
-function transformVehicleTripDetailsResponse(
-	raw: RawVehicleTripDetailsResponse
-): VehicleTripDetailsResponse {
+function transformVehicleTripResponse(
+	raw: RawVehicleTripResponse
+): VehicleTripResponse {
 	// Create GeoJSON features for route stops (stations along the route)
 	const routeStopsFeatures = raw.RouteDetails.map((item) =>
 		createStopFeature(
@@ -136,18 +136,18 @@ export class VehiclesAPI {
 	constructor(private client: BaseClient) {}
 
 	/**
-	 * List vehicles by registration number (partial match)
+	 * Search vehicles by registration number (partial match)
 	 * @param params - Search parameters including vehicle registration number
 	 * @returns List of matching vehicles in normalized format
 	 */
-	async listVehicles(
-		params: ListVehiclesParams
-	): Promise<ListVehiclesResponse> {
+	async searchVehicles(
+		params: SearchVehiclesParams
+	): Promise<SearchVehiclesResponse> {
 		// Validate input parameters
 		const validatedParams = validate(
-			listVehiclesParamsSchema,
+			searchVehiclesParamsSchema,
 			{ vehicleregno: params.vehicleRegNo },
-			"Invalid list vehicles parameters"
+			"Invalid search vehicles parameters"
 		);
 
 		const response = await this.client.getClient().post("ListVehicles", {
@@ -158,28 +158,28 @@ export class VehiclesAPI {
 
 		// Validate raw response with Zod schema
 		const rawResponse = validate(
-			rawListVehiclesResponseSchema,
+			rawSearchVehiclesResponseSchema,
 			data,
-			"Invalid list vehicles response"
+			"Invalid search vehicles response"
 		);
 
 		// Transform to clean, normalized format
-		return transformListVehiclesResponse(rawResponse);
+		return transformSearchVehiclesResponse(rawResponse);
 	}
 
 	/**
-	 * Get vehicle trip details including route details and live location
+	 * Get vehicle trip information including route stops and live location
 	 * @param params - Parameters including vehicle ID
-	 * @returns Vehicle trip details with route information and live location in normalized format
+	 * @returns Vehicle trip with route information and live location in normalized GeoJSON format
 	 */
-	async getVehicleTripDetails(
-		params: VehicleTripDetailsParams
-	): Promise<VehicleTripDetailsResponse> {
+	async getVehicleTrip(
+		params: VehicleTripParams
+	): Promise<VehicleTripResponse> {
 		// Validate input parameters
 		const validatedParams = validate(
-			vehicleTripDetailsParamsSchema,
+			vehicleTripParamsSchema,
 			{ vehicleId: params.vehicleId },
-			"Invalid vehicle trip details parameters"
+			"Invalid vehicle trip parameters"
 		);
 
 		const response = await this.client
@@ -192,12 +192,12 @@ export class VehiclesAPI {
 
 		// Validate raw response with Zod schema
 		const rawResponse = validate(
-			rawVehicleTripDetailsResponseSchema,
+			rawVehicleTripResponseSchema,
 			data,
-			"Invalid vehicle trip details response"
+			"Invalid vehicle trip response"
 		);
 
 		// Transform to clean, normalized format
-		return transformVehicleTripDetailsResponse(rawResponse);
+		return transformVehicleTripResponse(rawResponse);
 	}
 }

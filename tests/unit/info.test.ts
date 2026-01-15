@@ -14,7 +14,7 @@ describe("InfoAPI", () => {
 		vi.spyOn(kyClient, "post").mockImplementation(mockPost);
 	});
 
-	describe("getHelplineData", () => {
+	describe("getHelpline", () => {
 		it("should fetch helpline data successfully", async () => {
 			const mockRawResponse = {
 				data: [
@@ -37,7 +37,7 @@ describe("InfoAPI", () => {
 				json: async () => mockRawResponse,
 			} as Response);
 
-			const result = await client.info.getHelplineData();
+			const result = await client.info.getHelpline();
 
 			expect(result.success).toBe(true);
 			expect(result.message).toBe("Success");
@@ -76,7 +76,7 @@ describe("InfoAPI", () => {
 				json: async () => mockRawResponse,
 			} as Response);
 
-			const result = await client.info.getHelplineData();
+			const result = await client.info.getHelpline();
 
 			expect(result.items).toHaveLength(2);
 			expect(result.rowCount).toBe(2);
@@ -95,7 +95,7 @@ describe("InfoAPI", () => {
 				json: async () => invalidResponse,
 			} as Response);
 
-			await expect(client.info.getHelplineData()).rejects.toThrow(
+			await expect(client.info.getHelpline()).rejects.toThrow(
 				"Invalid helpline response"
 			);
 		});
@@ -109,11 +109,11 @@ describe("InfoAPI", () => {
 			};
 			mockPost.mockRejectedValue(error);
 
-			await expect(client.info.getHelplineData()).rejects.toThrow();
+			await expect(client.info.getHelpline()).rejects.toThrow();
 		});
 	});
 
-	describe("getAllServiceTypes", () => {
+	describe("getServiceTypes", () => {
 		it("should fetch service types successfully", async () => {
 			const mockRawResponse = {
 				data: [
@@ -140,7 +140,7 @@ describe("InfoAPI", () => {
 				json: async () => mockRawResponse,
 			} as Response);
 
-			const result = await client.info.getAllServiceTypes();
+			const result = await client.info.getServiceTypes();
 
 			expect(result.success).toBe(true);
 			expect(result.message).toBe("Success");
@@ -173,7 +173,7 @@ describe("InfoAPI", () => {
 				json: async () => mockRawResponse,
 			} as Response);
 
-			const result = await client.info.getAllServiceTypes();
+			const result = await client.info.getServiceTypes();
 
 			expect(result.items).toHaveLength(1);
 			expect(result.items[0].serviceType).toBe("AC");
@@ -191,7 +191,7 @@ describe("InfoAPI", () => {
 				json: async () => invalidResponse,
 			} as Response);
 
-			await expect(client.info.getAllServiceTypes()).rejects.toThrow(
+			await expect(client.info.getServiceTypes()).rejects.toThrow(
 				"Invalid service types response"
 			);
 		});
@@ -205,11 +205,11 @@ describe("InfoAPI", () => {
 			};
 			mockPost.mockRejectedValue(error);
 
-			await expect(client.info.getAllServiceTypes()).rejects.toThrow();
+			await expect(client.info.getServiceTypes()).rejects.toThrow();
 		});
 	});
 
-	describe("getAboutData", () => {
+	describe("getAbout", () => {
 		it("should fetch about data successfully", async () => {
 			const mockRawResponse = {
 				data: [
@@ -239,7 +239,7 @@ describe("InfoAPI", () => {
 				json: async () => mockRawResponse,
 			} as Response);
 
-			const result = await client.info.getAboutData();
+			const result = await client.info.getAbout();
 
 			expect(result.success).toBe(true);
 			expect(result.message).toBe("Success");
@@ -268,7 +268,7 @@ describe("InfoAPI", () => {
 				json: async () => invalidResponse,
 			} as Response);
 
-			await expect(client.info.getAboutData()).rejects.toThrow(
+			await expect(client.info.getAbout()).rejects.toThrow(
 				"Invalid about data response"
 			);
 		});
@@ -282,7 +282,7 @@ describe("InfoAPI", () => {
 			};
 			mockPost.mockRejectedValue(error);
 
-			await expect(client.info.getAboutData()).rejects.toThrow();
+			await expect(client.info.getAbout()).rejects.toThrow();
 		});
 	});
 

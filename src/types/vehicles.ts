@@ -4,8 +4,8 @@
 
 import type { z } from "zod";
 import type {
-	rawListVehiclesResponseSchema,
-	rawVehicleTripDetailsResponseSchema,
+	rawSearchVehiclesResponseSchema,
+	rawVehicleTripResponseSchema,
 } from "../schemas/vehicles";
 import type {
 	StopFeatureCollection,
@@ -22,11 +22,11 @@ export interface RawVehicleDataItem {
 }
 
 /**
- * Raw list vehicles API response from BMTC API (for validation)
+ * Raw search vehicles API response from BMTC API (for validation)
  * Uses Zod inferred type to match schema exactly
  */
-export type RawListVehiclesResponse = z.infer<
-	typeof rawListVehiclesResponseSchema
+export type RawSearchVehiclesResponse = z.infer<
+	typeof rawSearchVehiclesResponseSchema
 >;
 
 /**
@@ -39,9 +39,9 @@ export interface VehicleDataItem {
 }
 
 /**
- * Clean, normalized list vehicles response
+ * Clean, normalized search vehicles response
  */
-export interface ListVehiclesResponse {
+export interface SearchVehiclesResponse {
 	items: VehicleDataItem[];
 	message: string;
 	success: boolean;
@@ -49,9 +49,9 @@ export interface ListVehiclesResponse {
 }
 
 /**
- * Parameters for listing vehicles
+ * Parameters for searching vehicles
  */
-export interface ListVehiclesParams {
+export interface SearchVehiclesParams {
 	/**
 	 * Vehicle registration number (partial match supported)
 	 * e.g., "KA57f183" will match "KA57F1831", "KA57F1832", etc.
@@ -130,17 +130,17 @@ export interface RawLiveLocationItem {
 }
 
 /**
- * Raw vehicle trip details API response from BMTC API
+ * Raw vehicle trip API response from BMTC API
  * Uses Zod inferred type to match schema exactly
  */
-export type RawVehicleTripDetailsResponse = z.infer<
-	typeof rawVehicleTripDetailsResponseSchema
+export type RawVehicleTripResponse = z.infer<
+	typeof rawVehicleTripResponseSchema
 >;
 
 /**
- * Clean, normalized vehicle trip details response
+ * Clean, normalized vehicle trip response
  */
-export interface VehicleTripDetailsResponse {
+export interface VehicleTripResponse {
 	/**
 	 * Route stops as GeoJSON FeatureCollection (Point features for each station)
 	 */
@@ -155,11 +155,11 @@ export interface VehicleTripDetailsResponse {
 }
 
 /**
- * Parameters for getting vehicle trip details
+ * Parameters for getting vehicle trip information
  */
-export interface VehicleTripDetailsParams {
+export interface VehicleTripParams {
 	/**
-	 * Vehicle ID (obtained from listVehicles)
+	 * Vehicle ID (obtained from searchVehicles)
 	 */
 	vehicleId: number;
 }

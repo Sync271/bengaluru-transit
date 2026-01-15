@@ -14,8 +14,8 @@ describe("VehiclesAPI", () => {
 		vi.spyOn(kyClient, "post").mockImplementation(mockPost);
 	});
 
-	describe("listVehicles", () => {
-		it("should list vehicles by registration number successfully", async () => {
+	describe("searchVehicles", () => {
+		it("should search vehicles by registration number successfully", async () => {
 			const mockRawResponse = {
 				data: [
 					{
@@ -46,7 +46,7 @@ describe("VehiclesAPI", () => {
 				json: async () => mockRawResponse,
 			} as Response);
 
-			const result = await client.vehicles.listVehicles({
+			const result = await client.vehicles.searchVehicles({
 				vehicleRegNo: "KA57f183",
 			});
 
@@ -74,7 +74,7 @@ describe("VehiclesAPI", () => {
 				json: async () => mockRawResponse,
 			} as Response);
 
-			const result = await client.vehicles.listVehicles({
+			const result = await client.vehicles.searchVehicles({
 				vehicleRegNo: "INVALID",
 			});
 
@@ -85,8 +85,8 @@ describe("VehiclesAPI", () => {
 
 		it("should validate input parameters and throw on empty vehicleRegNo", async () => {
 			await expect(
-				client.vehicles.listVehicles({ vehicleRegNo: "" })
-			).rejects.toThrow("Invalid list vehicles parameters");
+				client.vehicles.searchVehicles({ vehicleRegNo: "" })
+			).rejects.toThrow("Invalid search vehicles parameters");
 		});
 
 		it("should validate response schema and throw on invalid data", async () => {
@@ -101,8 +101,8 @@ describe("VehiclesAPI", () => {
 			} as Response);
 
 			await expect(
-				client.vehicles.listVehicles({ vehicleRegNo: "KA57f183" })
-			).rejects.toThrow("Invalid list vehicles response");
+				client.vehicles.searchVehicles({ vehicleRegNo: "KA57f183" })
+			).rejects.toThrow("Invalid search vehicles response");
 		});
 
 		it("should handle API errors", async () => {
@@ -115,13 +115,13 @@ describe("VehiclesAPI", () => {
 			mockPost.mockRejectedValue(error);
 
 			await expect(
-				client.vehicles.listVehicles({ vehicleRegNo: "KA57f183" })
+				client.vehicles.searchVehicles({ vehicleRegNo: "KA57f183" })
 			).rejects.toThrow();
 		});
 	});
 
-	describe("getVehicleTripDetails", () => {
-		it("should get vehicle trip details successfully", async () => {
+	describe("getVehicleTrip", () => {
+		it("should get vehicle trip successfully", async () => {
 			const mockRawResponse = {
 				RouteDetails: [
 					{
@@ -201,7 +201,7 @@ describe("VehiclesAPI", () => {
 				json: async () => mockRawResponse,
 			} as Response);
 
-			const result = await client.vehicles.getVehicleTripDetails({
+			const result = await client.vehicles.getVehicleTrip({
 				vehicleId: 21537,
 			});
 
@@ -257,7 +257,7 @@ describe("VehiclesAPI", () => {
 				json: async () => mockRawResponse,
 			} as Response);
 
-			const result = await client.vehicles.getVehicleTripDetails({
+			const result = await client.vehicles.getVehicleTrip({
 				vehicleId: 99999,
 			});
 
@@ -272,12 +272,12 @@ describe("VehiclesAPI", () => {
 
 		it("should validate input parameters and throw on invalid vehicleId", async () => {
 			await expect(
-				client.vehicles.getVehicleTripDetails({ vehicleId: 0 })
-			).rejects.toThrow("Invalid vehicle trip details parameters");
+				client.vehicles.getVehicleTrip({ vehicleId: 0 })
+			).rejects.toThrow("Invalid vehicle trip parameters");
 
 			await expect(
-				client.vehicles.getVehicleTripDetails({ vehicleId: -1 })
-			).rejects.toThrow("Invalid vehicle trip details parameters");
+				client.vehicles.getVehicleTrip({ vehicleId: -1 })
+			).rejects.toThrow("Invalid vehicle trip parameters");
 		});
 
 		it("should validate response schema and throw on invalid data", async () => {
@@ -292,8 +292,8 @@ describe("VehiclesAPI", () => {
 			} as Response);
 
 			await expect(
-				client.vehicles.getVehicleTripDetails({ vehicleId: 21537 })
-			).rejects.toThrow("Invalid vehicle trip details response");
+				client.vehicles.getVehicleTrip({ vehicleId: 21537 })
+			).rejects.toThrow("Invalid vehicle trip response");
 		});
 
 		it("should handle API errors", async () => {
@@ -306,7 +306,7 @@ describe("VehiclesAPI", () => {
 			mockPost.mockRejectedValue(error);
 
 			await expect(
-				client.vehicles.getVehicleTripDetails({ vehicleId: 21537 })
+				client.vehicles.getVehicleTrip({ vehicleId: 21537 })
 			).rejects.toThrow();
 		});
 	});

@@ -116,10 +116,10 @@ export class InfoAPI {
 	constructor(private client: BaseClient) {}
 
 	/**
-	 * Get BMTC helpline data
+	 * Get BMTC helpline information
 	 * @returns Helpline information including contact numbers in normalized format
 	 */
-	async getHelplineData(): Promise<HelplineResponse> {
+	async getHelpline(): Promise<HelplineResponse> {
 		const response = await this.client.getClient().post("GetHelplineData", {
 			json: {},
 		});
@@ -138,10 +138,10 @@ export class InfoAPI {
 	}
 
 	/**
-	 * Get all service types (e.g., AC, Non AC/Ordinary)
+	 * Get service types (e.g., AC, Non AC/Ordinary)
 	 * @returns List of available service types in normalized format
 	 */
-	async getAllServiceTypes(): Promise<ServiceTypesResponse> {
+	async getServiceTypes(): Promise<ServiceTypesResponse> {
 		const response = await this.client.getClient().post("GetAllServiceTypes", {
 			json: {},
 		});
@@ -160,10 +160,10 @@ export class InfoAPI {
 	}
 
 	/**
-	 * Get about data including URLs and airport information
+	 * Get about information including URLs and airport information
 	 * @returns About data with terms, URLs, and airport coordinates in normalized format
 	 */
-	async getAboutData(): Promise<AboutDataResponse> {
+	async getAbout(): Promise<AboutDataResponse> {
 		const response = await this.client.getClient().post("GetAboutData", {
 			json: {},
 		});

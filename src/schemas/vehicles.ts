@@ -14,9 +14,9 @@ export const rawVehicleDataItemSchema = z.object({
 });
 
 /**
- * Schema for raw list vehicles API response from BMTC API
+ * Schema for raw search vehicles API response from BMTC API
  */
-export const rawListVehiclesResponseSchema = z.object({
+export const rawSearchVehiclesResponseSchema = z.object({
 	data: z.array(rawVehicleDataItemSchema),
 	Message: z.string(),
 	Issuccess: z.boolean(),
@@ -26,9 +26,9 @@ export const rawListVehiclesResponseSchema = z.object({
 });
 
 /**
- * Schema for list vehicles request parameters
+ * Schema for search vehicles request parameters
  */
-export const listVehiclesParamsSchema = z.object({
+export const searchVehiclesParamsSchema = z.object({
 	vehicleregno: z.string().min(1, "Vehicle registration number is required"),
 });
 
@@ -103,9 +103,9 @@ export const rawLiveLocationItemSchema = z.object({
 });
 
 /**
- * Schema for raw vehicle trip details API response from BMTC API
+ * Schema for raw vehicle trip API response from BMTC API
  */
-export const rawVehicleTripDetailsResponseSchema = z.object({
+export const rawVehicleTripResponseSchema = z.object({
 	RouteDetails: z.array(rawRouteDetailItemSchema),
 	LiveLocation: z.array(rawLiveLocationItemSchema),
 	Message: z.string(),
@@ -116,8 +116,8 @@ export const rawVehicleTripDetailsResponseSchema = z.object({
 });
 
 /**
- * Schema for vehicle trip details request parameters
+ * Schema for vehicle trip request parameters
  */
-export const vehicleTripDetailsParamsSchema = z.object({
+export const vehicleTripParamsSchema = z.object({
 	vehicleId: z.number().int().positive("Vehicle ID must be a positive integer"),
 });
