@@ -268,6 +268,45 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 
 	describe("Routes API - Real Endpoints", () => {
 		it.skipIf(!shouldRunTest("route"))(
+			"should get all routes from real API",
+			async () => {
+				const result = await client.routes.getAllRoutes();
+
+				expect(result).toBeDefined();
+				expect(result.success).toBe(true);
+				expect(result.items).toBeInstanceOf(Array);
+				expect(result.items.length).toBeGreaterThan(0);
+				if (result.items.length > 0) {
+					expect(result.items[0]).toHaveProperty("routeId");
+					expect(result.items[0]).toHaveProperty("routeNo");
+					expect(result.items[0]).toHaveProperty("routeName");
+					expect(result.items[0]).toHaveProperty("fromStationId");
+					expect(result.items[0]).toHaveProperty("fromStation");
+					expect(result.items[0]).toHaveProperty("toStationId");
+					expect(result.items[0]).toHaveProperty("toStation");
+					expect(typeof result.items[0].routeId).toBe("number");
+				}
+
+				// Print formatted response (first 5 items only to avoid huge output)
+				console.log("\n🗺️ All Routes Response (first 5 items):");
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+				console.log(
+					JSON.stringify(
+						{
+							...result,
+							items: result.items.slice(0, 5),
+						},
+						null,
+						2
+					)
+				);
+				console.log(`... and ${result.items.length - 5} more items`);
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+			},
+			{ timeout: 30000 }
+		);
+
+		it.skipIf(!shouldRunTest("route"))(
 			"should search routes from real API",
 			async () => {
 				const result = await client.routes.searchRoutes({

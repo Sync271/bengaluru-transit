@@ -6,6 +6,7 @@ import type { z } from "zod";
 import type {
 	rawRoutePointsResponseSchema,
 	rawRouteSearchResponseSchema,
+	rawAllRoutesResponseSchema,
 } from "../schemas/routes";
 import type { RouteFeatureCollection } from "./geojson";
 
@@ -109,4 +110,68 @@ export interface RouteSearchParams {
 	 * e.g., "80-a" will match "80-A", "180-A", "280-A", etc.
 	 */
 	query: string;
+}
+
+/**
+ * Raw route list item from GetAllRouteList API
+ */
+export interface RawRouteListItem {
+	routeid: number;
+	routeno: string;
+	routename: string;
+	fromstationid: number;
+	fromstation: string;
+	tostationid: number;
+	tostation: string;
+	responsecode: number;
+}
+
+/**
+ * Raw all routes API response from BMTC API (for validation)
+ * Uses Zod inferred type to match schema exactly
+ */
+export type RawAllRoutesResponse = z.infer<typeof rawAllRoutesResponseSchema>;
+
+/**
+ * Clean, normalized route list item
+ */
+export interface RouteListItem {
+	/**
+	 * Route ID
+	 */
+	routeId: number;
+	/**
+	 * Route number (e.g., "89-C UP", "89-C DOWN")
+	 */
+	routeNo: string;
+	/**
+	 * Route name (e.g., "KBS-CVN", "CVN-KBS")
+	 */
+	routeName: string;
+	/**
+	 * From station ID
+	 */
+	fromStationId: number;
+	/**
+	 * From station name
+	 */
+	fromStation: string;
+	/**
+	 * To station ID
+	 */
+	toStationId: number;
+	/**
+	 * To station name
+	 */
+	toStation: string;
+}
+
+/**
+ * Clean, normalized all routes response
+ */
+export interface AllRoutesResponse {
+	items: RouteListItem[];
+	message: string;
+	success: boolean;
+	rowCount: number;
 }

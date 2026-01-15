@@ -61,3 +61,29 @@ export const rawRouteSearchResponseSchema = z.object({
 export const routeSearchParamsSchema = z.object({
 	routetext: z.string().min(1, "Route text is required"),
 });
+
+/**
+ * Schema for raw route list item from GetAllRouteList API
+ */
+export const rawRouteListItemSchema = z.object({
+	routeid: z.number(),
+	routeno: z.string(),
+	routename: z.string(),
+	fromstationid: z.number(),
+	fromstation: z.string(),
+	tostationid: z.number(),
+	tostation: z.string(),
+	responsecode: z.number(),
+});
+
+/**
+ * Schema for raw all routes API response from BMTC API
+ */
+export const rawAllRoutesResponseSchema = z.object({
+	data: z.array(rawRouteListItemSchema),
+	Message: z.string(),
+	Issuccess: z.boolean(),
+	exception: z.unknown().nullish(),
+	RowCount: z.number(),
+	responsecode: z.number(),
+});

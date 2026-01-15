@@ -259,4 +259,118 @@ describe("RoutesAPI", () => {
 			).rejects.toThrow();
 		});
 	});
+
+	describe("getAllRoutes", () => {
+		it("should get all routes successfully", async () => {
+			const mockRawResponse = {
+				data: [
+					{
+						routeid: 1657,
+						routeno: "89-C UP",
+						routename: "KBS-CVN",
+						fromstationid: 20921,
+						fromstation: "Kempegowda Bus Station",
+						tostationid: 32209,
+						tostation: "Cauvery Nagara",
+						responsecode: 200,
+					},
+					{
+						routeid: 1658,
+						routeno: "89-C DOWN",
+						routename: "CVN-KBS",
+						fromstationid: 24379,
+						fromstation: "Cauvery Nagara",
+						tostationid: 20922,
+						tostation: "Kempegowda Bus Station",
+						responsecode: 200,
+					},
+				],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 2,
+				responsecode: 200,
+			};
+
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const result = await client.routes.getAllRoutes();
+
+			expect(result.success).toBe(true);
+			expect(result.message).toBe("Success");
+			expect(result.items).toHaveLength(2);
+			expect(result.rowCount).toBe(2);
+
+			// Verify first item
+			expect(result.items[0].routeId).toBe(1657);
+			expect(result.items[0].routeNo).toBe("89-C UP");
+			expect(result.items[0].routeName).toBe("KBS-CVN");
+			expect(result.items[0].fromStationId).toBe(20921);
+			expect(result.items[0].fromStation).toBe("Kempegowda Bus Station");
+			expect(result.items[0].toStationId).toBe(32209);
+			expect(result.items[0].toStation).toBe("Cauvery Nagara");
+
+			// Verify second item
+			expect(result.items[1].routeId).toBe(1658);
+			expect(result.items[1].routeNo).toBe("89-C DOWN");
+			expect(result.items[1].routeName).toBe("CVN-KBS");
+			expect(result.items[1].fromStationId).toBe(24379);
+			expect(result.items[1].fromStation).toBe("Cauvery Nagara");
+			expect(result.items[1].toStationId).toBe(20922);
+			expect(result.items[1].toStation).toBe("Kempegowda Bus Station");
+		});
+
+		it("should handle empty results", async () => {
+			const mockRawResponse = {
+				data: [],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 0,
+				responsecode: 200,
+			};
+
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const result = await client.routes.getAllRoutes();
+
+			expect(result.success).toBe(true);
+			expect(result.items).toHaveLength(0);
+			expect(result.rowCount).toBe(0);
+		});
+
+		it("should validate response schema and throw on invalid data", async () => {
+			const invalidResponse = {
+				data: "invalid",
+				Message: "Success",
+			};
+
+			// Mock the response with invalid data
+			mockPost.mockResolvedValue({
+				json: async () => invalidResponse,
+			} as Response);
+
+			await expect(client.routes.getAllRoutes()).rejects.toThrow(
+				"Invalid all routes response"
+			);
+		});
+
+		it("should handle API errors", async () => {
+			// Mock an error response
+			const error = new Error("Internal Server Error");
+			(error as any).response = {
+				status: 500,
+				json: async () => ({ message: "Internal Server Error" }),
+			};
+			mockPost.mockRejectedValue(error);
+
+			await expect(client.routes.getAllRoutes()).rejects.toThrow();
+		});
+	});
 });

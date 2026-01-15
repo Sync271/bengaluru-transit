@@ -4,6 +4,7 @@ import {
 	routePointsParamsSchema,
 	rawRouteSearchResponseSchema,
 	routeSearchParamsSchema,
+	rawAllRoutesResponseSchema,
 } from "../schemas/routes";
 import { createRouteFeature, createFeatureCollection } from "../utils/geojson";
 import type { BaseClient } from "../client/base-client";
@@ -15,6 +16,9 @@ import type {
 	RawRouteSearchResponse,
 	RouteSearchParams,
 	RouteSearchItem,
+	AllRoutesResponse,
+	RawAllRoutesResponse,
+	RouteListItem,
 } from "../types/routes";
 import type { RouteFeature } from "../types/geojson";
 
@@ -70,6 +74,30 @@ function transformRouteSearchResponse(
 }
 
 /**
+ * Transform raw all routes API response to clean, normalized format
+ */
+function transformAllRoutesResponse(
+	raw: RawAllRoutesResponse
+): AllRoutesResponse {
+	const items: RouteListItem[] = raw.data.map((item) => ({
+		routeId: item.routeid,
+		routeNo: item.routeno,
+		routeName: item.routename,
+		fromStationId: item.fromstationid,
+		fromStation: item.fromstation,
+		toStationId: item.tostationid,
+		toStation: item.tostation,
+	}));
+
+	return {
+		items,
+		message: raw.Message,
+		success: raw.Issuccess,
+		rowCount: raw.RowCount,
+	};
+}
+
+/**
  * Routes API methods
  */
 export class RoutesAPI {
@@ -112,9 +140,7 @@ export class RoutesAPI {
 	 * @param params - Parameters including search query
 	 * @returns List of matching routes in normalized format
 	 */
-	async searchRoutes(
-		params: RouteSearchParams
-	): Promise<RouteSearchResponse> {
+	async searchRoutes(params: RouteSearchParams): Promise<RouteSearchResponse> {
 		// Validate input parameters
 		const validatedParams = validate(
 			routeSearchParamsSchema,
@@ -137,5 +163,27 @@ export class RoutesAPI {
 
 		// Transform to clean, normalized format
 		return transformRouteSearchResponse(rawResponse);
+	}
+
+	/**
+	 * Get all routes list
+	 * @returns List of all routes in normalized format
+	 */
+	async getAllRoutes(): Promise<AllRoutesResponse> {
+		const response = await this.client.getClient().post("GetAllRouteList", {
+			json: {},
+		});
+
+		const data = await response.json<unknown>();
+
+		// Validate raw response with Zod schema
+		const rawResponse = validate(
+			rawAllRoutesResponseSchema,
+			data,
+			"Invalid all routes response"
+		);
+
+		// Transform to clean, normalized format
+		return transformAllRoutesResponse(rawResponse);
 	}
 }
