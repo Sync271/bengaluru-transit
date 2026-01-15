@@ -136,8 +136,8 @@ export class VehiclesAPI {
 	constructor(private client: BaseClient) {}
 
 	/**
-	 * Search vehicles by registration number (partial match)
-	 * @param params - Search parameters including vehicle registration number
+	 * Search vehicles by query (partial match)
+	 * @param params - Search parameters including search query
 	 * @returns List of matching vehicles in normalized format
 	 */
 	async searchVehicles(
@@ -146,7 +146,7 @@ export class VehiclesAPI {
 		// Validate input parameters
 		const validatedParams = validate(
 			searchVehiclesParamsSchema,
-			{ vehicleregno: params.vehicleRegNo },
+			{ vehicleregno: params.query },
 			"Invalid search vehicles parameters"
 		);
 

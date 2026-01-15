@@ -47,7 +47,7 @@ describe("VehiclesAPI", () => {
 			} as Response);
 
 			const result = await client.vehicles.searchVehicles({
-				vehicleRegNo: "KA57f183",
+				query: "KA57f183",
 			});
 
 			expect(result.success).toBe(true);
@@ -75,7 +75,7 @@ describe("VehiclesAPI", () => {
 			} as Response);
 
 			const result = await client.vehicles.searchVehicles({
-				vehicleRegNo: "INVALID",
+				query: "INVALID",
 			});
 
 			expect(result.success).toBe(true);
@@ -83,9 +83,9 @@ describe("VehiclesAPI", () => {
 			expect(result.rowCount).toBe(0);
 		});
 
-		it("should validate input parameters and throw on empty vehicleRegNo", async () => {
+		it("should validate input parameters and throw on empty query", async () => {
 			await expect(
-				client.vehicles.searchVehicles({ vehicleRegNo: "" })
+				client.vehicles.searchVehicles({ query: "" })
 			).rejects.toThrow("Invalid search vehicles parameters");
 		});
 
@@ -101,7 +101,7 @@ describe("VehiclesAPI", () => {
 			} as Response);
 
 			await expect(
-				client.vehicles.searchVehicles({ vehicleRegNo: "KA57f183" })
+				client.vehicles.searchVehicles({ query: "KA57f183" })
 			).rejects.toThrow("Invalid search vehicles response");
 		});
 
@@ -115,7 +115,7 @@ describe("VehiclesAPI", () => {
 			mockPost.mockRejectedValue(error);
 
 			await expect(
-				client.vehicles.searchVehicles({ vehicleRegNo: "KA57f183" })
+				client.vehicles.searchVehicles({ query: "KA57f183" })
 			).rejects.toThrow();
 		});
 	});

@@ -3,7 +3,10 @@
  */
 
 import type { z } from "zod";
-import type { rawRoutePointsResponseSchema } from "../schemas/routes";
+import type {
+	rawRoutePointsResponseSchema,
+	rawRouteSearchResponseSchema,
+} from "../schemas/routes";
 import type { RouteFeatureCollection } from "./geojson";
 
 /**
@@ -44,4 +47,66 @@ export interface RoutePointsParams {
 	 * Route ID (obtained from getVehicleTrip)
 	 */
 	routeId: number;
+}
+
+/**
+ * Raw route search result item from BMTC API
+ */
+export interface RawRouteSearchItem {
+	union_rowno: number;
+	row: number;
+	routeno: string;
+	responsecode: number;
+	routeparentid: number;
+}
+
+/**
+ * Raw route search API response from BMTC API (for validation)
+ * Uses Zod inferred type to match schema exactly
+ */
+export type RawRouteSearchResponse = z.infer<
+	typeof rawRouteSearchResponseSchema
+>;
+
+/**
+ * Clean, normalized route search result item
+ */
+export interface RouteSearchItem {
+	/**
+	 * Union row number (grouping identifier)
+	 */
+	unionRowNo: number;
+	/**
+	 * Row number within the union group
+	 */
+	row: number;
+	/**
+	 * Route number/name (e.g., "80-A", "80-A D31G-KBS")
+	 */
+	routeNo: string;
+	/**
+	 * Route parent ID (used for other endpoints like getRoutePoints)
+	 */
+	routeParentId: number;
+}
+
+/**
+ * Clean, normalized route search response
+ */
+export interface RouteSearchResponse {
+	items: RouteSearchItem[];
+	message: string;
+	success: boolean;
+	rowCount: number;
+}
+
+/**
+ * Parameters for searching routes
+ */
+export interface RouteSearchParams {
+	/**
+	 * Search query for routes (partial match supported)
+	 * e.g., "80-a" will match "80-A", "180-A", "280-A", etc.
+	 */
+	query: string;
 }

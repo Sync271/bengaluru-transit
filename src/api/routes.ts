@@ -2,6 +2,8 @@ import { validate } from "../utils/validation";
 import {
 	rawRoutePointsResponseSchema,
 	routePointsParamsSchema,
+	rawRouteSearchResponseSchema,
+	routeSearchParamsSchema,
 } from "../schemas/routes";
 import { createRouteFeature, createFeatureCollection } from "../utils/geojson";
 import type { BaseClient } from "../client/base-client";
@@ -9,6 +11,10 @@ import type {
 	RoutePointsResponse,
 	RawRoutePointsResponse,
 	RoutePointsParams,
+	RouteSearchResponse,
+	RawRouteSearchResponse,
+	RouteSearchParams,
+	RouteSearchItem,
 } from "../types/routes";
 import type { RouteFeature } from "../types/geojson";
 
@@ -36,6 +42,27 @@ function transformRoutePointsResponse(
 
 	return {
 		routePath: createFeatureCollection([routeFeature]),
+		message: raw.Message,
+		success: raw.Issuccess,
+		rowCount: raw.RowCount,
+	};
+}
+
+/**
+ * Transform raw route search API response to clean, normalized format
+ */
+function transformRouteSearchResponse(
+	raw: RawRouteSearchResponse
+): RouteSearchResponse {
+	const items: RouteSearchItem[] = raw.data.map((item) => ({
+		unionRowNo: item.union_rowno,
+		row: item.row,
+		routeNo: item.routeno,
+		routeParentId: item.routeparentid,
+	}));
+
+	return {
+		items,
 		message: raw.Message,
 		success: raw.Issuccess,
 		rowCount: raw.RowCount,
@@ -78,5 +105,37 @@ export class RoutesAPI {
 
 		// Transform to clean, normalized format
 		return transformRoutePointsResponse(rawResponse, params.routeId);
+	}
+
+	/**
+	 * Search for routes by query text (partial match)
+	 * @param params - Parameters including search query
+	 * @returns List of matching routes in normalized format
+	 */
+	async searchRoutes(
+		params: RouteSearchParams
+	): Promise<RouteSearchResponse> {
+		// Validate input parameters
+		const validatedParams = validate(
+			routeSearchParamsSchema,
+			{ routetext: params.query },
+			"Invalid route search parameters"
+		);
+
+		const response = await this.client.getClient().post("SearchRoute_v2", {
+			json: validatedParams,
+		});
+
+		const data = await response.json<unknown>();
+
+		// Validate raw response with Zod schema
+		const rawResponse = validate(
+			rawRouteSearchResponseSchema,
+			data,
+			"Invalid route search response"
+		);
+
+		// Transform to clean, normalized format
+		return transformRouteSearchResponse(rawResponse);
 	}
 }

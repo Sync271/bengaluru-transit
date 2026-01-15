@@ -149,7 +149,7 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 			"should list vehicles from real API",
 			async () => {
 				const result = await client.vehicles.searchVehicles({
-					vehicleRegNo: "KA57f183",
+					query: "KA57f183",
 				});
 
 				expect(result).toBeDefined();
@@ -267,6 +267,33 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 	});
 
 	describe("Routes API - Real Endpoints", () => {
+		it.skipIf(!shouldRunTest("route"))(
+			"should search routes from real API",
+			async () => {
+				const result = await client.routes.searchRoutes({
+					query: "80-a",
+				});
+
+				expect(result).toBeDefined();
+				expect(result.success).toBe(true);
+				expect(result.items).toBeInstanceOf(Array);
+				if (result.items.length > 0) {
+					expect(result.items[0]).toHaveProperty("routeNo");
+					expect(result.items[0]).toHaveProperty("routeParentId");
+					expect(result.items[0]).toHaveProperty("unionRowNo");
+					expect(result.items[0]).toHaveProperty("row");
+					expect(typeof result.items[0].routeParentId).toBe("number");
+				}
+
+				// Print formatted response
+				console.log("\n🔍 Route Search Response:");
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+				console.log(JSON.stringify(result, null, 2));
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+			},
+			{ timeout: 30000 }
+		);
+
 		it.skipIf(!shouldRunTest("route"))(
 			"should get route points from real API",
 			async () => {

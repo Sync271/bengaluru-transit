@@ -53,10 +53,10 @@ export interface SearchVehiclesResponse {
  */
 export interface SearchVehiclesParams {
 	/**
-	 * Vehicle registration number (partial match supported)
+	 * Search query for vehicles (partial match supported)
 	 * e.g., "KA57f183" will match "KA57F1831", "KA57F1832", etc.
 	 */
-	vehicleRegNo: string;
+	query: string;
 }
 
 /**
