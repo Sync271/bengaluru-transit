@@ -40,3 +40,31 @@ export interface HelplineResponse {
 	success: boolean;
 	rowCount: number;
 }
+
+/**
+ * Raw service type data item from BMTC API
+ */
+export interface RawServiceTypeDataItem {
+	servicetype: string;
+	servicetypeid: number;
+	responsecode: number;
+}
+
+/**
+ * Clean, normalized service type data item
+ */
+export interface ServiceTypeDataItem {
+	serviceType: string;
+	serviceTypeId: number;
+	responseCode: number;
+}
+
+/**
+ * Clean, normalized service types response
+ */
+export interface ServiceTypesResponse {
+	items: ServiceTypeDataItem[];
+	message: string;
+	success: boolean;
+	rowCount: number;
+}

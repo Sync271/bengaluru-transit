@@ -1,11 +1,19 @@
 import { validate } from "../utils/validation";
-import { rawHelplineResponseSchema } from "../schemas/info";
+import {
+	rawHelplineResponseSchema,
+	rawServiceTypesResponseSchema,
+} from "../schemas/info";
 import type { BaseClient } from "../client/base-client";
 import type {
 	HelplineResponse,
 	HelplineDataItem,
 	RawHelplineResponse,
+	ServiceTypesResponse,
+	ServiceTypeDataItem,
 } from "../types/info";
+import type { z } from "zod";
+
+type RawServiceTypesResponse = z.infer<typeof rawServiceTypesResponseSchema>;
 
 /**
  * Transform raw BMTC API response to clean, normalized format
@@ -17,6 +25,26 @@ function transformHelplineResponse(raw: RawHelplineResponse): HelplineResponse {
 				labelName: item.labelname,
 				busStopName: item.busstopname,
 				helplineNumber: item.helplinenumber,
+				responseCode: item.responsecode,
+			})
+		),
+		message: raw.Message,
+		success: raw.Issuccess,
+		rowCount: raw.RowCount,
+	};
+}
+
+/**
+ * Transform raw service types API response to clean, normalized format
+ */
+function transformServiceTypesResponse(
+	raw: RawServiceTypesResponse
+): ServiceTypesResponse {
+	return {
+		items: raw.data.map(
+			(item): ServiceTypeDataItem => ({
+				serviceType: item.servicetype,
+				serviceTypeId: item.servicetypeid,
 				responseCode: item.responsecode,
 			})
 		),
@@ -52,5 +80,27 @@ export class InfoAPI {
 
 		// Transform to clean, normalized format
 		return transformHelplineResponse(rawResponse);
+	}
+
+	/**
+	 * Get all service types (e.g., AC, Non AC/Ordinary)
+	 * @returns List of available service types in normalized format
+	 */
+	async getAllServiceTypes(): Promise<ServiceTypesResponse> {
+		const response = await this.client.getClient().post("GetAllServiceTypes", {
+			json: {},
+		});
+
+		const data = await response.json<unknown>();
+
+		// Validate raw response with Zod schema
+		const rawResponse = validate(
+			rawServiceTypesResponseSchema,
+			data,
+			"Invalid service types response"
+		);
+
+		// Transform to clean, normalized format
+		return transformServiceTypesResponse(rawResponse);
 	}
 }

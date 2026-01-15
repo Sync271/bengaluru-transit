@@ -102,4 +102,93 @@ describe("InfoAPI", () => {
 			await expect(client.info.getHelplineData()).rejects.toThrow();
 		});
 	});
+
+	describe("getAllServiceTypes", () => {
+		it("should fetch service types successfully", async () => {
+			const mockRawResponse = {
+				data: [
+					{
+						servicetype: "AC",
+						servicetypeid: 73,
+						responsecode: 200,
+					},
+					{
+						servicetype: "Non AC/Ordinary",
+						servicetypeid: 72,
+						responsecode: 200,
+					},
+				],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 2,
+				responsecode: 200,
+			};
+
+			nock(baseURL)
+				.post("/WebAPI/GetAllServiceTypes")
+				.reply(200, mockRawResponse);
+
+			const result = await client.info.getAllServiceTypes();
+
+			expect(result.success).toBe(true);
+			expect(result.message).toBe("Success");
+			expect(result.items).toHaveLength(2);
+			expect(result.items[0].serviceType).toBe("AC");
+			expect(result.items[0].serviceTypeId).toBe(73);
+			expect(result.items[1].serviceType).toBe("Non AC/Ordinary");
+			expect(result.items[1].serviceTypeId).toBe(72);
+			expect(result.rowCount).toBe(2);
+		});
+
+		it("should handle single service type", async () => {
+			const mockRawResponse = {
+				data: [
+					{
+						servicetype: "AC",
+						servicetypeid: 73,
+						responsecode: 200,
+					},
+				],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 1,
+				responsecode: 200,
+			};
+
+			nock(baseURL)
+				.post("/WebAPI/GetAllServiceTypes")
+				.reply(200, mockRawResponse);
+
+			const result = await client.info.getAllServiceTypes();
+
+			expect(result.items).toHaveLength(1);
+			expect(result.items[0].serviceType).toBe("AC");
+			expect(result.items[0].responseCode).toBe(200);
+		});
+
+		it("should validate response schema and throw on invalid data", async () => {
+			const invalidResponse = {
+				data: "invalid",
+				Message: "Success",
+			};
+
+			nock(baseURL)
+				.post("/WebAPI/GetAllServiceTypes")
+				.reply(200, invalidResponse);
+
+			await expect(client.info.getAllServiceTypes()).rejects.toThrow(
+				"Invalid service types response"
+			);
+		});
+
+		it("should handle API errors", async () => {
+			nock(baseURL)
+				.post("/WebAPI/GetAllServiceTypes")
+				.reply(500, { message: "Internal Server Error" });
+
+			await expect(client.info.getAllServiceTypes()).rejects.toThrow();
+		});
+	});
 });

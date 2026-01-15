@@ -25,3 +25,24 @@ export const rawHelplineResponseSchema = z.object({
 	RowCount: z.number(),
 	responsecode: z.number(),
 });
+
+/**
+ * Schema for raw service type data item from BMTC API
+ */
+export const rawServiceTypeDataItemSchema = z.object({
+	servicetype: z.string(),
+	servicetypeid: z.number(),
+	responsecode: z.number(),
+});
+
+/**
+ * Schema for raw service types API response from BMTC API
+ */
+export const rawServiceTypesResponseSchema = z.object({
+	data: z.array(rawServiceTypeDataItemSchema),
+	Message: z.string(),
+	Issuccess: z.boolean(),
+	exception: z.unknown().nullish(),
+	RowCount: z.number(),
+	responsecode: z.number(),
+});
