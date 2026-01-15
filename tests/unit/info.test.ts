@@ -1,0 +1,105 @@
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import nock from "nock";
+import { BMTCClient } from "../../src/client/bmtc-client";
+
+describe("InfoAPI", () => {
+	let client: BMTCClient;
+	const baseURL = "https://bmtcmobileapi.karnataka.gov.in";
+
+	beforeEach(() => {
+		nock.cleanAll();
+		nock.disableNetConnect();
+		client = new BMTCClient();
+	});
+
+	afterEach(() => {
+		nock.enableNetConnect();
+		nock.cleanAll();
+	});
+
+	describe("getHelplineData", () => {
+		it("should fetch helpline data successfully", async () => {
+			const mockRawResponse = {
+				data: [
+					{
+						labelname: "BMTC Helpline No",
+						busstopname: null,
+						helplinenumber: "08022483777",
+						responsecode: 200,
+					},
+				],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 1,
+				responsecode: 200,
+			};
+
+			nock(baseURL).post("/WebAPI/GetHelplineData").reply(200, mockRawResponse);
+
+			const result = await client.info.getHelplineData();
+
+			expect(result.success).toBe(true);
+			expect(result.message).toBe("Success");
+			expect(result.items).toHaveLength(1);
+			expect(result.items[0].helplineNumber).toBe("08022483777");
+			expect(result.items[0].labelName).toBe("BMTC Helpline No");
+			expect(result.items[0].busStopName).toBeNull();
+			expect(result.rowCount).toBe(1);
+		});
+
+		it("should handle multiple helpline entries", async () => {
+			const mockRawResponse = {
+				data: [
+					{
+						labelname: "BMTC Helpline No",
+						busstopname: null,
+						helplinenumber: "08022483777",
+						responsecode: 200,
+					},
+					{
+						labelname: "Customer Care",
+						busstopname: "Central",
+						helplinenumber: "08012345678",
+						responsecode: 200,
+					},
+				],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 2,
+				responsecode: 200,
+			};
+
+			nock(baseURL).post("/WebAPI/GetHelplineData").reply(200, mockRawResponse);
+
+			const result = await client.info.getHelplineData();
+
+			expect(result.items).toHaveLength(2);
+			expect(result.rowCount).toBe(2);
+			expect(result.items[1].labelName).toBe("Customer Care");
+			expect(result.items[1].busStopName).toBe("Central");
+		});
+
+		it("should validate response schema and throw on invalid data", async () => {
+			const invalidResponse = {
+				data: "invalid",
+				Message: "Success",
+			};
+
+			nock(baseURL).post("/WebAPI/GetHelplineData").reply(200, invalidResponse);
+
+			await expect(client.info.getHelplineData()).rejects.toThrow(
+				"Invalid helpline response"
+			);
+		});
+
+		it("should handle API errors", async () => {
+			nock(baseURL)
+				.post("/WebAPI/GetHelplineData")
+				.reply(500, { message: "Internal Server Error" });
+
+			await expect(client.info.getHelplineData()).rejects.toThrow();
+		});
+	});
+});

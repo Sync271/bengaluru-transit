@@ -1,18 +1,14 @@
-import { BaseClient, type BaseClientConfig } from './base-client';
+import { BaseClient, type BaseClientConfig } from "./base-client";
+import { InfoAPI } from "../api/info";
 
 /**
  * Main BMTC API client
- * This class will be extended with API methods as we implement endpoints
  */
 export class BMTCClient extends BaseClient {
-  constructor(config: BaseClientConfig = {}) {
-    super(config);
-  }
+	public readonly info: InfoAPI;
 
-  // API methods will be added here as we implement endpoints
-  // Example structure:
-  // routes: {
-  //   getAll: () => Promise<RouteFeatureCollection>;
-  //   getById: (id: string) => Promise<RouteFeature>;
-  // }
+	constructor(config: BaseClientConfig = {}) {
+		super(config);
+		this.info = new InfoAPI(this);
+	}
 }

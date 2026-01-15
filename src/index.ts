@@ -11,12 +11,12 @@ export type * from './types';
 
 // Export utilities (if needed for advanced usage)
 export {
-  createStopFeature,
-  createRouteFeature,
-  createLocationFeature,
-  createFeatureCollection,
-  validateCoordinates,
-  normalizeCoordinates,
+	createStopFeature,
+	createRouteFeature,
+	createLocationFeature,
+	createFeatureCollection,
+	validateCoordinates,
+	normalizeCoordinates,
 } from './utils/geojson';
 
 export { validate, safeValidate } from './utils/validation';
