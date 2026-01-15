@@ -169,6 +169,52 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 			},
 			{ timeout: 30000 }
 		);
+
+		it.skipIf(!shouldRunTest("vehicle"))(
+			"should get vehicle trip details from real API",
+			async () => {
+				const result = await client.vehicles.getVehicleTripDetails({
+					vehicleId: 21537,
+				});
+
+				expect(result).toBeDefined();
+				expect(result.success).toBe(true);
+				expect(result.routeStops).toBeDefined();
+				expect(result.routeStops.type).toBe("FeatureCollection");
+				expect(result.vehicleLocation).toBeDefined();
+				expect(result.vehicleLocation.type).toBe("FeatureCollection");
+				if (result.routeStops.features.length > 0) {
+					expect(result.routeStops.features[0].geometry.type).toBe("Point");
+					expect(result.routeStops.features[0].properties).toHaveProperty(
+						"tripId"
+					);
+					expect(result.routeStops.features[0].properties).toHaveProperty(
+						"routeNo"
+					);
+					expect(result.routeStops.features[0].properties).toHaveProperty(
+						"vehicleId"
+					);
+				}
+				if (result.vehicleLocation.features.length > 0) {
+					expect(result.vehicleLocation.features[0].geometry.type).toBe(
+						"Point"
+					);
+					expect(result.vehicleLocation.features[0].properties).toHaveProperty(
+						"vehicleId"
+					);
+					expect(
+						result.vehicleLocation.features[0].geometry.coordinates
+					).toHaveLength(2);
+				}
+
+				// Print formatted response
+				console.log("\n🚌 Vehicle Trip Details Response:");
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+				console.log(JSON.stringify(result, null, 2));
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+			},
+			{ timeout: 30000 }
+		);
 	});
 
 	describe("Client Configuration", () => {
