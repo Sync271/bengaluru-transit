@@ -1,0 +1,40 @@
+# BMTC API Endpoints Implementation Status
+
+This file tracks the progress of implementing wrappers for BMTC API endpoints.
+
+## Completed Endpoints ✅
+
+- [x] `/GetHelplineData` - Get BMTC helpline information
+- [x] `/GetAllServiceTypes` - Get all service types (AC, Non AC, etc.)
+
+## In Progress 🚧
+
+_None currently_
+
+## Pending Endpoints 📋
+
+- [ ] `/GetAboutData` - Get about information
+- [ ] `/GetEmergencyMessage_v1` - Get emergency messages
+- [ ] `/NearbyStations_v2` - Find nearby bus stations
+- [ ] `/ListVehicles` - List vehicles
+- [ ] `/VehicleTripDetails_v2` - Get vehicle trip details
+- [ ] `/RoutePoints` - Get route points
+- [ ] `/AroundBusStops_v2` - Find bus stops around a location
+- [ ] `/SearchRoute_v2` - Search for routes
+- [ ] `/GetTimetableByRouteid_v3` - Get timetable by route ID
+- [ ] `/GetTimetableByStation_v4` - Get timetable by station
+- [ ] `/AroundBusStops_v2_Webportal` - Find bus stops (web portal version)
+- [ ] `/GetFareRoutes` - Get fare information for routes
+- [ ] `/GetMobileFareData_v2` - Get mobile fare data
+- [ ] `/FindNearByBusStop_v2` - Find nearby bus stops
+- [ ] `/TripPlannerMSMD` - Trip planner
+- [ ] `/GetFareScrollMessage` - Get fare scroll messages
+
+## Total Progress
+
+- **Completed:** 2 / 18 (11%)
+- **Remaining:** 16 endpoints
+
+---
+
+_Last updated: After implementing GetAllServiceTypes endpoint_
