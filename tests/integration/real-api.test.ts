@@ -217,6 +217,44 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 		);
 	});
 
+	describe("Routes API - Real Endpoints", () => {
+		it.skipIf(!shouldRunTest("route"))(
+			"should get route points from real API",
+			async () => {
+				// Use a known routeId from the example (11797)
+				const result = await client.routes.getRoutePoints({
+					routeId: 11797,
+				});
+
+				expect(result).toBeDefined();
+				expect(result.success).toBe(true);
+				expect(result.routePath).toBeDefined();
+				expect(result.routePath.type).toBe("FeatureCollection");
+				expect(result.routePath.features).toHaveLength(1);
+				expect(result.routePath.features[0].geometry.type).toBe("LineString");
+				if (result.routePath.features[0].geometry.coordinates.length > 0) {
+					expect(
+						result.routePath.features[0].geometry.coordinates[0]
+					).toHaveLength(2);
+					expect(
+						result.routePath.features[0].geometry.coordinates[0][0]
+					).toBeGreaterThan(70); // Longitude for Bangalore
+					expect(
+						result.routePath.features[0].geometry.coordinates[0][1]
+					).toBeGreaterThan(10); // Latitude for Bangalore
+					expect(result.routePath.features[0].properties.routeId).toBe("11797");
+				}
+
+				// Print formatted response
+				console.log("\n🛣️ Route Points Response:");
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+				console.log(JSON.stringify(result, null, 2));
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+			},
+			{ timeout: 30000 }
+		);
+	});
+
 	describe("Client Configuration", () => {
 		it.skipIf(!shouldRunTest("kannada"))(
 			"should work with Kannada language",
