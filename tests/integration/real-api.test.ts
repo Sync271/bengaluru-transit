@@ -86,6 +86,28 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 			},
 			{ timeout: 30000 }
 		);
+
+		it(
+			"should fetch about data from real API",
+			async () => {
+				const result = await client.info.getAboutData();
+
+				expect(result).toBeDefined();
+				expect(result.success).toBe(true);
+				expect(result.item).toBeDefined();
+				expect(result.item).toHaveProperty("termsAndConditionsUrl");
+				expect(result.item).toHaveProperty("aboutBmtcUrl");
+				expect(result.item).toHaveProperty("airportLatitude");
+				expect(result.item).toHaveProperty("airportLongitude");
+
+				// Print formatted response
+				console.log("\nℹ️ About Data Response:");
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+				console.log(JSON.stringify(result, null, 2));
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+			},
+			{ timeout: 30000 }
+		);
 	});
 
 	describe("Client Configuration", () => {

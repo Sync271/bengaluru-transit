@@ -46,3 +46,29 @@ export const rawServiceTypesResponseSchema = z.object({
 	RowCount: z.number(),
 	responsecode: z.number(),
 });
+
+/**
+ * Schema for raw about data item from BMTC API
+ */
+export const rawAboutDataItemSchema = z.object({
+	termsandconditionsurl: z.string().url(),
+	aboutbmtcurl: z.string().url(),
+	aboutdeveloperurl: z.string().url(),
+	airportlattitude: z.number(),
+	airportlongitude: z.number(),
+	airportstationid: z.number(),
+	airportstationname: z.string(),
+	responsecode: z.number(),
+});
+
+/**
+ * Schema for raw about data API response from BMTC API
+ */
+export const rawAboutDataResponseSchema = z.object({
+	data: z.array(rawAboutDataItemSchema),
+	Message: z.string(),
+	Issuccess: z.boolean(),
+	exception: z.unknown().nullish(),
+	RowCount: z.number(),
+	responsecode: z.number(),
+});

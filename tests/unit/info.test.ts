@@ -191,4 +191,71 @@ describe("InfoAPI", () => {
 			await expect(client.info.getAllServiceTypes()).rejects.toThrow();
 		});
 	});
+
+	describe("getAboutData", () => {
+		it("should fetch about data successfully", async () => {
+			const mockRawResponse = {
+				data: [
+					{
+						termsandconditionsurl:
+							"https://bmtcmobileapi.karnataka.gov.in/StaticFiles/TermsAndConditions.html",
+						aboutbmtcurl:
+							"https://bmtcmobileapi.karnataka.gov.in/StaticFiles/AboutBMTC.html",
+						aboutdeveloperurl:
+							"https://bmtcmobileapi.karnataka.gov.in/StaticFiles/AboutDeveloper.html",
+						airportlattitude: 13.1986,
+						airportlongitude: 77.7066,
+						airportstationid: 111,
+						airportstationname: "Kempegowda International Airport Bengaluru",
+						responsecode: 200,
+					},
+				],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 1,
+				responsecode: 200,
+			};
+
+			nock(baseURL).post("/WebAPI/GetAboutData").reply(200, mockRawResponse);
+
+			const result = await client.info.getAboutData();
+
+			expect(result.success).toBe(true);
+			expect(result.message).toBe("Success");
+			expect(result.item.termsAndConditionsUrl).toBe(
+				"https://bmtcmobileapi.karnataka.gov.in/StaticFiles/TermsAndConditions.html"
+			);
+			expect(result.item.aboutBmtcUrl).toBe(
+				"https://bmtcmobileapi.karnataka.gov.in/StaticFiles/AboutBMTC.html"
+			);
+			expect(result.item.airportLatitude).toBe(13.1986);
+			expect(result.item.airportLongitude).toBe(77.7066);
+			expect(result.item.airportStationId).toBe(111);
+			expect(result.item.airportStationName).toBe(
+				"Kempegowda International Airport Bengaluru"
+			);
+		});
+
+		it("should validate response schema and throw on invalid data", async () => {
+			const invalidResponse = {
+				data: "invalid",
+				Message: "Success",
+			};
+
+			nock(baseURL).post("/WebAPI/GetAboutData").reply(200, invalidResponse);
+
+			await expect(client.info.getAboutData()).rejects.toThrow(
+				"Invalid about data response"
+			);
+		});
+
+		it("should handle API errors", async () => {
+			nock(baseURL)
+				.post("/WebAPI/GetAboutData")
+				.reply(500, { message: "Internal Server Error" });
+
+			await expect(client.info.getAboutData()).rejects.toThrow();
+		});
+	});
 });

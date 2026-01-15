@@ -2,6 +2,7 @@ import { validate } from "../utils/validation";
 import {
 	rawHelplineResponseSchema,
 	rawServiceTypesResponseSchema,
+	rawAboutDataResponseSchema,
 } from "../schemas/info";
 import type { BaseClient } from "../client/base-client";
 import type {
@@ -10,10 +11,12 @@ import type {
 	RawHelplineResponse,
 	ServiceTypesResponse,
 	ServiceTypeDataItem,
+	AboutDataResponse,
 } from "../types/info";
 import type { z } from "zod";
 
 type RawServiceTypesResponse = z.infer<typeof rawServiceTypesResponseSchema>;
+type RawAboutDataResponse = z.infer<typeof rawAboutDataResponseSchema>;
 
 /**
  * Transform raw BMTC API response to clean, normalized format
@@ -51,6 +54,30 @@ function transformServiceTypesResponse(
 		message: raw.Message,
 		success: raw.Issuccess,
 		rowCount: raw.RowCount,
+	};
+}
+
+/**
+ * Transform raw about data API response to clean, normalized format
+ */
+function transformAboutDataResponse(
+	raw: RawAboutDataResponse
+): AboutDataResponse {
+	// About data typically has only one item
+	const item = raw.data[0];
+	return {
+		item: {
+			termsAndConditionsUrl: item.termsandconditionsurl,
+			aboutBmtcUrl: item.aboutbmtcurl,
+			aboutDeveloperUrl: item.aboutdeveloperurl,
+			airportLatitude: item.airportlattitude,
+			airportLongitude: item.airportlongitude,
+			airportStationId: item.airportstationid,
+			airportStationName: item.airportstationname,
+			responseCode: item.responsecode,
+		},
+		message: raw.Message,
+		success: raw.Issuccess,
 	};
 }
 
@@ -102,5 +129,27 @@ export class InfoAPI {
 
 		// Transform to clean, normalized format
 		return transformServiceTypesResponse(rawResponse);
+	}
+
+	/**
+	 * Get about data including URLs and airport information
+	 * @returns About data with terms, URLs, and airport coordinates in normalized format
+	 */
+	async getAboutData(): Promise<AboutDataResponse> {
+		const response = await this.client.getClient().post("GetAboutData", {
+			json: {},
+		});
+
+		const data = await response.json<unknown>();
+
+		// Validate raw response with Zod schema
+		const rawResponse = validate(
+			rawAboutDataResponseSchema,
+			data,
+			"Invalid about data response"
+		);
+
+		// Transform to clean, normalized format
+		return transformAboutDataResponse(rawResponse);
 	}
 }

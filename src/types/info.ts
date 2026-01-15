@@ -68,3 +68,40 @@ export interface ServiceTypesResponse {
 	success: boolean;
 	rowCount: number;
 }
+
+/**
+ * Raw about data item from BMTC API
+ */
+export interface RawAboutDataItem {
+	termsandconditionsurl: string;
+	aboutbmtcurl: string;
+	aboutdeveloperurl: string;
+	airportlattitude: number;
+	airportlongitude: number;
+	airportstationid: number;
+	airportstationname: string;
+	responsecode: number;
+}
+
+/**
+ * Clean, normalized about data item
+ */
+export interface AboutDataItem {
+	termsAndConditionsUrl: string;
+	aboutBmtcUrl: string;
+	aboutDeveloperUrl: string;
+	airportLatitude: number;
+	airportLongitude: number;
+	airportStationId: number;
+	airportStationName: string;
+	responseCode: number;
+}
+
+/**
+ * Clean, normalized about data response
+ */
+export interface AboutDataResponse {
+	item: AboutDataItem;
+	message: string;
+	success: boolean;
+}
