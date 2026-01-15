@@ -1,0 +1,37 @@
+# Source files
+src/
+tests/
+*.test.ts
+*.spec.ts
+
+# Configuration
+tsconfig.json
+tsconfig.build.json
+vitest.config.ts
+.gitignore
+.npmignore
+
+# Development
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testing
+coverage/
+.nyc_output/
+
+# Build config (keep dist/)
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Misc
+.cache/
+.temp/

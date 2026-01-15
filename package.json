@@ -1,0 +1,58 @@
+{
+  "name": "bmtc-wrapper",
+  "version": "0.1.0",
+  "description": "Type-safe TypeScript wrapper for BMTC (Bangalore Metropolitan Transport Corporation) APIs with Zod validation and GeoJSON support",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "module": "dist/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "prepublishOnly": "npm run build && npm run test"
+  },
+  "keywords": [
+    "bmtc",
+    "bangalore",
+    "bus",
+    "transport",
+    "api",
+    "typescript",
+    "geojson",
+    "public-transport",
+    "india"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "dependencies": {
+    "ky": "^1.7.3",
+    "zod": "^3.23.8",
+    "@types/geojson": "^7946.0.15"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8",
+    "nock": "^13.5.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
