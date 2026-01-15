@@ -8,6 +8,26 @@ export interface BaseClientConfig {
 	timeout?: number;
 	retry?: number;
 	headers?: Record<string, string>;
+	/**
+	 * Language preference: 'en' for English, 'kn' for Kannada
+	 * @default 'en'
+	 */
+	language?: "en" | "kn";
+	/**
+	 * Device type identifier
+	 * @default ''
+	 */
+	deviceType?: string;
+	/**
+	 * Authentication token
+	 * @default 'N/A'
+	 */
+	authToken?: string;
+	/**
+	 * Device identifier
+	 * @default ''
+	 */
+	deviceId?: string;
 }
 
 /**
@@ -21,6 +41,16 @@ export class BaseClient {
 		this.baseURL =
 			config.baseURL || "https://bmtcmobileapi.karnataka.gov.in/WebAPI";
 
+		// Default BMTC API headers
+		const defaultHeaders: Record<string, string> = {
+			"Content-Type": "application/json",
+			Accept: "application/json, text/plain, */*",
+			lan: config.language || "en",
+			deviceType: config.deviceType || "",
+			authToken: config.authToken || "N/A",
+			deviceId: config.deviceId || "",
+		};
+
 		this.client = ky.create({
 			prefixUrl: this.baseURL,
 			timeout: config.timeout,
@@ -30,8 +60,8 @@ export class BaseClient {
 				statusCodes: [408, 413, 429, 500, 502, 503, 504],
 			},
 			headers: {
-				"Content-Type": "application/json",
-				...config.headers,
+				...defaultHeaders,
+				...config.headers, // Allow overriding any header
 			},
 			hooks: {
 				beforeError: [
