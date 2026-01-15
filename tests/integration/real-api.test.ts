@@ -217,6 +217,55 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 		);
 	});
 
+	describe("Stops API - Real Endpoints", () => {
+		it.skipIf(!shouldRunTest("stop"))(
+			"should find nearby stations from real API",
+			async () => {
+				const result = await client.stops.findNearbyStations({
+					latitude: 13.079389141522491,
+					longitude: 77.58817675200433,
+				});
+
+				expect(result).toBeDefined();
+				expect(result.success).toBe(true);
+				expect(result.stations).toBeInstanceOf(Array);
+				if (result.stations.length > 0) {
+					expect(result.stations[0]).toHaveProperty("stationName");
+					expect(result.stations[0]).toHaveProperty("distance");
+					expect(result.stations[0]).toHaveProperty("facilityTypes");
+					expect(result.stations[0].facilityTypes).toBeInstanceOf(Array);
+
+					// Verify GeoJSON structure
+					if (result.stations[0].facilityTypes.length > 0) {
+						const facilityType = result.stations[0].facilityTypes[0];
+						expect(facilityType.facilities.type).toBe("FeatureCollection");
+						if (facilityType.facilities.features.length > 0) {
+							expect(facilityType.facilities.features[0].geometry.type).toBe(
+								"Point"
+							);
+							expect(
+								facilityType.facilities.features[0].geometry.coordinates
+							).toHaveLength(2);
+							expect(
+								facilityType.facilities.features[0].properties
+							).toHaveProperty("facilityName");
+							expect(
+								facilityType.facilities.features[0].properties
+							).toHaveProperty("facilityType");
+						}
+					}
+				}
+
+				// Print formatted response
+				console.log("\n🚏 Nearby Stations Response:");
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+				console.log(JSON.stringify(result, null, 2));
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+			},
+			{ timeout: 30000 }
+		);
+	});
+
 	describe("Routes API - Real Endpoints", () => {
 		it.skipIf(!shouldRunTest("route"))(
 			"should get route points from real API",

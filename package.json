@@ -29,6 +29,7 @@
 		"test:integration:emergency": "cross-env RUN_REAL_API_TESTS=true TEST_ENDPOINT=emergency vitest run tests/integration/real-api.test.ts --pool=forks --poolOptions.forks.singleFork=true",
 		"test:integration:vehicle": "cross-env RUN_REAL_API_TESTS=true TEST_ENDPOINT=vehicle vitest run tests/integration/real-api.test.ts --pool=forks --poolOptions.forks.singleFork=true",
 		"test:integration:route": "cross-env RUN_REAL_API_TESTS=true TEST_ENDPOINT=route vitest run tests/integration/real-api.test.ts --pool=forks --poolOptions.forks.singleFork=true",
+		"test:integration:stop": "cross-env RUN_REAL_API_TESTS=true TEST_ENDPOINT=stop vitest run tests/integration/real-api.test.ts --pool=forks --poolOptions.forks.singleFork=true",
 		"test:unit": "vitest run tests/unit",
 		"prepublishOnly": "npm run build && npm run test:unit"
 	},

@@ -4,6 +4,8 @@ import type {
   Position,
 } from 'geojson';
 import type {
+  FacilityFeature,
+  FacilityProperties,
   LocationFeature,
   LocationProperties,
   RouteFeature,
@@ -57,6 +59,23 @@ export function createLocationFeature(
   coordinates: Position,
   properties: LocationProperties,
 ): LocationFeature {
+  return {
+    type: 'Feature',
+    geometry: {
+      type: 'Point',
+      coordinates,
+    },
+    properties,
+  };
+}
+
+/**
+ * Creates a Point feature for a facility/amenity
+ */
+export function createFacilityFeature(
+  coordinates: Position,
+  properties: FacilityProperties,
+): FacilityFeature {
   return {
     type: 'Feature',
     geometry: {

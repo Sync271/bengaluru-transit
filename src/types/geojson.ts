@@ -20,6 +20,11 @@ export type StopFeature = Feature<Point, StopProperties>;
 export type LocationFeature = Feature<Point, LocationProperties>;
 
 /**
+ * A facility/amenity represented as a GeoJSON Point Feature
+ */
+export type FacilityFeature = Feature<Point, FacilityProperties>;
+
+/**
  * Properties for a route feature
  */
 export interface RouteProperties {
@@ -57,6 +62,20 @@ export interface LocationProperties {
 }
 
 /**
+ * Properties for a facility feature (amenities around bus stations)
+ */
+export interface FacilityProperties {
+  facilityId?: string;
+  facilityName: string;
+  facilityType: string;
+  facilityTypeId: string;
+  icon?: string;
+  distance?: number;
+  stationName?: string;
+  [key: string]: unknown;
+}
+
+/**
  * Collection of route features
  */
 export type RouteFeatureCollection = FeatureCollection<LineString, RouteProperties>;
@@ -70,3 +89,8 @@ export type StopFeatureCollection = FeatureCollection<Point, StopProperties>;
  * Collection of location features
  */
 export type LocationFeatureCollection = FeatureCollection<Point, LocationProperties>;
+
+/**
+ * Collection of facility features
+ */
+export type FacilityFeatureCollection = FeatureCollection<Point, FacilityProperties>;
