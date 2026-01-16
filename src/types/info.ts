@@ -3,7 +3,10 @@
  */
 
 import type { z } from "zod";
-import type { rawHelplineResponseSchema } from "../schemas/info";
+import type {
+	rawHelplineResponseSchema,
+	rawFareScrollMessagesResponseSchema,
+} from "../schemas/info";
 
 /**
  * Raw helpline data item from BMTC API
@@ -133,6 +136,35 @@ export interface EmergencyMessageDataItem {
  */
 export interface EmergencyMessagesResponse {
 	items: EmergencyMessageDataItem[];
+	message: string;
+	success: boolean;
+	rowCount: number;
+}
+
+/**
+ * Raw fare scroll messages API response from BMTC API (for validation)
+ * Uses Zod inferred type to match schema exactly
+ */
+export type RawFareScrollMessagesResponse = z.infer<
+	typeof rawFareScrollMessagesResponseSchema
+>;
+
+/**
+ * Clean, normalized fare scroll message data item
+ */
+export interface FareScrollMessageDataItem {
+	id: string;
+	messageEnglish: string;
+	messageKannada: string;
+	isDisplay: boolean;
+	displayKey: string;
+}
+
+/**
+ * Clean, normalized fare scroll messages response
+ */
+export interface FareScrollMessagesResponse {
+	items: FareScrollMessageDataItem[];
 	message: string;
 	success: boolean;
 	rowCount: number;

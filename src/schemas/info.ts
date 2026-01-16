@@ -95,3 +95,26 @@ export const rawEmergencyMessagesResponseSchema = z.object({
 	RowCount: z.number(),
 	responsecode: z.number(),
 });
+
+/**
+ * Schema for raw fare scroll message data item from BMTC API
+ */
+export const rawFareScrollMessageDataItemSchema = z.object({
+	id: z.number(),
+	message_english: z.string(),
+	message_kannada: z.string(),
+	isdisplay: z.number(),
+	display_key: z.string(),
+});
+
+/**
+ * Schema for raw fare scroll messages API response from BMTC API
+ */
+export const rawFareScrollMessagesResponseSchema = z.object({
+	data: z.array(rawFareScrollMessageDataItemSchema),
+	Message: z.string(),
+	Issuccess: z.boolean(),
+	exception: z.unknown().nullish(),
+	RowCount: z.number(),
+	responsecode: z.number(),
+});

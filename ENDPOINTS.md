@@ -16,6 +16,7 @@ This file tracks the progress of implementing wrappers for BMTC API endpoints.
 - [x] `/GetAllRouteList` - Get all routes list
 - [x] `/GetTimetableByRouteid_v3` - Get timetable by route ID
 - [x] `/GetSearchPlaceData` - Search place data by name
+- [x] `/GetFareScrollMessage` - Get fare scroll messages (English and Kannada)
 
 ## In Progress 🚧
 
@@ -31,13 +32,12 @@ _None currently_
 - [ ] `/GetMobileFareData_v2` - Get mobile fare data
 - [ ] `/FindNearByBusStop_v2` - Find nearby bus stops
 - [ ] `/TripPlannerMSMD` - Trip planner
-- [ ] `/GetFareScrollMessage` - Get fare scroll messages
 
 ## Total Progress
 
-- **Completed:** 12 / 20 (60%)
-- **Remaining:** 8 endpoints
+- **Completed:** 13 / 20 (65%)
+- **Remaining:** 7 endpoints
 
 ---
 
-_Last updated: After implementing GetSearchPlaceData endpoint_
+_Last updated: After implementing GetFareScrollMessage endpoint_

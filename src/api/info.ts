@@ -4,6 +4,7 @@ import {
 	rawServiceTypesResponseSchema,
 	rawAboutDataResponseSchema,
 	rawEmergencyMessagesResponseSchema,
+	rawFareScrollMessagesResponseSchema,
 } from "../schemas/info";
 import type { BaseClient } from "../client/base-client";
 import type {
@@ -15,6 +16,9 @@ import type {
 	AboutDataResponse,
 	EmergencyMessagesResponse,
 	EmergencyMessageDataItem,
+	FareScrollMessagesResponse,
+	RawFareScrollMessagesResponse,
+	FareScrollMessageDataItem,
 } from "../types/info";
 import type { z } from "zod";
 
@@ -96,6 +100,28 @@ function transformEmergencyMessagesResponse(
 	return {
 		items: raw.data.map(
 			(item): EmergencyMessageDataItem => ({
+				id: item.id.toString(),
+				messageEnglish: item.message_english,
+				messageKannada: item.message_kannada,
+				isDisplay: item.isdisplay === 1,
+				displayKey: item.display_key,
+			})
+		),
+		message: raw.Message,
+		success: raw.Issuccess,
+		rowCount: raw.RowCount,
+	};
+}
+
+/**
+ * Transform raw fare scroll messages API response to clean, normalized format
+ */
+function transformFareScrollMessagesResponse(
+	raw: RawFareScrollMessagesResponse
+): FareScrollMessagesResponse {
+	return {
+		items: raw.data.map(
+			(item): FareScrollMessageDataItem => ({
 				id: item.id.toString(),
 				messageEnglish: item.message_english,
 				messageKannada: item.message_kannada,
@@ -203,5 +229,29 @@ export class InfoAPI {
 
 		// Transform to clean, normalized format
 		return transformEmergencyMessagesResponse(rawResponse);
+	}
+
+	/**
+	 * Get fare scroll messages (English and Kannada)
+	 * @returns List of fare scroll messages with display settings in normalized format
+	 */
+	async getFareScrollMessages(): Promise<FareScrollMessagesResponse> {
+		const response = await this.client
+			.getClient()
+			.post("GetFareScrollMessage", {
+				json: {},
+			});
+
+		const data = await response.json<unknown>();
+
+		// Validate raw response with Zod schema
+		const rawResponse = validate(
+			rawFareScrollMessagesResponseSchema,
+			data,
+			"Invalid fare scroll messages response"
+		);
+
+		// Transform to clean, normalized format
+		return transformFareScrollMessagesResponse(rawResponse);
 	}
 }

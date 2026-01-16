@@ -390,4 +390,129 @@ describe("InfoAPI", () => {
 			await expect(client.info.getEmergencyMessages()).rejects.toThrow();
 		});
 	});
+
+	describe("getFareScrollMessages", () => {
+		it("should fetch fare scroll messages successfully", async () => {
+			const mockRawResponse = {
+				data: [
+					{
+						id: 3,
+						message_english:
+							"All the approx fares are inclusive of toll charges wherever applicable & these fares may vary with actual fares.",
+						message_kannada:
+							"ಎಲ್ಲಾ ಅಂದಾಜು ದರಗಳು ಟೋಲ್ ಶುಲ್ಕಗಳನ್ನು ಒಳಗೊಂಡಿರುತ್ತವೆ ಮತ್ತು ಈ ದರಗಳು ನಿಜವಾದ ದರಗಳೊಂದಿಗೆ ಬದಲಾಗಬಹುದು.",
+						display_key: "Fare_Calculator",
+						isdisplay: 1,
+					},
+				],
+				Message: "",
+				Issuccess: true,
+				exception: null,
+				RowCount: 1,
+				responsecode: 200,
+			};
+
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const result = await client.info.getFareScrollMessages();
+
+			expect(result.success).toBe(true);
+			expect(result.message).toBe("");
+			expect(result.items).toHaveLength(1);
+			expect(result.rowCount).toBe(1);
+			expect(result.items[0].id).toBe("3");
+			expect(result.items[0].messageEnglish).toContain(
+				"approx fares are inclusive"
+			);
+			expect(result.items[0].messageKannada).toBeDefined();
+			expect(result.items[0].isDisplay).toBe(true);
+			expect(result.items[0].displayKey).toBe("Fare_Calculator");
+
+			// Verify API call
+			expect(mockPost).toHaveBeenCalledWith("GetFareScrollMessage", {
+				json: {},
+			});
+		});
+
+		it("should handle empty results", async () => {
+			const mockRawResponse = {
+				data: [],
+				Message: "",
+				Issuccess: true,
+				exception: null,
+				RowCount: 0,
+				responsecode: 200,
+			};
+
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const result = await client.info.getFareScrollMessages();
+
+			expect(result.success).toBe(true);
+			expect(result.items).toHaveLength(0);
+			expect(result.rowCount).toBe(0);
+		});
+
+		it("should convert isdisplay 0 to false", async () => {
+			const mockRawResponse = {
+				data: [
+					{
+						id: 1,
+						message_english: "Test message",
+						message_kannada: "ಪರೀಕ್ಷಾ ಸಂದೇಶ",
+						isdisplay: 0,
+						display_key: "Test",
+					},
+				],
+				Message: "",
+				Issuccess: true,
+				exception: null,
+				RowCount: 1,
+				responsecode: 200,
+			};
+
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const result = await client.info.getFareScrollMessages();
+
+			expect(result.items[0].isDisplay).toBe(false);
+		});
+
+		it("should validate response schema and throw on invalid data", async () => {
+			const invalidResponse = {
+				data: "invalid",
+				Message: "Success",
+			};
+
+			// Mock the response with invalid data
+			mockPost.mockResolvedValue({
+				json: async () => invalidResponse,
+			} as Response);
+
+			await expect(client.info.getFareScrollMessages()).rejects.toThrow(
+				"Invalid fare scroll messages response"
+			);
+		});
+
+		it("should handle API errors", async () => {
+			// Mock an error response
+			const error = new Error("Internal Server Error");
+			(error as any).response = {
+				status: 500,
+				json: async () => ({ message: "Internal Server Error" }),
+			};
+			mockPost.mockRejectedValue(error);
+
+			await expect(client.info.getFareScrollMessages()).rejects.toThrow();
+		});
+	});
 });
