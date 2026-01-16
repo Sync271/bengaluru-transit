@@ -15,6 +15,7 @@ This file tracks the progress of implementing wrappers for BMTC API endpoints.
 - [x] `/SearchRoute_v2` - Search for routes by route text (partial match)
 - [x] `/GetAllRouteList` - Get all routes list
 - [x] `/GetTimetableByRouteid_v3` - Get timetable by route ID
+- [x] `/GetSearchPlaceData` - Search place data by name
 
 ## In Progress 🚧
 
@@ -34,9 +35,9 @@ _None currently_
 
 ## Total Progress
 
-- **Completed:** 11 / 19 (58%)
+- **Completed:** 12 / 20 (60%)
 - **Remaining:** 8 endpoints
 
 ---
 
-_Last updated: After implementing GetTimetableByRouteid_v3 endpoint_
+_Last updated: After implementing GetSearchPlaceData endpoint_

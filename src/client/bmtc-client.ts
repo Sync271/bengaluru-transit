@@ -3,6 +3,7 @@ import { InfoAPI } from "../api/info";
 import { VehiclesAPI } from "../api/vehicles";
 import { RoutesAPI } from "../api/routes";
 import { StopsAPI } from "../api/stops";
+import { LocationsAPI } from "../api/locations";
 
 /**
  * Main BMTC API client
@@ -12,6 +13,7 @@ export class BMTCClient extends BaseClient {
 	public readonly vehicles: VehiclesAPI;
 	public readonly routes: RoutesAPI;
 	public readonly stops: StopsAPI;
+	public readonly locations: LocationsAPI;
 
 	constructor(config: BaseClientConfig = {}) {
 		super(config);
@@ -19,5 +21,6 @@ export class BMTCClient extends BaseClient {
 		this.vehicles = new VehiclesAPI(this);
 		this.routes = new RoutesAPI(this);
 		this.stops = new StopsAPI(this);
+		this.locations = new LocationsAPI(this);
 	}
 }

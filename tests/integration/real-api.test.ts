@@ -436,6 +436,54 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 		);
 	});
 
+	describe("Locations API - Real Endpoints", () => {
+		it.skipIf(!shouldRunTest("place"))(
+			"should search places from real API",
+			async () => {
+				const result = await client.locations.searchPlaces({
+					query: "cbi",
+				});
+
+				expect(result).toBeDefined();
+				expect(result.success).toBe(true);
+				expect(result.items).toBeInstanceOf(Array);
+				expect(result.items.length).toBeGreaterThan(0);
+				if (result.items.length > 0) {
+					const item = result.items[0];
+					expect(item).toHaveProperty("title");
+					expect(item).toHaveProperty("address");
+					expect(item).toHaveProperty("latitude");
+					expect(item).toHaveProperty("longitude");
+					expect(typeof item.latitude).toBe("number");
+					expect(typeof item.longitude).toBe("number");
+					expect(item.latitude).toBeGreaterThan(10);
+					expect(item.latitude).toBeLessThan(14);
+					expect(item.longitude).toBeGreaterThan(75);
+					expect(item.longitude).toBeLessThan(79);
+				}
+
+				// Print formatted response (first 5 items only to avoid huge output)
+				console.log("\n📍 Search Places Response (first 5 items):");
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+				console.log(
+					JSON.stringify(
+						{
+							...result,
+							items: result.items.slice(0, 5),
+						},
+						null,
+						2
+					)
+				);
+				if (result.items.length > 5) {
+					console.log(`... and ${result.items.length - 5} more items`);
+				}
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+			},
+			{ timeout: 30000 }
+		);
+	});
+
 	describe("Client Configuration", () => {
 		it.skipIf(!shouldRunTest("kannada"))(
 			"should work with Kannada language",
