@@ -53,7 +53,7 @@ describe("VehiclesAPI", () => {
 			expect(result.success).toBe(true);
 			expect(result.message).toBe("Success");
 			expect(result.items).toHaveLength(3);
-			expect(result.items[0].vehicleId).toBe(13270);
+			expect(result.items[0].vehicleId).toBe("13270");
 			expect(result.items[0].vehicleRegNo).toBe("KA57F1831");
 			expect(result.items[1].vehicleRegNo).toBe("KA57F1832");
 			expect(result.rowCount).toBe(3);
@@ -202,7 +202,7 @@ describe("VehiclesAPI", () => {
 			} as Response);
 
 			const result = await client.vehicles.getVehicleTrip({
-				vehicleId: 21537,
+				vehicleId: "21537",
 			});
 
 			expect(result.success).toBe(true);
@@ -220,9 +220,9 @@ describe("VehiclesAPI", () => {
 			expect(result.routeStops.features[0].properties.stopName).toBe(
 				"Electronic City Wipro Main Gate"
 			);
-			expect(result.routeStops.features[0].properties.tripId).toBe(79897818);
+			expect(result.routeStops.features[0].properties.tripId).toBe("79897818");
 			expect(result.routeStops.features[0].properties.routeNo).toBe("KIA-8E");
-			expect(result.routeStops.features[0].properties.vehicleId).toBe(21537);
+			expect(result.routeStops.features[0].properties.vehicleId).toBe("21537");
 
 			// Verify vehicle location GeoJSON
 			expect(result.vehicleLocation).toBeDefined();
@@ -234,7 +234,7 @@ describe("VehiclesAPI", () => {
 			]);
 			expect(result.vehicleLocation.features[0].properties.busId).toBe("21537");
 			expect(result.vehicleLocation.features[0].properties.vehicleId).toBe(
-				21537
+				"21537"
 			);
 			expect(result.vehicleLocation.features[0].properties.routeNo).toBe(
 				"KIA-8E"
@@ -258,7 +258,7 @@ describe("VehiclesAPI", () => {
 			} as Response);
 
 			const result = await client.vehicles.getVehicleTrip({
-				vehicleId: 99999,
+				vehicleId: "99999",
 			});
 
 			expect(result.success).toBe(true);
@@ -272,11 +272,11 @@ describe("VehiclesAPI", () => {
 
 		it("should validate input parameters and throw on invalid vehicleId", async () => {
 			await expect(
-				client.vehicles.getVehicleTrip({ vehicleId: 0 })
+				client.vehicles.getVehicleTrip({ vehicleId: "0" })
 			).rejects.toThrow("Invalid vehicle trip parameters");
 
 			await expect(
-				client.vehicles.getVehicleTrip({ vehicleId: -1 })
+				client.vehicles.getVehicleTrip({ vehicleId: "-1" })
 			).rejects.toThrow("Invalid vehicle trip parameters");
 		});
 

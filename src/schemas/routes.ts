@@ -87,3 +87,51 @@ export const rawAllRoutesResponseSchema = z.object({
 	RowCount: z.number(),
 	responsecode: z.number(),
 });
+
+/**
+ * Schema for raw trip detail item from timetable API
+ */
+export const rawTripDetailItemSchema = z.object({
+	starttime: z.string(), // Format: "HH:mm"
+	endtime: z.string(), // Format: "HH:mm"
+});
+
+/**
+ * Schema for raw timetable data item from BMTC API
+ */
+export const rawTimetableItemSchema = z.object({
+	fromstationname: z.string(),
+	tostationname: z.string(),
+	fromstationid: z.string(), // API returns as string
+	tostationid: z.string(), // API returns as string
+	apptime: z.string(), // Format: "HH:mm:ss"
+	distance: z.string(), // API returns as string
+	platformname: z.string(),
+	platformnumber: z.string(),
+	baynumber: z.string(),
+	tripdetails: z.array(rawTripDetailItemSchema),
+});
+
+/**
+ * Schema for raw timetable API response from BMTC API
+ */
+export const rawTimetableResponseSchema = z.object({
+	data: z.array(rawTimetableItemSchema),
+	Message: z.string(),
+	Issuccess: z.boolean(),
+	exception: z.unknown().nullish(),
+	RowCount: z.number(),
+	responsecode: z.number(),
+});
+
+/**
+ * Schema for timetable request parameters (internal - for API call)
+ */
+export const timetableRequestSchema = z.object({
+	current_date: z.string(), // ISO 8601 format
+	routeid: z.number().int().positive("Route ID must be a positive integer"),
+	fromStationId: z.string().optional(),
+	toStationId: z.string().optional(),
+	starttime: z.string(), // Format: "YYYY-MM-DD HH:mm"
+	endtime: z.string(), // Format: "YYYY-MM-DD HH:mm"
+});

@@ -146,9 +146,9 @@ describe("InfoAPI", () => {
 			expect(result.message).toBe("Success");
 			expect(result.items).toHaveLength(2);
 			expect(result.items[0].serviceType).toBe("AC");
-			expect(result.items[0].serviceTypeId).toBe(73);
+			expect(result.items[0].serviceTypeId).toBe("73");
 			expect(result.items[1].serviceType).toBe("Non AC/Ordinary");
-			expect(result.items[1].serviceTypeId).toBe(72);
+			expect(result.items[1].serviceTypeId).toBe("72");
 			expect(result.rowCount).toBe(2);
 		});
 
@@ -251,7 +251,7 @@ describe("InfoAPI", () => {
 			);
 			expect(result.item.airportLatitude).toBe(13.1986);
 			expect(result.item.airportLongitude).toBe(77.7066);
-			expect(result.item.airportStationId).toBe(111);
+			expect(result.item.airportStationId).toBe("111");
 			expect(result.item.airportStationName).toBe(
 				"Kempegowda International Airport Bengaluru"
 			);
@@ -325,12 +325,12 @@ describe("InfoAPI", () => {
 
 			expect(result.success).toBe(true);
 			expect(result.items).toHaveLength(2);
-			expect(result.items[0].id).toBe(1);
+			expect(result.items[0].id).toBe("1");
 			expect(result.items[0].messageEnglish).toContain("6287 buses");
 			expect(result.items[0].messageKannada).toBeDefined();
 			expect(result.items[0].isDisplay).toBe(true);
 			expect(result.items[0].displayKey).toBe("Home_screen");
-			expect(result.items[1].id).toBe(2);
+			expect(result.items[1].id).toBe("2");
 			expect(result.items[1].displayKey).toBe("Journey_Planner");
 		});
 

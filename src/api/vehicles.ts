@@ -30,7 +30,7 @@ function transformSearchVehiclesResponse(
 	return {
 		items: raw.data.map(
 			(item): VehicleDataItem => ({
-				vehicleId: item.vehicleid,
+				vehicleId: item.vehicleid.toString(),
 				vehicleRegNo: item.vehicleregno,
 				responseCode: item.responsecode,
 			})
@@ -54,8 +54,8 @@ function transformVehicleTripResponse(
 			{
 				stopId: item.stationid.toString(),
 				stopName: item.stationname,
-				stationId: item.stationid,
-				tripId: item.tripid,
+				stationId: item.stationid.toString(),
+				tripId: item.tripid.toString(),
 				routeNo: item.routeno,
 				routeName: item.routename,
 				busNo: item.busno,
@@ -64,7 +64,7 @@ function transformVehicleTripResponse(
 				sourceStation: item.sourcestation,
 				destinationStation: item.destinationstation,
 				serviceType: item.servicetype,
-				serviceTypeId: item.servicetypeid,
+				serviceTypeId: item.servicetypeid.toString(),
 				lastUpdatedAt: item.lastupdatedat,
 				actualArrivalTime: item.actual_arrivaltime,
 				etaStatus: item.etastatus,
@@ -82,8 +82,8 @@ function transformVehicleTripResponse(
 				actualDepartureTime: item.actual_departudetime,
 				tripStartTime: item.tripstarttime,
 				tripEndTime: item.tripendtime,
-				routeId: item.routeid,
-				vehicleId: item.vehicleid,
+				routeId: item.routeid.toString(),
+				vehicleId: item.vehicleid.toString(),
 				responseCode: item.responsecode,
 				lastReceivedDateTimeFlag: item.lastreceiveddatetimeflag,
 				serialNo: item.srno,
@@ -103,11 +103,11 @@ function transformVehicleTripResponse(
 			{
 				busId: item.vehicleid.toString(),
 				routeId: item.routeno,
-				vehicleId: item.vehicleid,
+				vehicleId: item.vehicleid.toString(),
 				vehicleNumber: item.vehiclenumber,
 				routeNo: item.routeno,
 				serviceType: item.servicetype,
-				serviceTypeId: item.servicetypeid,
+				serviceTypeId: item.servicetypeid.toString(),
 				heading: item.heading,
 				location: item.location,
 				lastRefreshedOn: item.lastrefreshon,
@@ -175,10 +175,10 @@ export class VehiclesAPI {
 	async getVehicleTrip(
 		params: VehicleTripParams
 	): Promise<VehicleTripResponse> {
-		// Validate input parameters
+		// Validate input parameters - API expects number, convert from string
 		const validatedParams = validate(
 			vehicleTripParamsSchema,
-			{ vehicleId: params.vehicleId },
+			{ vehicleId: parseInt(params.vehicleId, 10) },
 			"Invalid vehicle trip parameters"
 		);
 

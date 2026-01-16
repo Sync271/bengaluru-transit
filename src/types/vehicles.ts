@@ -33,7 +33,7 @@ export type RawSearchVehiclesResponse = z.infer<
  * Clean, normalized vehicle data item
  */
 export interface VehicleDataItem {
-	vehicleId: number;
+	vehicleId: string;
 	vehicleRegNo: string;
 	responseCode: number;
 }
@@ -159,7 +159,7 @@ export interface VehicleTripResponse {
  */
 export interface VehicleTripParams {
 	/**
-	 * Vehicle ID (obtained from searchVehicles)
+	 * Vehicle ID (obtained from searchVehicles, always string for consistency)
 	 */
-	vehicleId: number;
+	vehicleId: string;
 }

@@ -7,6 +7,7 @@ import type {
 	rawRoutePointsResponseSchema,
 	rawRouteSearchResponseSchema,
 	rawAllRoutesResponseSchema,
+	rawTimetableResponseSchema,
 } from "../schemas/routes";
 import type { RouteFeatureCollection } from "./geojson";
 
@@ -45,9 +46,9 @@ export interface RoutePointsResponse {
  */
 export interface RoutePointsParams {
 	/**
-	 * Route ID (obtained from getVehicleTrip)
+	 * Route ID (obtained from getVehicleTrip, always string for consistency)
 	 */
-	routeId: number;
+	routeId: string;
 }
 
 /**
@@ -86,9 +87,9 @@ export interface RouteSearchItem {
 	 */
 	routeNo: string;
 	/**
-	 * Route parent ID (used for other endpoints like getRoutePoints)
+	 * Route parent ID (used for other endpoints like getRoutePoints, always string for consistency)
 	 */
-	routeParentId: number;
+	routeParentId: string;
 }
 
 /**
@@ -137,9 +138,9 @@ export type RawAllRoutesResponse = z.infer<typeof rawAllRoutesResponseSchema>;
  */
 export interface RouteListItem {
 	/**
-	 * Route ID
+	 * Route ID (always string for consistency)
 	 */
-	routeId: number;
+	routeId: string;
 	/**
 	 * Route number (e.g., "89-C UP", "89-C DOWN")
 	 */
@@ -149,17 +150,17 @@ export interface RouteListItem {
 	 */
 	routeName: string;
 	/**
-	 * From station ID
+	 * From station ID (always string for consistency)
 	 */
-	fromStationId: number;
+	fromStationId: string;
 	/**
 	 * From station name
 	 */
 	fromStation: string;
 	/**
-	 * To station ID
+	 * To station ID (always string for consistency)
 	 */
-	toStationId: number;
+	toStationId: string;
 	/**
 	 * To station name
 	 */
@@ -175,3 +176,161 @@ export interface AllRoutesResponse {
 	success: boolean;
 	rowCount: number;
 }
+
+/**
+ * Raw trip detail item from timetable API
+ */
+export interface RawTripDetailItem {
+	starttime: string; // Format: "HH:mm"
+	endtime: string; // Format: "HH:mm"
+}
+
+/**
+ * Raw timetable data item from BMTC API
+ */
+export interface RawTimetableItem {
+	fromstationname: string;
+	tostationname: string;
+	fromstationid: string; // API returns as string
+	tostationid: string; // API returns as string
+	apptime: string; // Format: "HH:mm:ss"
+	distance: string; // API returns as string
+	platformname: string;
+	platformnumber: string;
+	baynumber: string;
+	tripdetails: RawTripDetailItem[];
+}
+
+/**
+ * Raw timetable API response from BMTC API (for validation)
+ * Uses Zod inferred type to match schema exactly
+ */
+export type RawTimetableResponse = z.infer<typeof rawTimetableResponseSchema>;
+
+/**
+ * Clean, normalized trip detail item
+ */
+export interface TripDetailItem {
+	/**
+	 * Start time in format "HH:mm"
+	 */
+	startTime: string;
+	/**
+	 * End time in format "HH:mm"
+	 */
+	endTime: string;
+}
+
+/**
+ * Clean, normalized timetable item
+ */
+export interface TimetableItem {
+	/**
+	 * From station name
+	 */
+	fromStationName: string;
+	/**
+	 * To station name
+	 */
+	toStationName: string;
+	/**
+	 * From station ID (string as returned by API)
+	 */
+	fromStationId: string;
+	/**
+	 * To station ID (string as returned by API)
+	 */
+	toStationId: string;
+	/**
+	 * Approximate travel time in format "HH:mm:ss"
+	 */
+	approximateTime: string;
+	/**
+	 * Distance in kilometers
+	 */
+	distance: number;
+	/**
+	 * Platform name
+	 */
+	platformName: string;
+	/**
+	 * Platform number
+	 */
+	platformNumber: string;
+	/**
+	 * Bay number
+	 */
+	bayNumber: string;
+	/**
+	 * List of trip details with start and end times
+	 */
+	tripDetails: TripDetailItem[];
+}
+
+/**
+ * Clean, normalized timetable response
+ */
+export interface TimetableResponse {
+	items: TimetableItem[];
+	message: string;
+	success: boolean;
+	rowCount: number;
+}
+
+/**
+ * Base parameters for getting timetable by route ID
+ */
+interface TimetableByRouteBaseParams {
+	/**
+	 * Route ID (always string for consistency)
+	 */
+	routeId: string;
+	/**
+	 * Start time (optional - defaults to current time)
+	 * The wrapper converts this to "YYYY-MM-DD HH:mm" format
+	 */
+	startTime?: Date;
+	/**
+	 * End time (optional - defaults to "23:59" of startTime date)
+	 * The wrapper converts this to "YYYY-MM-DD HH:mm" format
+	 */
+	endTime?: Date;
+}
+
+/**
+ * Parameters for getting timetable with specific stations
+ */
+export interface TimetableByRouteParamsWithStations
+	extends TimetableByRouteBaseParams {
+	/**
+	 * From station ID (required with toStationId, string as returned by API)
+	 */
+	fromStationId: string;
+	/**
+	 * To station ID (required with fromStationId, string as returned by API)
+	 */
+	toStationId: string;
+}
+
+/**
+ * Parameters for getting timetable without specific stations (uses route start/end)
+ */
+export interface TimetableByRouteParamsWithoutStations
+	extends TimetableByRouteBaseParams {
+	/**
+	 * From station ID must not be provided
+	 */
+	fromStationId?: never;
+	/**
+	 * To station ID must not be provided
+	 */
+	toStationId?: never;
+}
+
+/**
+ * Parameters for getting timetable by route ID
+ * Type-safe: either both fromStationId and toStationId are provided, or neither
+ */
+export type TimetableByRouteParams =
+	| TimetableByRouteParamsWithStations
+	| TimetableByRouteParamsWithoutStations;

@@ -55,7 +55,7 @@ export interface RawServiceTypeDataItem {
  */
 export interface ServiceTypeDataItem {
 	serviceType: string;
-	serviceTypeId: number;
+	serviceTypeId: string;
 	responseCode: number;
 }
 
@@ -92,7 +92,7 @@ export interface AboutDataItem {
 	aboutDeveloperUrl: string;
 	airportLatitude: number;
 	airportLongitude: number;
-	airportStationId: number;
+	airportStationId: string;
 	airportStationName: string;
 	responseCode: number;
 }
@@ -121,7 +121,7 @@ export interface RawEmergencyMessageDataItem {
  * Clean, normalized emergency message data item
  */
 export interface EmergencyMessageDataItem {
-	id: number;
+	id: string;
 	messageEnglish: string;
 	messageKannada: string;
 	isDisplay: boolean;

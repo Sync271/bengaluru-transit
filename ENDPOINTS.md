@@ -14,6 +14,7 @@ This file tracks the progress of implementing wrappers for BMTC API endpoints.
 - [x] `/AroundBusStops_v2` - Find nearby bus stations with facilities as GeoJSON Points
 - [x] `/SearchRoute_v2` - Search for routes by route text (partial match)
 - [x] `/GetAllRouteList` - Get all routes list
+- [x] `/GetTimetableByRouteid_v3` - Get timetable by route ID
 
 ## In Progress 🚧
 
@@ -23,7 +24,6 @@ _None currently_
 
 - [ ] `/NearbyStations_v2` - Find nearby bus stations
 - [ ] `/AroundBusStops_v2` - Find bus stops around a location
-- [ ] `/GetTimetableByRouteid_v3` - Get timetable by route ID
 - [ ] `/GetTimetableByStation_v4` - Get timetable by station
 - [ ] `/AroundBusStops_v2_Webportal` - Find bus stops (web portal version)
 - [ ] `/GetFareRoutes` - Get fare information for routes
@@ -34,9 +34,9 @@ _None currently_
 
 ## Total Progress
 
-- **Completed:** 10 / 19 (53%)
-- **Remaining:** 9 endpoints
+- **Completed:** 11 / 19 (58%)
+- **Remaining:** 8 endpoints
 
 ---
 
-_Last updated: After implementing GetAllRouteList endpoint_
+_Last updated: After implementing GetTimetableByRouteid_v3 endpoint_

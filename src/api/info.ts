@@ -53,7 +53,7 @@ function transformServiceTypesResponse(
 		items: raw.data.map(
 			(item): ServiceTypeDataItem => ({
 				serviceType: item.servicetype,
-				serviceTypeId: item.servicetypeid,
+				serviceTypeId: item.servicetypeid.toString(),
 				responseCode: item.responsecode,
 			})
 		),
@@ -78,7 +78,7 @@ function transformAboutDataResponse(
 			aboutDeveloperUrl: item.aboutdeveloperurl,
 			airportLatitude: item.airportlattitude,
 			airportLongitude: item.airportlongitude,
-			airportStationId: item.airportstationid,
+			airportStationId: item.airportstationid.toString(),
 			airportStationName: item.airportstationname,
 			responseCode: item.responsecode,
 		},
@@ -96,7 +96,7 @@ function transformEmergencyMessagesResponse(
 	return {
 		items: raw.data.map(
 			(item): EmergencyMessageDataItem => ({
-				id: item.id,
+				id: item.id.toString(),
 				messageEnglish: item.message_english,
 				messageKannada: item.message_kannada,
 				isDisplay: item.isdisplay === 1,

@@ -174,7 +174,7 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 			"should get vehicle trip details from real API",
 			async () => {
 				const result = await client.vehicles.getVehicleTrip({
-					vehicleId: 21537,
+					vehicleId: "21537",
 				});
 
 				expect(result).toBeDefined();
@@ -284,7 +284,7 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 					expect(result.items[0]).toHaveProperty("fromStation");
 					expect(result.items[0]).toHaveProperty("toStationId");
 					expect(result.items[0]).toHaveProperty("toStation");
-					expect(typeof result.items[0].routeId).toBe("number");
+					expect(typeof result.items[0].routeId).toBe("string");
 				}
 
 				// Print formatted response (first 5 items only to avoid huge output)
@@ -321,7 +321,7 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 					expect(result.items[0]).toHaveProperty("routeParentId");
 					expect(result.items[0]).toHaveProperty("unionRowNo");
 					expect(result.items[0]).toHaveProperty("row");
-					expect(typeof result.items[0].routeParentId).toBe("number");
+					expect(typeof result.items[0].routeParentId).toBe("string");
 				}
 
 				// Print formatted response
@@ -338,7 +338,7 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 			async () => {
 				// Use a known routeId from the example (11797)
 				const result = await client.routes.getRoutePoints({
-					routeId: 11797,
+					routeId: "11797",
 				});
 
 				expect(result).toBeDefined();
@@ -364,6 +364,72 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 				console.log("\n🛣️ Route Points Response:");
 				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 				console.log(JSON.stringify(result, null, 2));
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+			},
+			{ timeout: 30000 }
+		);
+
+		it.skipIf(!shouldRunTest("route"))(
+			"should get timetable by route from real API",
+			async () => {
+				// Use routeId 2981 from the example
+				const startTime = new Date("2025-01-15T10:00:00");
+				const endTime = new Date("2025-01-15T23:59:00");
+
+				const result = await client.routes.getTimetableByRoute({
+					routeId: "2981",
+					startTime,
+					endTime,
+				});
+
+				expect(result).toBeDefined();
+				expect(result.success).toBe(true);
+				expect(result.items).toBeInstanceOf(Array);
+				if (result.items.length > 0) {
+					const item = result.items[0];
+					expect(item).toHaveProperty("fromStationName");
+					expect(item).toHaveProperty("toStationName");
+					expect(item).toHaveProperty("fromStationId");
+					expect(item).toHaveProperty("toStationId");
+					expect(item).toHaveProperty("approximateTime");
+					expect(item).toHaveProperty("distance");
+					expect(item).toHaveProperty("platformName");
+					expect(item).toHaveProperty("platformNumber");
+					expect(item).toHaveProperty("bayNumber");
+					expect(item).toHaveProperty("tripDetails");
+					expect(item.tripDetails).toBeInstanceOf(Array);
+					expect(typeof item.fromStationId).toBe("string");
+					expect(typeof item.toStationId).toBe("string");
+					expect(typeof item.distance).toBe("number");
+					if (item.tripDetails.length > 0) {
+						expect(item.tripDetails[0]).toHaveProperty("startTime");
+						expect(item.tripDetails[0]).toHaveProperty("endTime");
+					}
+				}
+
+				// Print formatted response (first item only to avoid huge output)
+				console.log("\n⏰ Timetable Response (first item):");
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+				console.log(
+					JSON.stringify(
+						{
+							...result,
+							items: result.items.slice(0, 1).map((item) => ({
+								...item,
+								tripDetails: item.tripDetails.slice(0, 5), // First 5 trips only
+							})),
+						},
+						null,
+						2
+					)
+				);
+				if (result.items.length > 0 && result.items[0].tripDetails.length > 5) {
+					console.log(
+						`... and ${
+							result.items[0].tripDetails.length - 5
+						} more trips in first item`
+					);
+				}
 				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 			},
 			{ timeout: 30000 }
