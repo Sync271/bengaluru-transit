@@ -25,9 +25,7 @@ _None currently_
 ## Pending Endpoints 📋
 
 - [ ] `/NearbyStations_v2` - Find nearby bus stations
-- [ ] `/AroundBusStops_v2` - Find bus stops around a location
 - [ ] `/GetTimetableByStation_v4` - Get timetable by station
-- [ ] `/AroundBusStops_v2_Webportal` - Find bus stops (web portal version)
 - [ ] `/GetFareRoutes` - Get fare information for routes
 - [ ] `/GetMobileFareData_v2` - Get mobile fare data
 - [ ] `/FindNearByBusStop_v2` - Find nearby bus stops
@@ -35,8 +33,10 @@ _None currently_
 
 ## Total Progress
 
-- **Completed:** 13 / 20 (65%)
-- **Remaining:** 7 endpoints
+- **Completed:** 13 / 18 (72%)
+- **Remaining:** 5 endpoints
+
+**Note:** `/AroundBusStops_v2_Webportal` is the same as `/AroundBusStops_v2` (already completed), so it's been removed from pending.
 
 ---
 
