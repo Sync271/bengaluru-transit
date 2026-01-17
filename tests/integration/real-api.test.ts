@@ -650,6 +650,80 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 		);
 	});
 
+	describe("Stops API - Real Endpoints", () => {
+		it.skipIf(!shouldRunTest("stop"))(
+			"should search bus stops from real API",
+			async () => {
+				await delay(RATE_LIMIT_DELAY);
+
+				const result = await client.stops.searchBusStops({
+					stationName: "hebbal",
+				});
+
+				expect(result).toBeDefined();
+				expect(result.success).toBe(true);
+				expect(result.items).toBeInstanceOf(Array);
+				expect(result.items.length).toBeGreaterThan(0);
+				if (result.items.length > 0) {
+					const item = result.items[0];
+					expect(item).toHaveProperty("stationId");
+					expect(item).toHaveProperty("stationName");
+					expect(item).toHaveProperty("latitude");
+					expect(item).toHaveProperty("longitude");
+					expect(item).toHaveProperty("serialNumber");
+					expect(item).toHaveProperty("routeTypeId");
+					expect(typeof item.stationId).toBe("string");
+					expect(typeof item.stationName).toBe("string");
+					expect(typeof item.latitude).toBe("number");
+					expect(typeof item.longitude).toBe("number");
+				}
+
+				// Print formatted response (first 5 items only to avoid huge output)
+				console.log("\n🚏 Search Bus Stops Response (first 5 items):");
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+				console.log(
+					JSON.stringify(
+						{
+							...result,
+							items: result.items.slice(0, 5),
+						},
+						null,
+						2
+					)
+				);
+				if (result.items.length > 5) {
+					console.log(`... and ${result.items.length - 5} more items`);
+				}
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+			},
+			{ timeout: 30000 }
+		);
+
+		it.skipIf(!shouldRunTest("stop"))(
+			"should search bus stops with different station flags from real API",
+			async () => {
+				await delay(RATE_LIMIT_DELAY);
+
+				// Test with metro flag
+				const metroResult = await client.stops.searchBusStops({
+					stationName: "hebbal",
+					stationFlag: "metro",
+				});
+
+				expect(metroResult).toBeDefined();
+				expect(metroResult.success).toBe(true);
+				expect(metroResult.items).toBeInstanceOf(Array);
+
+				// Print formatted response
+				console.log("\n🚇 Metro Stops Response:");
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+				console.log(JSON.stringify(metroResult, null, 2));
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+			},
+			{ timeout: 30000 }
+		);
+	});
+
 	describe("Client Configuration", () => {
 		it.skipIf(!shouldRunTest("kannada"))(
 			"should work with Kannada language",

@@ -2,6 +2,8 @@ import { validate } from "../utils/validation";
 import {
 	rawAroundBusStopsResponseSchema,
 	aroundBusStopsParamsSchema,
+	rawNearbyBusStopsResponseSchema,
+	nearbyBusStopsParamsSchema,
 } from "../schemas/stops";
 import {
 	createFacilityFeature,
@@ -14,7 +16,12 @@ import type {
 	AroundBusStopsParams,
 	NearbyStation,
 	FacilityTypeGroup,
+	NearbyBusStopsResponse,
+	RawNearbyBusStopsResponse,
+	NearbyBusStopsParams,
+	NearbyBusStopItem,
 } from "../types/stops";
+import { stationFlagToNumber } from "../types/stops";
 import type { FacilityFeature } from "../types/geojson";
 
 /**
@@ -67,6 +74,32 @@ function transformAroundBusStopsResponse(
 }
 
 /**
+ * Transform raw nearby bus stops API response to clean, normalized format
+ */
+function transformNearbyBusStopsResponse(
+	raw: RawNearbyBusStopsResponse
+): NearbyBusStopsResponse {
+	const items: NearbyBusStopItem[] = raw.data.map((item) => ({
+		serialNumber: item.srno,
+		routeNo: item.routeno,
+		stationId: item.routeid.toString(),
+		latitude: item.center_lat,
+		longitude: item.center_lon,
+		responseCode: item.responsecode,
+		routeTypeId: item.routetypeid,
+		stationName: item.routename,
+		route: item.route,
+	}));
+
+	return {
+		items,
+		message: raw.Message,
+		success: raw.Issuccess,
+		rowCount: raw.RowCount,
+	};
+}
+
+/**
  * Stops/Stations API methods
  */
 export class StopsAPI {
@@ -105,5 +138,53 @@ export class StopsAPI {
 
 		// Transform to clean, normalized format
 		return transformAroundBusStopsResponse(rawResponse);
+	}
+
+	/**
+	 * Search bus stops by station name
+	 * @param params - Parameters including station name query and optional station flag
+	 * @returns List of bus stops matching the query
+	 * @remarks
+	 * The stationFlag parameter determines the type of stops to search (defaults to "bmtc"):
+	 * - "bmtc": BMTC Bus Stops (default)
+	 * - "chartered": Chartered Stops
+	 * - "metro": Metro Stops
+	 * - "ksrtc": KSRTC bus stops
+	 */
+	async searchBusStops(
+		params: NearbyBusStopsParams
+	): Promise<NearbyBusStopsResponse> {
+		// Convert human-readable stationFlag to API numeric value (default to "bmtc")
+		const stationFlagValue = params.stationFlag || "bmtc";
+		const stationFlagNumber = stationFlagToNumber(stationFlagValue);
+
+		// Validate input parameters
+		const validatedParams = validate(
+			nearbyBusStopsParamsSchema,
+			{
+				stationname: params.stationName,
+				stationflag: stationFlagNumber,
+			},
+			"Invalid nearby bus stops parameters"
+		);
+
+		const response = await this.client.getClient().post("FindNearByBusStop_v2", {
+			json: {
+				stationname: validatedParams.stationname,
+				stationflag: validatedParams.stationflag,
+			},
+		});
+
+		const data = await response.json<unknown>();
+
+		// Validate raw response with Zod schema
+		const rawResponse = validate(
+			rawNearbyBusStopsResponseSchema,
+			data,
+			"Invalid nearby bus stops response"
+		);
+
+		// Transform to clean, normalized format
+		return transformNearbyBusStopsResponse(rawResponse);
 	}
 }

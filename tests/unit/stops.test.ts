@@ -239,4 +239,250 @@ describe("StopsAPI", () => {
 			).rejects.toThrow();
 		});
 	});
+
+	describe("searchBusStops", () => {
+		it("should find nearby bus stops successfully", async () => {
+			const mockRawResponse = {
+				data: [
+					{
+						srno: 7,
+						routeno: "",
+						routeid: 37944,
+						center_lat: 0,
+						center_lon: 0,
+						responsecode: 200,
+						routetypeid: "2",
+						routename: "Hebbala",
+						route: "",
+					},
+					{
+						srno: 1,
+						routeno: "",
+						routeid: 20695,
+						center_lat: 0,
+						center_lon: 0,
+						responsecode: 200,
+						routetypeid: "2",
+						routename: "Hebbala Canara Bank",
+						route: "",
+					},
+				],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 2,
+				responsecode: 200,
+			};
+
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const result = await client.stops.searchBusStops({
+				stationName: "hebbal",
+			});
+
+			expect(result.success).toBe(true);
+			expect(result.message).toBe("Success");
+			expect(result.rowCount).toBe(2);
+			expect(result.items).toHaveLength(2);
+
+			// Verify first item
+			expect(result.items[0].serialNumber).toBe(7);
+			expect(result.items[0].stationId).toBe("37944");
+			expect(result.items[0].stationName).toBe("Hebbala");
+			expect(result.items[0].routeTypeId).toBe("2");
+			expect(result.items[0].latitude).toBe(0);
+			expect(result.items[0].longitude).toBe(0);
+
+			// Verify second item
+			expect(result.items[1].serialNumber).toBe(1);
+			expect(result.items[1].stationId).toBe("20695");
+			expect(result.items[1].stationName).toBe("Hebbala Canara Bank");
+		});
+
+		it("should use default stationFlag of 'bmtc' when not provided", async () => {
+			const mockRawResponse = {
+				data: [],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 0,
+				responsecode: 200,
+			};
+
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			await client.stops.searchBusStops({
+				stationName: "hebbal",
+			});
+
+			// Verify the request includes default stationflag of 1
+			expect(mockPost).toHaveBeenCalledWith(
+				"FindNearByBusStop_v2",
+				expect.objectContaining({
+					json: expect.objectContaining({
+						stationname: "hebbal",
+						stationflag: 1,
+					}),
+				})
+			);
+		});
+
+		it("should use provided stationFlag and convert to API numeric value", async () => {
+			const mockRawResponse = {
+				data: [],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 0,
+				responsecode: 200,
+			};
+
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			// Test with "metro" - should convert to 163
+			await client.stops.searchBusStops({
+				stationName: "hebbal",
+				stationFlag: "metro", // Metro Stops
+			});
+
+			// Verify the request includes the converted stationflag
+			expect(mockPost).toHaveBeenCalledWith(
+				"FindNearByBusStop_v2",
+				expect.objectContaining({
+					json: expect.objectContaining({
+						stationname: "hebbal",
+						stationflag: 163, // Converted from "metro"
+					}),
+				})
+			);
+		});
+
+		it("should convert all station flag types correctly", async () => {
+			const mockRawResponse = {
+				data: [],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 0,
+				responsecode: 200,
+			};
+
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			// Test each station flag type
+			const testCases: Array<{ flag: "bmtc" | "chartered" | "metro" | "ksrtc"; expected: number }> = [
+				{ flag: "bmtc", expected: 1 },
+				{ flag: "chartered", expected: 2 },
+				{ flag: "metro", expected: 163 },
+				{ flag: "ksrtc", expected: 164 },
+			];
+
+			for (const { flag, expected } of testCases) {
+				mockPost.mockClear();
+				await client.stops.searchBusStops({
+					stationName: "hebbal",
+					stationFlag: flag,
+				});
+
+				expect(mockPost).toHaveBeenCalledWith(
+					"FindNearByBusStop_v2",
+					expect.objectContaining({
+						json: expect.objectContaining({
+							stationflag: expected,
+						}),
+					})
+				);
+			}
+		});
+
+		it("should normalize IDs to strings in response", async () => {
+			const mockRawResponse = {
+				data: [
+					{
+						srno: 1,
+						routeno: "",
+						routeid: 20695,
+						center_lat: 12.9536,
+						center_lon: 77.54378,
+						responsecode: 200,
+						routetypeid: "2",
+						routename: "Hebbala Canara Bank",
+						route: "",
+					},
+				],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 1,
+				responsecode: 200,
+			};
+
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const result = await client.stops.searchBusStops({
+				stationName: "hebbal",
+			});
+
+			expect(typeof result.items[0].stationId).toBe("string");
+			expect(result.items[0].stationId).toBe("20695");
+		});
+
+		it("should validate input parameters and throw on invalid data", async () => {
+			await expect(
+				client.stops.searchBusStops({
+					stationName: "", // Invalid: must not be empty
+				})
+			).rejects.toThrow("Invalid nearby bus stops parameters");
+		});
+
+		it("should validate response schema and throw on invalid data", async () => {
+			const invalidResponse = {
+				data: [
+					{
+						// Missing required fields
+						srno: 1,
+					},
+				],
+				Message: "Success",
+				Issuccess: true,
+			};
+
+			mockPost.mockResolvedValue({
+				json: async () => invalidResponse,
+			} as Response);
+
+			await expect(
+				client.stops.searchBusStops({
+					stationName: "hebbal",
+				})
+			).rejects.toThrow("Invalid nearby bus stops response");
+		});
+
+		it("should handle API errors", async () => {
+			// Mock an error response
+			const error = new Error("Internal Server Error");
+			(error as any).response = {
+				status: 500,
+				json: async () => ({ message: "Internal Server Error" }),
+			};
+			mockPost.mockRejectedValue(error);
+
+			await expect(
+				client.stops.searchBusStops({
+					stationName: "hebbal",
+				})
+			).rejects.toThrow();
+		});
+	});
 });
