@@ -7,8 +7,14 @@ import {
 	rawAllRoutesResponseSchema,
 	rawTimetableResponseSchema,
 	timetableRequestSchema,
+	rawRouteDetailsResponseSchema,
+	routeDetailsParamsSchema,
 } from "../schemas/routes";
-import { createRouteFeature, createFeatureCollection } from "../utils/geojson";
+import {
+	createRouteFeature,
+	createFeatureCollection,
+	createLocationFeature,
+} from "../utils/geojson";
 import type { BaseClient } from "../client/base-client";
 import type {
 	RoutePointsResponse,
@@ -25,8 +31,19 @@ import type {
 	RawTimetableResponse,
 	TimetableByRouteParams,
 	TimetableItem,
+	RouteDetailsResponse,
+	RawRouteDetailsResponse,
+	RouteDetailsParams,
+	RouteDetailVehicleItem,
+	RouteDetailDirectionData,
+	RawRouteDetailVehicleItem,
+	RawRouteDetailDirectionData,
 } from "../types/routes";
-import type { RouteFeature } from "../types/geojson";
+import type {
+	RouteFeature,
+	LocationFeature,
+} from "../types/geojson";
+import type { RouteDetailStationProperties } from "../types/routes";
 
 /**
  * Transform raw route points API response to clean, normalized format
@@ -130,6 +147,140 @@ function transformTimetableResponse(
 		message: raw.Message,
 		success: raw.Issuccess,
 		rowCount: raw.RowCount,
+	};
+}
+
+/**
+ * Transform raw vehicle detail item to clean, normalized format
+ */
+function transformVehicleDetailItem(
+	raw: RawRouteDetailVehicleItem
+): RouteDetailVehicleItem {
+	return {
+		vehicleId: raw.vehicleid.toString(),
+		vehicleNumber: raw.vehiclenumber,
+		serviceTypeId: raw.servicetypeid.toString(),
+		serviceType: raw.servicetype,
+		centerLat: raw.centerlat,
+		centerLong: raw.centerlong,
+		eta: raw.eta,
+		scheduledArrivalTime: raw.sch_arrivaltime,
+		scheduledDepartureTime: raw.sch_departuretime,
+		actualArrivalTime: raw.actual_arrivaltime,
+		actualDepartureTime: raw.actual_departuretime,
+		scheduledTripStartTime: raw.sch_tripstarttime,
+		scheduledTripEndTime: raw.sch_tripendtime,
+		lastLocationId: raw.lastlocationid.toString(),
+		currentLocationId: raw.currentlocationid.toString(),
+		nextLocationId: raw.nextlocationid.toString(),
+		currentStop: raw.currentstop,
+		nextStop: raw.nextstop,
+		lastStop: raw.laststop,
+		stopCoveredStatus: raw.stopCoveredStatus,
+		heading: raw.heading,
+		lastRefreshOn: raw.lastrefreshon,
+		lastReceivedDateTimeFlag: raw.lastreceiveddatetimeflag,
+		tripPosition: raw.tripposition,
+	};
+}
+
+/**
+ * Transform raw direction data to clean, normalized format
+ */
+function transformDirectionData(
+	raw: RawRouteDetailDirectionData
+): RouteDetailDirectionData {
+	// Convert stations to GeoJSON Point features (without vehicleDetails in properties)
+	const stationFeatures = raw.data.map((station) => {
+		const properties: RouteDetailStationProperties = {
+			stopId: station.stationid.toString(),
+			stopName: station.stationname,
+			routeId: station.routeid.toString(),
+			from: station.from,
+			to: station.to,
+			routeNo: station.routeno,
+			distanceOnStation: station.distance_on_station,
+			responseCode: station.responsecode,
+			isNotify: station.isnotify,
+		};
+		return {
+			type: "Feature" as const,
+			geometry: {
+				type: "Point" as const,
+				coordinates: [station.centerlong, station.centerlat] as [number, number],
+			},
+			properties,
+		};
+	});
+
+	// Collect all vehicles from all stations into a single FeatureCollection
+	const stationVehicleFeatures = raw.data.flatMap((station) =>
+		station.vehicleDetails.map((vehicle) => {
+			const { centerLat, centerLong, ...properties } = transformVehicleDetailItem(vehicle);
+			return {
+				type: "Feature" as const,
+				geometry: {
+					type: "Point" as const,
+					coordinates: [centerLong, centerLat] as [number, number],
+				},
+				properties: {
+					...properties,
+					stationId: station.stationid.toString(), // Link vehicle to station
+				},
+			};
+		})
+	);
+
+	// Convert mapData vehicles (live vehicles) to GeoJSON Point features
+	const liveVehicleFeatures: LocationFeature[] = raw.mapData.map((vehicle) =>
+		createLocationFeature(
+			[vehicle.centerlong, vehicle.centerlat], // GeoJSON: [lng, lat]
+			{
+				vehicleId: vehicle.vehicleid.toString(),
+				vehicleNumber: vehicle.vehiclenumber,
+				serviceTypeId: vehicle.servicetypeid.toString(),
+				serviceType: vehicle.servicetype,
+				eta: vehicle.eta,
+				scheduledArrivalTime: vehicle.sch_arrivaltime,
+				scheduledDepartureTime: vehicle.sch_departuretime,
+				actualArrivalTime: vehicle.actual_arrivaltime,
+				actualDepartureTime: vehicle.actual_departuretime,
+				scheduledTripStartTime: vehicle.sch_tripstarttime,
+				scheduledTripEndTime: vehicle.sch_tripendtime,
+				lastLocationId: vehicle.lastlocationid.toString(),
+				currentLocationId: vehicle.currentlocationid.toString(),
+				nextLocationId: vehicle.nextlocationid.toString(),
+				currentStop: vehicle.currentstop,
+				nextStop: vehicle.nextstop,
+				lastStop: vehicle.laststop,
+				stopCoveredStatus: vehicle.stopCoveredStatus,
+				heading: vehicle.heading,
+				lastRefreshOn: vehicle.lastrefreshon,
+				lastReceivedDateTimeFlag: vehicle.lastreceiveddatetimeflag,
+				tripPosition: vehicle.tripposition,
+			}
+		)
+	);
+
+	return {
+		stops: createFeatureCollection(stationFeatures),
+		stationVehicles: createFeatureCollection(stationVehicleFeatures),
+		liveVehicles: createFeatureCollection(liveVehicleFeatures),
+	};
+}
+
+/**
+ * Transform raw route details API response to clean, normalized format
+ */
+function transformRouteDetailsResponse(
+	raw: RawRouteDetailsResponse
+): RouteDetailsResponse {
+	return {
+		up: transformDirectionData(raw.up),
+		down: transformDirectionData(raw.down),
+		message: raw.message,
+		success: raw.issuccess,
+		rowCount: raw.rowCount,
 	};
 }
 
@@ -305,5 +456,52 @@ export class RoutesAPI {
 
 		// Transform to clean, normalized format
 		return transformTimetableResponse(rawResponse);
+	}
+
+	/**
+	 * Search route details by route ID
+	 * @param params - Parameters including route ID and optional service type ID
+	 * @returns Route details with live vehicle information for both directions (up and down)
+	 */
+	async searchByRouteDetails(
+		params: RouteDetailsParams
+	): Promise<RouteDetailsResponse> {
+		// Build request payload - API expects numbers for IDs, convert from strings
+		const requestPayload: {
+			routeid: number;
+			servicetypeid?: number;
+		} = {
+			routeid: parseInt(params.routeId, 10),
+		};
+
+		// Add service type ID if provided
+		if (params.serviceTypeId) {
+			requestPayload.servicetypeid = parseInt(params.serviceTypeId, 10);
+		}
+
+		// Validate request payload
+		const validatedParams = validate(
+			routeDetailsParamsSchema,
+			requestPayload,
+			"Invalid route details parameters"
+		);
+
+		const response = await this.client
+			.getClient()
+			.post("SearchByRouteDetails_v4", {
+				json: validatedParams,
+			});
+
+		const data = await response.json<unknown>();
+
+		// Validate raw response with Zod schema
+		const rawResponse = validate(
+			rawRouteDetailsResponseSchema,
+			data,
+			"Invalid route details response"
+		);
+
+		// Transform to clean, normalized format
+		return transformRouteDetailsResponse(rawResponse);
 	}
 }

@@ -135,3 +135,80 @@ export const timetableRequestSchema = z.object({
 	starttime: z.string(), // Format: "YYYY-MM-DD HH:mm"
 	endtime: z.string(), // Format: "YYYY-MM-DD HH:mm"
 });
+
+/**
+ * Schema for raw vehicle detail item from SearchByRouteDetails_v4 API
+ */
+export const rawRouteDetailVehicleItemSchema = z.object({
+	vehicleid: z.number(),
+	vehiclenumber: z.string(),
+	servicetypeid: z.number(),
+	servicetype: z.string(),
+	centerlat: z.number(),
+	centerlong: z.number(),
+	eta: z.string(),
+	sch_arrivaltime: z.string(),
+	sch_departuretime: z.string(),
+	actual_arrivaltime: z.string(),
+	actual_departuretime: z.string(),
+	sch_tripstarttime: z.string(),
+	sch_tripendtime: z.string(),
+	lastlocationid: z.number(),
+	currentlocationid: z.number(),
+	nextlocationid: z.number(),
+	currentstop: z.string().nullable(),
+	nextstop: z.string().nullable(),
+	laststop: z.string().nullable(),
+	stopCoveredStatus: z.number(),
+	heading: z.number(),
+	lastrefreshon: z.string(),
+	lastreceiveddatetimeflag: z.number(),
+	tripposition: z.number(),
+});
+
+/**
+ * Schema for raw station data item from SearchByRouteDetails_v4 API
+ */
+export const rawRouteDetailStationItemSchema = z.object({
+	routeid: z.number(),
+	stationid: z.number(),
+	stationname: z.string(),
+	from: z.string(),
+	to: z.string(),
+	routeno: z.string(),
+	distance_on_station: z.number(),
+	centerlat: z.number(),
+	centerlong: z.number(),
+	responsecode: z.number(),
+	isnotify: z.number(),
+	vehicleDetails: z.array(rawRouteDetailVehicleItemSchema),
+});
+
+/**
+ * Schema for raw direction data (up or down) from SearchByRouteDetails_v4 API
+ */
+export const rawRouteDetailDirectionDataSchema = z.object({
+	data: z.array(rawRouteDetailStationItemSchema),
+	mapData: z.array(rawRouteDetailVehicleItemSchema),
+});
+
+/**
+ * Schema for raw SearchByRouteDetails_v4 API response from BMTC API
+ */
+export const rawRouteDetailsResponseSchema = z.object({
+	up: rawRouteDetailDirectionDataSchema,
+	down: rawRouteDetailDirectionDataSchema,
+	message: z.string(),
+	issuccess: z.boolean(),
+	exception: z.unknown().nullish(),
+	rowCount: z.number(),
+	responsecode: z.number(),
+});
+
+/**
+ * Schema for route details request parameters
+ */
+export const routeDetailsParamsSchema = z.object({
+	routeid: z.number().int().positive("Route ID must be a positive integer"),
+	servicetypeid: z.number().int().positive().optional(),
+});

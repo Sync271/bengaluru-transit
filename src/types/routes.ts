@@ -8,8 +8,15 @@ import type {
 	rawRouteSearchResponseSchema,
 	rawAllRoutesResponseSchema,
 	rawTimetableResponseSchema,
+	rawRouteDetailsResponseSchema,
 } from "../schemas/routes";
-import type { RouteFeatureCollection } from "./geojson";
+import type {
+	RouteFeatureCollection,
+	StopFeatureCollection,
+	LocationFeatureCollection,
+	StopProperties,
+} from "./geojson";
+import type { Feature, FeatureCollection, Point } from "geojson";
 
 /**
  * Raw route point data item from BMTC API
@@ -334,3 +341,173 @@ export interface TimetableByRouteParamsWithoutStations
 export type TimetableByRouteParams =
 	| TimetableByRouteParamsWithStations
 	| TimetableByRouteParamsWithoutStations;
+
+/**
+ * Raw vehicle detail item from SearchByRouteDetails_v4 API
+ */
+export interface RawRouteDetailVehicleItem {
+	vehicleid: number;
+	vehiclenumber: string;
+	servicetypeid: number;
+	servicetype: string;
+	centerlat: number;
+	centerlong: number;
+	eta: string;
+	sch_arrivaltime: string;
+	sch_departuretime: string;
+	actual_arrivaltime: string;
+	actual_departuretime: string;
+	sch_tripstarttime: string;
+	sch_tripendtime: string;
+	lastlocationid: number;
+	currentlocationid: number;
+	nextlocationid: number;
+	currentstop: string | null;
+	nextstop: string | null;
+	laststop: string | null;
+	stopCoveredStatus: number;
+	heading: number;
+	lastrefreshon: string;
+	lastreceiveddatetimeflag: number;
+	tripposition: number;
+}
+
+/**
+ * Raw station data item from SearchByRouteDetails_v4 API
+ */
+export interface RawRouteDetailStationItem {
+	routeid: number;
+	stationid: number;
+	stationname: string;
+	from: string;
+	to: string;
+	routeno: string;
+	distance_on_station: number;
+	centerlat: number;
+	centerlong: number;
+	responsecode: number;
+	isnotify: number;
+	vehicleDetails: RawRouteDetailVehicleItem[];
+}
+
+/**
+ * Raw direction data (up or down) from SearchByRouteDetails_v4 API
+ */
+export interface RawRouteDetailDirectionData {
+	data: RawRouteDetailStationItem[];
+	mapData: RawRouteDetailVehicleItem[];
+}
+
+/**
+ * Raw SearchByRouteDetails_v4 API response from BMTC API (for validation)
+ * Uses Zod inferred type to match schema exactly
+ */
+export type RawRouteDetailsResponse = z.infer<
+	typeof rawRouteDetailsResponseSchema
+>;
+
+/**
+ * Clean, normalized vehicle detail item (for station vehicles)
+ * Note: This is used as properties in GeoJSON features, excluding centerLat/centerLong
+ */
+export interface RouteDetailVehicleProperties {
+	vehicleId: string;
+	vehicleNumber: string;
+	serviceTypeId: string;
+	serviceType: string;
+	/**
+	 * Station ID where this vehicle is at/near
+	 */
+	stationId?: string;
+	eta: string;
+	scheduledArrivalTime: string;
+	scheduledDepartureTime: string;
+	actualArrivalTime: string;
+	actualDepartureTime: string;
+	scheduledTripStartTime: string;
+	scheduledTripEndTime: string;
+	lastLocationId: string;
+	currentLocationId: string;
+	nextLocationId: string;
+	currentStop: string | null;
+	nextStop: string | null;
+	lastStop: string | null;
+	stopCoveredStatus: number;
+	heading: number;
+	lastRefreshOn: string;
+	lastReceivedDateTimeFlag: number;
+	tripPosition: number;
+}
+
+/**
+ * Clean, normalized vehicle detail item (deprecated - use RouteDetailVehicleProperties in GeoJSON)
+ * @deprecated Use RouteDetailVehicleProperties instead
+ */
+export interface RouteDetailVehicleItem extends RouteDetailVehicleProperties {
+	centerLat: number;
+	centerLong: number;
+}
+
+/**
+ * Properties for a route detail station feature
+ * Extends StopProperties with route-specific fields
+ */
+export interface RouteDetailStationProperties extends StopProperties {
+	routeId: string;
+	from: string;
+	to: string;
+	routeNo: string;
+	distanceOnStation: number;
+	responseCode: number;
+	isNotify: number;
+}
+
+/**
+ * A route detail station represented as a GeoJSON Point Feature
+ */
+export type RouteDetailStationFeature = Feature<Point, RouteDetailStationProperties>;
+
+/**
+ * Clean, normalized direction data (up or down)
+ * All spatial data is returned as GeoJSON FeatureCollections
+ */
+export interface RouteDetailDirectionData {
+	/**
+	 * Bus stops/stations along the route as GeoJSON FeatureCollection (Point features)
+	 */
+	stops: FeatureCollection<Point, RouteDetailStationProperties>;
+	/**
+	 * Vehicles at/near stations as GeoJSON FeatureCollection (Point features)
+	 * These are vehicles that are currently at or near specific stops
+	 */
+	stationVehicles: FeatureCollection<Point, RouteDetailVehicleProperties>;
+	/**
+	 * Live vehicles currently on the route for map display as GeoJSON FeatureCollection (Point features)
+	 */
+	liveVehicles: LocationFeatureCollection;
+}
+
+/**
+ * Clean, normalized route details response
+ */
+export interface RouteDetailsResponse {
+	up: RouteDetailDirectionData;
+	down: RouteDetailDirectionData;
+	message: string;
+	success: boolean;
+	rowCount: number;
+}
+
+/**
+ * Parameters for searching route details
+ */
+export interface RouteDetailsParams {
+	/**
+	 * Route ID (can be from searchRoute or other APIs, always string for consistency)
+	 */
+	routeId: string;
+	/**
+	 * Service type ID (optional - from GetAllServiceTypes)
+	 */
+	serviceTypeId?: string;
+}

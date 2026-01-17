@@ -15,7 +15,7 @@ export interface BaseClientConfig {
 	language?: "en" | "kn";
 	/**
 	 * Device type identifier
-	 * @default ''
+	 * @default 'WEB'
 	 */
 	deviceType?: string;
 	/**
@@ -46,7 +46,7 @@ export class BaseClient {
 			"Content-Type": "application/json",
 			Accept: "application/json, text/plain, */*",
 			lan: config.language || "en",
-			deviceType: config.deviceType || "",
+			deviceType: config.deviceType || "WEB",
 			authToken: config.authToken || "N/A",
 			deviceId: config.deviceId || "",
 		};

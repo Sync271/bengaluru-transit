@@ -434,6 +434,120 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 			},
 			{ timeout: 30000 }
 		);
+
+		it.skipIf(!shouldRunTest("route"))(
+			"should search route details from real API",
+			async () => {
+				// Use routeId 2124 from the example
+				const result = await client.routes.searchByRouteDetails({
+					routeId: "2124",
+				});
+
+				expect(result).toBeDefined();
+				expect(result.success).toBe(true);
+				expect(result).toHaveProperty("up");
+				expect(result).toHaveProperty("down");
+				expect(result.up).toHaveProperty("stops");
+				expect(result.up).toHaveProperty("stationVehicles");
+				expect(result.up).toHaveProperty("liveVehicles");
+				expect(result.down).toHaveProperty("stops");
+				expect(result.down).toHaveProperty("stationVehicles");
+				expect(result.down).toHaveProperty("liveVehicles");
+
+				// Verify up direction structure - GeoJSON FeatureCollections
+				expect(result.up.stops.type).toBe("FeatureCollection");
+				expect(result.up.stops.features).toBeInstanceOf(Array);
+				if (result.up.stops.features.length > 0) {
+					const stationFeature = result.up.stops.features[0];
+					expect(stationFeature.geometry.type).toBe("Point");
+					expect(stationFeature.geometry.coordinates).toHaveLength(2);
+					expect(stationFeature.properties).toHaveProperty("stopId");
+					expect(stationFeature.properties).toHaveProperty("routeId");
+					expect(stationFeature.properties).toHaveProperty("stopName");
+					expect(stationFeature.properties).toHaveProperty("from");
+					expect(stationFeature.properties).toHaveProperty("to");
+					expect(stationFeature.properties).toHaveProperty("routeNo");
+					expect(stationFeature.properties).toHaveProperty("distanceOnStation");
+					expect(typeof stationFeature.properties.routeId).toBe("string");
+					expect(typeof stationFeature.properties.stopId).toBe("string");
+				}
+
+				// Verify stationVehicles structure - GeoJSON FeatureCollection
+				expect(result.up.stationVehicles.type).toBe("FeatureCollection");
+				expect(result.up.stationVehicles.features).toBeInstanceOf(Array);
+				if (result.up.stationVehicles.features.length > 0) {
+					const vehicleFeature = result.up.stationVehicles.features[0];
+					expect(vehicleFeature.geometry.type).toBe("Point");
+					expect(vehicleFeature.geometry.coordinates).toHaveLength(2);
+					expect(vehicleFeature.properties).toHaveProperty("vehicleId");
+					expect(vehicleFeature.properties).toHaveProperty("vehicleNumber");
+					expect(vehicleFeature.properties).toHaveProperty("serviceTypeId");
+					expect(vehicleFeature.properties).toHaveProperty("serviceType");
+					expect(vehicleFeature.properties).toHaveProperty("currentLocationId");
+					expect(typeof vehicleFeature.properties.vehicleId).toBe("string");
+					expect(typeof vehicleFeature.properties.serviceTypeId).toBe("string");
+					expect(typeof vehicleFeature.properties.currentLocationId).toBe("string");
+				}
+
+				// Verify liveVehicles structure - GeoJSON FeatureCollection
+				expect(result.up.liveVehicles.type).toBe("FeatureCollection");
+				expect(result.up.liveVehicles.features).toBeInstanceOf(Array);
+				if (result.up.liveVehicles.features.length > 0) {
+					const vehicleFeature = result.up.liveVehicles.features[0];
+					expect(vehicleFeature.geometry.type).toBe("Point");
+					expect(vehicleFeature.geometry.coordinates).toHaveLength(2);
+					expect(vehicleFeature.properties).toHaveProperty("vehicleId");
+					expect(vehicleFeature.properties).toHaveProperty("vehicleNumber");
+					expect(typeof vehicleFeature.properties.vehicleId).toBe("string");
+				}
+
+				// Print formatted response (first station from up direction only)
+				console.log("\n🔍 Route Details Response (first station from up):");
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+				const sampleResponse = {
+					...result,
+					up: {
+						...result.up,
+						stops: {
+							...result.up.stops,
+							features: result.up.stops.features.slice(0, 1),
+						},
+						stationVehicles: {
+							...result.up.stationVehicles,
+							features: result.up.stationVehicles.features.slice(0, 1),
+						},
+						liveVehicles: {
+							...result.up.liveVehicles,
+							features: result.up.liveVehicles.features.slice(0, 1),
+						},
+					},
+					down: {
+						...result.down,
+						stops: {
+							...result.down.stops,
+							features: result.down.stops.features.slice(0, 1),
+						},
+						stationVehicles: {
+							...result.down.stationVehicles,
+							features: result.down.stationVehicles.features.slice(0, 1),
+						},
+						liveVehicles: {
+							...result.down.liveVehicles,
+							features: result.down.liveVehicles.features.slice(0, 1),
+						},
+					},
+				};
+				console.log(JSON.stringify(sampleResponse, null, 2));
+				if (result.up.stops.features.length > 1) {
+					console.log(`... and ${result.up.stops.features.length - 1} more stations in up direction`);
+				}
+				if (result.down.stops.features.length > 0) {
+					console.log(`... and ${result.down.stops.features.length} stations in down direction`);
+				}
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+			},
+			{ timeout: 30000 }
+		);
 	});
 
 	describe("Locations API - Real Endpoints", () => {

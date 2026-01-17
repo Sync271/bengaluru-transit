@@ -612,4 +612,367 @@ describe("RoutesAPI", () => {
 			).rejects.toThrow();
 		});
 	});
+
+	describe("searchByRouteDetails", () => {
+		it("should search route details successfully", async () => {
+			const mockRawResponse = {
+				up: {
+					data: [
+						{
+							routeid: 3812,
+							stationid: 21042,
+							stationname: "Mysore Road Bus Station",
+							from: "Mysore Road Bus Station",
+							to: "Kempegowda International Airport",
+							routeno: "KIA-10",
+							distance_on_station: 0,
+							centerlat: 12.9536,
+							centerlong: 77.54378,
+							responsecode: 200,
+							isnotify: 0,
+							vehicleDetails: [
+								{
+									vehicleid: 21575,
+									vehiclenumber: "KA57F2403",
+									servicetypeid: 73,
+									servicetype: "AC",
+									centerlat: 13.193967,
+									centerlong: 77.65007,
+									eta: "",
+									sch_arrivaltime: "00:05",
+									sch_departuretime: "00:05",
+									actual_arrivaltime: "",
+									actual_departuretime: "",
+									sch_tripstarttime: "00:05",
+									sch_tripendtime: "00:05",
+									lastlocationid: 0,
+									currentlocationid: 34443,
+									nextlocationid: 0,
+									currentstop: null,
+									nextstop: null,
+									laststop: null,
+									stopCoveredStatus: 1,
+									heading: 60,
+									lastrefreshon: "18-01-2026 01:01:34",
+									lastreceiveddatetimeflag: 0,
+									tripposition: 1,
+								},
+							],
+						},
+					],
+					mapData: [
+						{
+							vehicleid: 21575,
+							vehiclenumber: "KA57F2403",
+							servicetypeid: 73,
+							servicetype: "AC",
+							centerlat: 13.193967,
+							centerlong: 77.65007,
+							eta: "2026-01-18 01:14:00",
+							sch_arrivaltime: "01:18",
+							sch_departuretime: "01:18",
+							actual_arrivaltime: "",
+							actual_departuretime: "",
+							sch_tripstarttime: "00:05",
+							sch_tripendtime: "00:05",
+							lastlocationid: 0,
+							currentlocationid: 34443,
+							nextlocationid: 0,
+							currentstop: null,
+							nextstop: null,
+							laststop: null,
+							stopCoveredStatus: 0,
+							heading: 60,
+							lastrefreshon: "18-01-2026 01:01:34",
+							lastreceiveddatetimeflag: 0,
+							tripposition: 1,
+						},
+					],
+				},
+				down: {
+					data: [],
+					mapData: [],
+				},
+				message: "Success",
+				issuccess: true,
+				exception: null,
+				rowCount: 0,
+				responsecode: 200,
+			};
+
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const result = await client.routes.searchByRouteDetails({
+				routeId: "2124",
+			});
+
+			expect(result.success).toBe(true);
+			expect(result.message).toBe("Success");
+			expect(result.rowCount).toBe(0);
+
+			// Verify up direction - GeoJSON FeatureCollections
+			expect(result.up.stops.type).toBe("FeatureCollection");
+			expect(result.up.stops.features).toHaveLength(1);
+			expect(result.up.stops.features[0].geometry.type).toBe("Point");
+			expect(result.up.stops.features[0].properties.stopId).toBe("21042");
+			expect(result.up.stops.features[0].properties.routeId).toBe("3812");
+			expect(result.up.stops.features[0].properties.stopName).toBe("Mysore Road Bus Station");
+
+			// Verify stationVehicles - GeoJSON FeatureCollection
+			expect(result.up.stationVehicles.type).toBe("FeatureCollection");
+			expect(result.up.stationVehicles.features).toHaveLength(1);
+			expect(result.up.stationVehicles.features[0].geometry.type).toBe("Point");
+			expect(result.up.stationVehicles.features[0].properties.vehicleId).toBe("21575");
+			expect(result.up.stationVehicles.features[0].properties.serviceTypeId).toBe("73");
+
+			// Verify liveVehicles - GeoJSON FeatureCollection
+			expect(result.up.liveVehicles.type).toBe("FeatureCollection");
+			expect(result.up.liveVehicles.features).toHaveLength(1);
+			expect(result.up.liveVehicles.features[0].geometry.type).toBe("Point");
+			expect(result.up.liveVehicles.features[0].properties.vehicleId).toBe("21575");
+
+			// Verify down direction
+			expect(result.down.stops.type).toBe("FeatureCollection");
+			expect(result.down.stops.features).toHaveLength(0);
+			expect(result.down.stationVehicles.type).toBe("FeatureCollection");
+			expect(result.down.stationVehicles.features).toHaveLength(0);
+			expect(result.down.liveVehicles.type).toBe("FeatureCollection");
+			expect(result.down.liveVehicles.features).toHaveLength(0);
+		});
+
+		it("should search route details with service type ID", async () => {
+			const mockRawResponse = {
+				up: {
+					data: [],
+					mapData: [],
+				},
+				down: {
+					data: [],
+					mapData: [],
+				},
+				message: "Success",
+				issuccess: true,
+				exception: null,
+				rowCount: 0,
+				responsecode: 200,
+			};
+
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			await client.routes.searchByRouteDetails({
+				routeId: "2124",
+				serviceTypeId: "73",
+			});
+
+			// Verify the request includes serviceTypeId
+			expect(mockPost).toHaveBeenCalledWith(
+				"SearchByRouteDetails_v4",
+				expect.objectContaining({
+					json: expect.objectContaining({
+						routeid: 2124,
+						servicetypeid: 73,
+					}),
+				})
+			);
+		});
+
+		it("should convert string IDs to numbers in API request", async () => {
+			const mockRawResponse = {
+				up: {
+					data: [],
+					mapData: [],
+				},
+				down: {
+					data: [],
+					mapData: [],
+				},
+				message: "Success",
+				issuccess: true,
+				exception: null,
+				rowCount: 0,
+				responsecode: 200,
+			};
+
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			await client.routes.searchByRouteDetails({
+				routeId: "2124",
+				serviceTypeId: "73",
+			});
+
+			// Verify IDs are converted to numbers
+			const callArgs = mockPost.mock.calls[0];
+			const requestJson = (callArgs[1] as any).json;
+			expect(requestJson.routeid).toBe(2124);
+			expect(requestJson.servicetypeid).toBe(73);
+		});
+
+		it("should normalize IDs to strings in response", async () => {
+			const mockRawResponse = {
+				up: {
+					data: [
+						{
+							routeid: 3812,
+							stationid: 21042,
+							stationname: "Test Station",
+							from: "From",
+							to: "To",
+							routeno: "KIA-10",
+							distance_on_station: 0,
+							centerlat: 12.9536,
+							centerlong: 77.54378,
+							responsecode: 200,
+							isnotify: 0,
+							vehicleDetails: [
+								{
+									vehicleid: 21575,
+									vehiclenumber: "KA57F2403",
+									servicetypeid: 73,
+									servicetype: "AC",
+									centerlat: 13.193967,
+									centerlong: 77.65007,
+									eta: "",
+									sch_arrivaltime: "00:05",
+									sch_departuretime: "00:05",
+									actual_arrivaltime: "",
+									actual_departuretime: "",
+									sch_tripstarttime: "00:05",
+									sch_tripendtime: "00:05",
+									lastlocationid: 0,
+									currentlocationid: 34443,
+									nextlocationid: 0,
+									currentstop: null,
+									nextstop: null,
+									laststop: null,
+									stopCoveredStatus: 1,
+									heading: 60,
+									lastrefreshon: "18-01-2026 01:01:34",
+									lastreceiveddatetimeflag: 0,
+									tripposition: 1,
+								},
+							],
+						},
+					],
+					mapData: [],
+				},
+				down: {
+					data: [],
+					mapData: [],
+				},
+				message: "Success",
+				issuccess: true,
+				exception: null,
+				rowCount: 0,
+				responsecode: 200,
+			};
+
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const result = await client.routes.searchByRouteDetails({
+				routeId: "2124",
+			});
+
+			// Verify all IDs are strings
+			expect(result.up.stops.features[0].properties.routeId).toBe("3812");
+			expect(result.up.stops.features[0].properties.stopId).toBe("21042");
+			// stationVehicles is now a separate GeoJSON FeatureCollection
+			expect(result.up.stationVehicles.type).toBe("FeatureCollection");
+			expect(result.up.stationVehicles.features[0].properties.vehicleId).toBe("21575");
+			expect(result.up.stationVehicles.features[0].properties.serviceTypeId).toBe("73");
+			expect(result.up.stationVehicles.features[0].properties.lastLocationId).toBe("0");
+			expect(result.up.stationVehicles.features[0].properties.currentLocationId).toBe("34443");
+			expect(result.up.stationVehicles.features[0].properties.nextLocationId).toBe("0");
+		});
+
+		it("should validate input parameters and throw on invalid routeId", async () => {
+			await expect(
+				client.routes.searchByRouteDetails({
+					routeId: "0", // Invalid: must be positive
+				})
+			).rejects.toThrow();
+		});
+
+		it("should handle empty results", async () => {
+			const mockRawResponse = {
+				up: {
+					data: [],
+					mapData: [],
+				},
+				down: {
+					data: [],
+					mapData: [],
+				},
+				message: "Success",
+				issuccess: true,
+				exception: null,
+				rowCount: 0,
+				responsecode: 200,
+			};
+
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const result = await client.routes.searchByRouteDetails({
+				routeId: "2124",
+			});
+
+			expect(result.success).toBe(true);
+			expect(result.up.stops.type).toBe("FeatureCollection");
+			expect(result.up.stops.features).toHaveLength(0);
+			expect(result.up.stationVehicles.type).toBe("FeatureCollection");
+			expect(result.up.stationVehicles.features).toHaveLength(0);
+			expect(result.up.liveVehicles.type).toBe("FeatureCollection");
+			expect(result.up.liveVehicles.features).toHaveLength(0);
+			expect(result.down.stops.type).toBe("FeatureCollection");
+			expect(result.down.stops.features).toHaveLength(0);
+			expect(result.down.stationVehicles.type).toBe("FeatureCollection");
+			expect(result.down.stationVehicles.features).toHaveLength(0);
+			expect(result.down.liveVehicles.type).toBe("FeatureCollection");
+			expect(result.down.liveVehicles.features).toHaveLength(0);
+		});
+
+		it("should validate response schema and throw on invalid data", async () => {
+			const invalidResponse = {
+				up: "invalid",
+				down: {},
+			};
+
+			// Mock the response with invalid data
+			mockPost.mockResolvedValue({
+				json: async () => invalidResponse,
+			} as Response);
+
+			await expect(
+				client.routes.searchByRouteDetails({ routeId: "2124" })
+			).rejects.toThrow("Invalid route details response");
+		});
+
+		it("should handle API errors", async () => {
+			// Mock an error response
+			const error = new Error("Internal Server Error");
+			(error as any).response = {
+				status: 500,
+				json: async () => ({ message: "Internal Server Error" }),
+			};
+			mockPost.mockRejectedValue(error);
+
+			await expect(
+				client.routes.searchByRouteDetails({ routeId: "2124" })
+			).rejects.toThrow();
+		});
+	});
 });
