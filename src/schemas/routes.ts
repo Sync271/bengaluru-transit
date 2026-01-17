@@ -5,6 +5,47 @@ import { z } from "zod";
  */
 
 /**
+ * Schema for raw route between stations item from GetFareRoutes API
+ */
+export const rawRouteBetweenStationsItemSchema = z.object({
+	id: z.number(),
+	fromstationid: z.number(),
+	source_code: z.string(),
+	from_displayname: z.string(),
+	tostationid: z.number(),
+	destination_code: z.string(),
+	to_displayname: z.string(),
+	fromdistance: z.number(),
+	todistance: z.number(),
+	routeid: z.number(),
+	routeno: z.string(),
+	routename: z.string(),
+	route_direction: z.string(),
+	fromstationname: z.string(),
+	tostationname: z.string(),
+});
+
+/**
+ * Schema for raw routes between stations API response from BMTC API
+ */
+export const rawRoutesBetweenStationsResponseSchema = z.object({
+	data: z.array(rawRouteBetweenStationsItemSchema),
+	Message: z.string(),
+	Issuccess: z.boolean(),
+	exception: z.string().nullable(),
+	RowCount: z.number(),
+	responsecode: z.number(),
+});
+
+/**
+ * Schema for routes between stations request parameters
+ */
+export const routesBetweenStationsParamsSchema = z.object({
+	fromStationId: z.number().int().positive(),
+	toStationId: z.number().int().positive(),
+});
+
+/**
  * Schema for raw route point data item from BMTC API
  */
 export const rawRoutePointItemSchema = z.object({
@@ -209,6 +250,6 @@ export const rawRouteDetailsResponseSchema = z.object({
  * Schema for route details request parameters
  */
 export const routeDetailsParamsSchema = z.object({
-	routeid: z.number().int().positive("Route ID must be a positive integer"),
+	routeid: z.number().int().positive("Parent route ID must be a positive integer"),
 	servicetypeid: z.number().int().positive().optional(),
 });

@@ -36,16 +36,18 @@ export interface BaseClientConfig {
 export class BaseClient {
 	protected client: KyInstance;
 	protected baseURL: string;
+	protected language: "en" | "kn";
 
 	constructor(config: BaseClientConfig = {}) {
 		this.baseURL =
 			config.baseURL || "https://bmtcmobileapi.karnataka.gov.in/WebAPI";
+		this.language = config.language || "en";
 
 		// Default BMTC API headers
 		const defaultHeaders: Record<string, string> = {
 			"Content-Type": "application/json",
 			Accept: "application/json, text/plain, */*",
-			lan: config.language || "en",
+			lan: this.language,
 			deviceType: config.deviceType || "WEB",
 			authToken: config.authToken || "N/A",
 			deviceId: config.deviceId || "",
@@ -102,5 +104,12 @@ export class BaseClient {
 	 */
 	getBaseURL(): string {
 		return this.baseURL;
+	}
+
+	/**
+	 * Get the language preference
+	 */
+	getLanguage(): "en" | "kn" {
+		return this.language;
 	}
 }

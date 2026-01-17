@@ -9,6 +9,8 @@ import {
 	timetableRequestSchema,
 	rawRouteDetailsResponseSchema,
 	routeDetailsParamsSchema,
+	rawRoutesBetweenStationsResponseSchema,
+	routesBetweenStationsParamsSchema,
 } from "../schemas/routes";
 import {
 	createRouteFeature,
@@ -38,6 +40,11 @@ import type {
 	RouteDetailDirectionData,
 	RawRouteDetailVehicleItem,
 	RawRouteDetailDirectionData,
+	RoutesBetweenStationsResponse,
+	RawRoutesBetweenStationsResponse,
+	RoutesBetweenStationsParams,
+	RouteBetweenStationsItem,
+	RawRouteBetweenStationsItem,
 } from "../types/routes";
 import type {
 	RouteFeature,
@@ -85,7 +92,7 @@ function transformRouteSearchResponse(
 		unionRowNo: item.union_rowno,
 		row: item.row,
 		routeNo: item.routeno,
-		routeParentId: item.routeparentid.toString(),
+		parentRouteId: item.routeparentid.toString(),
 	}));
 
 	return {
@@ -103,7 +110,7 @@ function transformAllRoutesResponse(
 	raw: RawAllRoutesResponse
 ): AllRoutesResponse {
 	const items: RouteListItem[] = raw.data.map((item) => ({
-		routeId: item.routeid.toString(),
+		subrouteId: item.routeid.toString(),
 		routeNo: item.routeno,
 		routeName: item.routename,
 		fromStationId: item.fromstationid.toString(),
@@ -195,7 +202,7 @@ function transformDirectionData(
 		const properties: RouteDetailStationProperties = {
 			stopId: station.stationid.toString(),
 			stopName: station.stationname,
-			routeId: station.routeid.toString(),
+			subrouteId: station.routeid.toString(), // This is the subroute ID for the specific direction
 			from: station.from,
 			to: station.to,
 			routeNo: station.routeno,
@@ -281,6 +288,45 @@ function transformRouteDetailsResponse(
 		message: raw.message,
 		success: raw.issuccess,
 		rowCount: raw.rowCount,
+	};
+}
+
+/**
+ * Transform raw route between stations item to clean, normalized format
+ */
+function transformRouteBetweenStationsItem(
+	raw: RawRouteBetweenStationsItem
+): RouteBetweenStationsItem {
+	return {
+		id: raw.id.toString(),
+		fromStationId: raw.fromstationid.toString(),
+		sourceCode: raw.source_code,
+		fromDisplayName: raw.from_displayname,
+		toStationId: raw.tostationid.toString(),
+		destinationCode: raw.destination_code,
+		toDisplayName: raw.to_displayname,
+		fromDistance: raw.fromdistance,
+		toDistance: raw.todistance,
+		subrouteId: raw.routeid.toString(),
+		routeNo: raw.routeno,
+		routeName: raw.routename,
+		routeDirection: raw.route_direction,
+		fromStationName: raw.fromstationname,
+		toStationName: raw.tostationname,
+	};
+}
+
+/**
+ * Transform raw routes between stations API response to clean, normalized format
+ */
+function transformRoutesBetweenStationsResponse(
+	raw: RawRoutesBetweenStationsResponse
+): RoutesBetweenStationsResponse {
+	return {
+		items: raw.data.map(transformRouteBetweenStationsItem),
+		message: raw.Message,
+		success: raw.Issuccess,
+		rowCount: raw.RowCount,
 	};
 }
 
@@ -459,9 +505,12 @@ export class RoutesAPI {
 	}
 
 	/**
-	 * Search route details by route ID
-	 * @param params - Parameters including route ID and optional service type ID
+	 * Search route details by parent route ID
+	 * @param params - Parameters including parent route ID and optional service type ID
 	 * @returns Route details with live vehicle information for both directions (up and down)
+	 * @remarks
+	 * The parentRouteId should be obtained from searchRoutes().parentRouteId.
+	 * The response contains subroute IDs in up.stops and down.stops (subrouteId property).
 	 */
 	async searchByRouteDetails(
 		params: RouteDetailsParams
@@ -471,7 +520,7 @@ export class RoutesAPI {
 			routeid: number;
 			servicetypeid?: number;
 		} = {
-			routeid: parseInt(params.routeId, 10),
+			routeid: parseInt(params.parentRouteId, 10),
 		};
 
 		// Add service type ID if provided
@@ -503,5 +552,52 @@ export class RoutesAPI {
 
 		// Transform to clean, normalized format
 		return transformRouteDetailsResponse(rawResponse);
+	}
+
+	/**
+	 * Get routes between two stations
+	 * @param params - Parameters including from and to station IDs
+	 * @returns List of routes connecting the two stations in normalized format
+	 * @remarks
+	 * The routeId in the response is likely a subroute ID (specific to direction/variant).
+	 * It can be used with searchByRouteDetails() endpoint.
+	 * Note: This differs from parentRouteId returned by searchRoutes().
+	 */
+	async getRoutesBetweenStations(
+		params: RoutesBetweenStationsParams
+	): Promise<RoutesBetweenStationsResponse> {
+		// Validate input parameters - API expects numbers, convert from strings
+		const validatedParams = validate(
+			routesBetweenStationsParamsSchema,
+			{
+				fromStationId: parseInt(params.fromStationId, 10),
+				toStationId: parseInt(params.toStationId, 10),
+			},
+			"Invalid routes between stations parameters"
+		);
+
+		// Get language from client and map to API format
+		const language = this.client.getLanguage();
+		const lan = language === "en" ? "English" : "Kannada";
+
+		const response = await this.client.getClient().post("GetFareRoutes", {
+			json: {
+				fromStationId: validatedParams.fromStationId,
+				toStationId: validatedParams.toStationId,
+				lan,
+			},
+		});
+
+		const data = await response.json<unknown>();
+
+		// Validate raw response with Zod schema
+		const rawResponse = validate(
+			rawRoutesBetweenStationsResponseSchema,
+			data,
+			"Invalid routes between stations response"
+		);
+
+		// Transform to clean, normalized format
+		return transformRoutesBetweenStationsResponse(rawResponse);
 	}
 }

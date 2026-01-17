@@ -9,10 +9,10 @@ import type {
 	rawAllRoutesResponseSchema,
 	rawTimetableResponseSchema,
 	rawRouteDetailsResponseSchema,
+	rawRoutesBetweenStationsResponseSchema,
 } from "../schemas/routes";
 import type {
 	RouteFeatureCollection,
-	StopFeatureCollection,
 	LocationFeatureCollection,
 	StopProperties,
 } from "./geojson";
@@ -94,9 +94,9 @@ export interface RouteSearchItem {
 	 */
 	routeNo: string;
 	/**
-	 * Route parent ID (used for other endpoints like getRoutePoints, always string for consistency)
+	 * Parent route ID (groups multiple subroutes, used for endpoints like getRoutePoints, always string for consistency)
 	 */
-	routeParentId: string;
+	parentRouteId: string;
 }
 
 /**
@@ -145,9 +145,9 @@ export type RawAllRoutesResponse = z.infer<typeof rawAllRoutesResponseSchema>;
  */
 export interface RouteListItem {
 	/**
-	 * Route ID (always string for consistency)
+	 * Subroute ID (specific directional variant, e.g., "89-C UP" or "89-C DOWN", always string for consistency)
 	 */
-	routeId: string;
+	subrouteId: string;
 	/**
 	 * Route number (e.g., "89-C UP", "89-C DOWN")
 	 */
@@ -453,7 +453,11 @@ export interface RouteDetailVehicleItem extends RouteDetailVehicleProperties {
  * Extends StopProperties with route-specific fields
  */
 export interface RouteDetailStationProperties extends StopProperties {
-	routeId: string;
+	/**
+	 * Subroute ID (specific directional variant from the parent route)
+	 * This is the subroute ID for the specific direction (UP or DOWN)
+	 */
+	subrouteId: string;
 	from: string;
 	to: string;
 	routeNo: string;
@@ -503,11 +507,95 @@ export interface RouteDetailsResponse {
  */
 export interface RouteDetailsParams {
 	/**
-	 * Route ID (can be from searchRoute or other APIs, always string for consistency)
+	 * Parent route ID (from searchRoutes().parentRouteId, always string for consistency)
+	 * This is the parent route that groups multiple subroutes (UP/DOWN directions)
 	 */
-	routeId: string;
+	parentRouteId: string;
 	/**
 	 * Service type ID (optional - from GetAllServiceTypes)
 	 */
 	serviceTypeId?: string;
+}
+
+/**
+ * Raw route between stations item from GetFareRoutes API
+ */
+export interface RawRouteBetweenStationsItem {
+	id: number;
+	fromstationid: number;
+	source_code: string;
+	from_displayname: string;
+	tostationid: number;
+	destination_code: string;
+	to_displayname: string;
+	fromdistance: number;
+	todistance: number;
+	routeid: number;
+	routeno: string;
+	routename: string;
+	route_direction: string;
+	fromstationname: string;
+	tostationname: string;
+}
+
+/**
+ * Raw routes between stations API response from BMTC API
+ * Uses Zod inferred type to match schema exactly
+ */
+export type RawRoutesBetweenStationsResponse = z.infer<
+	typeof rawRoutesBetweenStationsResponseSchema
+>;
+
+/**
+ * Clean, normalized route between stations item
+ */
+export interface RouteBetweenStationsItem {
+	id: string;
+	fromStationId: string;
+	sourceCode: string;
+	fromDisplayName: string;
+	toStationId: string;
+	destinationCode: string;
+	toDisplayName: string;
+	fromDistance: number;
+	toDistance: number;
+	/**
+	 * Subroute ID (specific to direction/variant as indicated by routeDirection)
+	 * Can be used with searchByRouteDetails() endpoint
+	 * Note: This differs from parentRouteId returned by searchRoutes()
+	 */
+	subrouteId: string;
+	routeNo: string;
+	routeName: string;
+	/**
+	 * Route direction (e.g., "UP", "Down")
+	 * Indicates this is a directional subroute
+	 */
+	routeDirection: string;
+	fromStationName: string;
+	toStationName: string;
+}
+
+/**
+ * Clean, normalized routes between stations response
+ */
+export interface RoutesBetweenStationsResponse {
+	items: RouteBetweenStationsItem[];
+	message: string;
+	success: boolean;
+	rowCount: number;
+}
+
+/**
+ * Parameters for getting routes between stations
+ */
+export interface RoutesBetweenStationsParams {
+	/**
+	 * From station ID (always string for consistency)
+	 */
+	fromStationId: string;
+	/**
+	 * To station ID (always string for consistency)
+	 */
+	toStationId: string;
 }

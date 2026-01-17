@@ -277,14 +277,14 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 				expect(result.items).toBeInstanceOf(Array);
 				expect(result.items.length).toBeGreaterThan(0);
 				if (result.items.length > 0) {
-					expect(result.items[0]).toHaveProperty("routeId");
+					expect(result.items[0]).toHaveProperty("subrouteId");
 					expect(result.items[0]).toHaveProperty("routeNo");
 					expect(result.items[0]).toHaveProperty("routeName");
 					expect(result.items[0]).toHaveProperty("fromStationId");
 					expect(result.items[0]).toHaveProperty("fromStation");
 					expect(result.items[0]).toHaveProperty("toStationId");
 					expect(result.items[0]).toHaveProperty("toStation");
-					expect(typeof result.items[0].routeId).toBe("string");
+					expect(typeof result.items[0].subrouteId).toBe("string");
 				}
 
 				// Print formatted response (first 5 items only to avoid huge output)
@@ -318,10 +318,10 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 				expect(result.items).toBeInstanceOf(Array);
 				if (result.items.length > 0) {
 					expect(result.items[0]).toHaveProperty("routeNo");
-					expect(result.items[0]).toHaveProperty("routeParentId");
+					expect(result.items[0]).toHaveProperty("parentRouteId");
 					expect(result.items[0]).toHaveProperty("unionRowNo");
 					expect(result.items[0]).toHaveProperty("row");
-					expect(typeof result.items[0].routeParentId).toBe("string");
+					expect(typeof result.items[0].parentRouteId).toBe("string");
 				}
 
 				// Print formatted response
@@ -438,9 +438,9 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 		it.skipIf(!shouldRunTest("route"))(
 			"should search route details from real API",
 			async () => {
-				// Use routeId 2124 from the example
+				// Use parentRouteId 2124 from the example
 				const result = await client.routes.searchByRouteDetails({
-					routeId: "2124",
+					parentRouteId: "2124",
 				});
 
 				expect(result).toBeDefined();
@@ -462,13 +462,13 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 					expect(stationFeature.geometry.type).toBe("Point");
 					expect(stationFeature.geometry.coordinates).toHaveLength(2);
 					expect(stationFeature.properties).toHaveProperty("stopId");
-					expect(stationFeature.properties).toHaveProperty("routeId");
+					expect(stationFeature.properties).toHaveProperty("subrouteId");
 					expect(stationFeature.properties).toHaveProperty("stopName");
 					expect(stationFeature.properties).toHaveProperty("from");
 					expect(stationFeature.properties).toHaveProperty("to");
 					expect(stationFeature.properties).toHaveProperty("routeNo");
 					expect(stationFeature.properties).toHaveProperty("distanceOnStation");
-					expect(typeof stationFeature.properties.routeId).toBe("string");
+					expect(typeof stationFeature.properties.subrouteId).toBe("string");
 					expect(typeof stationFeature.properties.stopId).toBe("string");
 				}
 

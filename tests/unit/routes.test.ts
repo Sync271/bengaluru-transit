@@ -188,15 +188,15 @@ describe("RoutesAPI", () => {
 			expect(result.items[0].unionRowNo).toBe(2);
 			expect(result.items[0].row).toBe(1);
 			expect(result.items[0].routeNo).toBe("80-A");
-			expect(result.items[0].routeParentId).toBe("3598");
+			expect(result.items[0].parentRouteId).toBe("3598");
 
 			// Verify second item
 			expect(result.items[1].routeNo).toBe("80-A D31G-KBS");
-			expect(result.items[1].routeParentId).toBe("4224");
+			expect(result.items[1].parentRouteId).toBe("4224");
 
 			// Verify third item
 			expect(result.items[2].routeNo).toBe("80-A KBS-NLO-D31G");
-			expect(result.items[2].routeParentId).toBe("7563");
+			expect(result.items[2].parentRouteId).toBe("7563");
 		});
 
 		it("should handle empty search results", async () => {
@@ -305,7 +305,7 @@ describe("RoutesAPI", () => {
 			expect(result.rowCount).toBe(2);
 
 			// Verify first item
-			expect(result.items[0].routeId).toBe("1657");
+			expect(result.items[0].subrouteId).toBe("1657");
 			expect(result.items[0].routeNo).toBe("89-C UP");
 			expect(result.items[0].routeName).toBe("KBS-CVN");
 			expect(result.items[0].fromStationId).toBe("20921");
@@ -314,7 +314,7 @@ describe("RoutesAPI", () => {
 			expect(result.items[0].toStation).toBe("Cauvery Nagara");
 
 			// Verify second item
-			expect(result.items[1].routeId).toBe("1658");
+			expect(result.items[1].subrouteId).toBe("1658");
 			expect(result.items[1].routeNo).toBe("89-C DOWN");
 			expect(result.items[1].routeName).toBe("CVN-KBS");
 			expect(result.items[1].fromStationId).toBe("24379");
@@ -706,7 +706,7 @@ describe("RoutesAPI", () => {
 			} as Response);
 
 			const result = await client.routes.searchByRouteDetails({
-				routeId: "2124",
+				parentRouteId: "2124",
 			});
 
 			expect(result.success).toBe(true);
@@ -718,7 +718,7 @@ describe("RoutesAPI", () => {
 			expect(result.up.stops.features).toHaveLength(1);
 			expect(result.up.stops.features[0].geometry.type).toBe("Point");
 			expect(result.up.stops.features[0].properties.stopId).toBe("21042");
-			expect(result.up.stops.features[0].properties.routeId).toBe("3812");
+			expect(result.up.stops.features[0].properties.subrouteId).toBe("3812");
 			expect(result.up.stops.features[0].properties.stopName).toBe("Mysore Road Bus Station");
 
 			// Verify stationVehicles - GeoJSON FeatureCollection
@@ -766,7 +766,7 @@ describe("RoutesAPI", () => {
 			} as Response);
 
 			await client.routes.searchByRouteDetails({
-				routeId: "2124",
+				parentRouteId: "2124",
 				serviceTypeId: "73",
 			});
 
@@ -805,7 +805,7 @@ describe("RoutesAPI", () => {
 			} as Response);
 
 			await client.routes.searchByRouteDetails({
-				routeId: "2124",
+				parentRouteId: "2124",
 				serviceTypeId: "73",
 			});
 
@@ -881,11 +881,11 @@ describe("RoutesAPI", () => {
 			} as Response);
 
 			const result = await client.routes.searchByRouteDetails({
-				routeId: "2124",
+				parentRouteId: "2124",
 			});
 
 			// Verify all IDs are strings
-			expect(result.up.stops.features[0].properties.routeId).toBe("3812");
+			expect(result.up.stops.features[0].properties.subrouteId).toBe("3812");
 			expect(result.up.stops.features[0].properties.stopId).toBe("21042");
 			// stationVehicles is now a separate GeoJSON FeatureCollection
 			expect(result.up.stationVehicles.type).toBe("FeatureCollection");
@@ -927,7 +927,7 @@ describe("RoutesAPI", () => {
 			} as Response);
 
 			const result = await client.routes.searchByRouteDetails({
-				routeId: "2124",
+				parentRouteId: "2124",
 			});
 
 			expect(result.success).toBe(true);
@@ -957,7 +957,7 @@ describe("RoutesAPI", () => {
 			} as Response);
 
 			await expect(
-				client.routes.searchByRouteDetails({ routeId: "2124" })
+				client.routes.searchByRouteDetails({ parentRouteId: "2124" })
 			).rejects.toThrow("Invalid route details response");
 		});
 
@@ -971,8 +971,253 @@ describe("RoutesAPI", () => {
 			mockPost.mockRejectedValue(error);
 
 			await expect(
-				client.routes.searchByRouteDetails({ routeId: "2124" })
+				client.routes.searchByRouteDetails({ parentRouteId: "2124" })
 			).rejects.toThrow();
+		});
+	});
+
+	describe("getRoutesBetweenStations", () => {
+		it("should get fare routes successfully", async () => {
+			const mockRawResponse = {
+				data: [
+					{
+						id: 6,
+						fromstationid: 20623,
+						source_code: "BSK5",
+						from_displayname: "Banashankari Bus Station",
+						tostationid: 20866,
+						destination_code: "ITL",
+						to_displayname: "ITPL",
+						fromdistance: 5.29,
+						todistance: 37.43,
+						routeid: 4977,
+						routeno: "500-CA ITPL-PPLO",
+						routename: "PPLO-ITPL",
+						route_direction: "Down",
+						fromstationname: "Banashankari Bus Station",
+						tostationname: "ITPL",
+					},
+					{
+						id: 6,
+						fromstationid: 20623,
+						source_code: "BSK5",
+						from_displayname: "Banashankari Bus Station",
+						tostationid: 20866,
+						destination_code: "ITL",
+						to_displayname: "ITPL",
+						fromdistance: 0.0,
+						todistance: 27.96,
+						routeid: 2983,
+						routeno: "V-500CK",
+						routename: "BSK-KDG",
+						route_direction: "UP",
+						fromstationname: "Banashankari Bus Station",
+						tostationname: "ITPL",
+					},
+				],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 2,
+				responsecode: 200,
+			};
+
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const result = await client.routes.getRoutesBetweenStations({
+				fromStationId: "20623",
+				toStationId: "20866",
+			});
+
+			expect(result.success).toBe(true);
+			expect(result.message).toBe("Success");
+			expect(result.rowCount).toBe(2);
+			expect(result.items).toHaveLength(2);
+
+			// Verify first item
+			const firstItem = result.items[0];
+			expect(firstItem.id).toBe("6");
+			expect(firstItem.fromStationId).toBe("20623");
+			expect(firstItem.toStationId).toBe("20866");
+			expect(firstItem.subrouteId).toBe("4977");
+			expect(firstItem.routeNo).toBe("500-CA ITPL-PPLO");
+			expect(firstItem.routeName).toBe("PPLO-ITPL");
+			expect(firstItem.routeDirection).toBe("Down");
+			expect(firstItem.fromDistance).toBe(5.29);
+			expect(firstItem.toDistance).toBe(37.43);
+			expect(firstItem.sourceCode).toBe("BSK5");
+			expect(firstItem.destinationCode).toBe("ITL");
+
+			// Verify second item
+			const secondItem = result.items[1];
+			expect(secondItem.subrouteId).toBe("2983");
+			expect(secondItem.routeDirection).toBe("UP");
+			expect(secondItem.fromDistance).toBe(0.0);
+		});
+
+		it("should normalize IDs to strings", async () => {
+			const mockRawResponse = {
+				data: [
+					{
+						id: 6,
+						fromstationid: 20623,
+						source_code: "BSK5",
+						from_displayname: "Banashankari",
+						tostationid: 20866,
+						destination_code: "ITL",
+						to_displayname: "ITPL",
+						fromdistance: 5.29,
+						todistance: 37.43,
+						routeid: 4977,
+						routeno: "500-CA",
+						routename: "PPLO-ITPL",
+						route_direction: "Down",
+						fromstationname: "Banashankari",
+						tostationname: "ITPL",
+					},
+				],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 1,
+				responsecode: 200,
+			};
+
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const result = await client.routes.getRoutesBetweenStations({
+				fromStationId: "20623",
+				toStationId: "20866",
+			});
+
+			expect(typeof result.items[0].id).toBe("string");
+			expect(typeof result.items[0].fromStationId).toBe("string");
+			expect(typeof result.items[0].toStationId).toBe("string");
+			expect(typeof result.items[0].subrouteId).toBe("string");
+		});
+
+		it("should automatically map language from client config", async () => {
+			const mockRawResponse = {
+				data: [],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 0,
+				responsecode: 200,
+			};
+
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			// Test with English
+			const englishClient = new BMTCClient({ language: "en" });
+			const mockPostEn = vi.fn();
+			const kyClientEn = englishClient.getClient() as unknown as KyInstance;
+			vi.spyOn(kyClientEn, "post").mockImplementation(mockPostEn);
+			mockPostEn.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			await englishClient.routes.getRoutesBetweenStations({
+				fromStationId: "20623",
+				toStationId: "20866",
+			});
+
+			expect(mockPostEn).toHaveBeenCalledWith("GetFareRoutes", {
+				json: expect.objectContaining({
+					lan: "English",
+				}),
+			});
+
+			// Test with Kannada
+			const kannadaClient = new BMTCClient({ language: "kn" });
+			const mockPostKn = vi.fn();
+			const kyClientKn = kannadaClient.getClient() as unknown as KyInstance;
+			vi.spyOn(kyClientKn, "post").mockImplementation(mockPostKn);
+			mockPostKn.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			await kannadaClient.routes.getRoutesBetweenStations({
+				fromStationId: "20623",
+				toStationId: "20866",
+			});
+
+			expect(mockPostKn).toHaveBeenCalledWith("GetFareRoutes", {
+				json: expect.objectContaining({
+					lan: "Kannada",
+				}),
+			});
+		});
+
+		it("should validate input parameters and throw on invalid station IDs", async () => {
+			await expect(
+				client.routes.getRoutesBetweenStations({
+					fromStationId: "0", // Invalid: must be positive
+					toStationId: "20866",
+				})
+			).rejects.toThrow();
+
+			await expect(
+				client.routes.getRoutesBetweenStations({
+					fromStationId: "20623",
+					toStationId: "-1", // Invalid: must be positive
+				})
+			).rejects.toThrow();
+		});
+
+		it("should handle empty results", async () => {
+			const mockRawResponse = {
+				data: [],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 0,
+				responsecode: 200,
+			};
+
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const result = await client.routes.getRoutesBetweenStations({
+				fromStationId: "20623",
+				toStationId: "20866",
+			});
+
+			expect(result.success).toBe(true);
+			expect(result.items).toHaveLength(0);
+			expect(result.rowCount).toBe(0);
+		});
+
+		it("should validate response schema and throw on invalid data", async () => {
+			const invalidResponse = {
+				data: [
+					{
+						// Missing required fields
+						id: 6,
+					},
+				],
+				Message: "Success",
+				Issuccess: true,
+			};
+
+			mockPost.mockResolvedValue({
+				json: async () => invalidResponse,
+			} as Response);
+
+			await expect(
+				client.routes.getRoutesBetweenStations({
+					fromStationId: "20623",
+					toStationId: "20866",
+				})
+			).rejects.toThrow("Invalid routes between stations response");
 		});
 	});
 });
