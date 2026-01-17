@@ -11,6 +11,8 @@ import {
 	routeDetailsParamsSchema,
 	rawRoutesBetweenStationsResponseSchema,
 	routesBetweenStationsParamsSchema,
+	rawFareDataResponseSchema,
+	fareDataParamsSchema,
 } from "../schemas/routes";
 import {
 	createRouteFeature,
@@ -45,6 +47,10 @@ import type {
 	RoutesBetweenStationsParams,
 	RouteBetweenStationsItem,
 	RawRouteBetweenStationsItem,
+	FareDataResponse,
+	RawFareDataResponse,
+	FareDataParams,
+	FareDataItem,
 } from "../types/routes";
 import type {
 	RouteFeature,
@@ -310,7 +316,7 @@ function transformRouteBetweenStationsItem(
 		subrouteId: raw.routeid.toString(),
 		routeNo: raw.routeno,
 		routeName: raw.routename,
-		routeDirection: raw.route_direction,
+		routeDirection: raw.route_direction.toLowerCase() as "up" | "down",
 		fromStationName: raw.fromstationname,
 		toStationName: raw.tostationname,
 	};
@@ -324,6 +330,25 @@ function transformRoutesBetweenStationsResponse(
 ): RoutesBetweenStationsResponse {
 	return {
 		items: raw.data.map(transformRouteBetweenStationsItem),
+		message: raw.Message,
+		success: raw.Issuccess,
+		rowCount: raw.RowCount,
+	};
+}
+
+/**
+ * Transform raw fare data API response to clean, normalized format
+ */
+function transformFareDataResponse(
+	raw: RawFareDataResponse
+): FareDataResponse {
+	const items: FareDataItem[] = raw.data.map((item) => ({
+		serviceType: item.servicetype,
+		fare: item.fare,
+	}));
+
+	return {
+		items,
 		message: raw.Message,
 		success: raw.Issuccess,
 		rowCount: raw.RowCount,
@@ -599,5 +624,52 @@ export class RoutesAPI {
 
 		// Transform to clean, normalized format
 		return transformRoutesBetweenStationsResponse(rawResponse);
+	}
+
+	/**
+	 * Get fare data for a route between stations
+	 * @param params - Parameters from getRoutesBetweenStations() response
+	 * @returns Fare data with service types and their fares
+	 * @remarks
+	 * The parameters should come from a RouteBetweenStationsItem returned by getRoutesBetweenStations().
+	 * This endpoint requires the subroute ID (not parent route ID) along with route direction,
+	 * source and destination codes to determine the exact fare for that route variant.
+	 */
+	async getFareData(params: FareDataParams): Promise<FareDataResponse> {
+		// Validate input parameters - API expects numbers for routeid, convert from string
+		// Normalize routeDirection to lowercase for validation, then convert to uppercase for API
+		const validatedParams = validate(
+			fareDataParamsSchema,
+			{
+				routeno: params.routeNo,
+				routeid: parseInt(params.subrouteId, 10),
+				route_direction: params.routeDirection, // Already lowercase "up" | "down"
+				source_code: params.sourceCode,
+				destination_code: params.destinationCode,
+			},
+			"Invalid fare data parameters"
+		);
+
+		// Convert lowercase "up" | "down" to uppercase "UP" | "DOWN" for API request
+		const apiParams = {
+			...validatedParams,
+			route_direction: validatedParams.route_direction.toUpperCase(),
+		};
+
+		const response = await this.client.getClient().post("GetMobileFareData_v2", {
+			json: apiParams,
+		});
+
+		const data = await response.json<unknown>();
+
+		// Validate raw response with Zod schema
+		const rawResponse = validate(
+			rawFareDataResponseSchema,
+			data,
+			"Invalid fare data response"
+		);
+
+		// Transform to clean, normalized format
+		return transformFareDataResponse(rawResponse);
 	}
 }

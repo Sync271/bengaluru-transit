@@ -548,6 +548,58 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 			},
 			{ timeout: 30000 }
 		);
+
+		it.skipIf(!shouldRunTest("route") && !shouldRunTest("fare"))(
+			"should get routes between stations and fare data from real API",
+			async () => {
+				await delay(RATE_LIMIT_DELAY);
+
+				// First, get routes between stations
+				const routesResult = await client.routes.getRoutesBetweenStations({
+					fromStationId: "20623", // Banashankari Bus Station
+					toStationId: "20866", // ITPL
+				});
+
+				expect(routesResult).toBeDefined();
+				expect(routesResult.success).toBe(true);
+				expect(routesResult.items.length).toBeGreaterThan(0);
+
+				// Get the first route item for fare data
+				const firstRoute = routesResult.items[0];
+
+				// Now get fare data using the route details
+				await delay(RATE_LIMIT_DELAY);
+
+				const fareResult = await client.routes.getFareData({
+					routeNo: firstRoute.routeNo,
+					subrouteId: firstRoute.subrouteId,
+					routeDirection: firstRoute.routeDirection,
+					sourceCode: firstRoute.sourceCode,
+					destinationCode: firstRoute.destinationCode,
+				});
+
+				expect(fareResult).toBeDefined();
+				expect(fareResult.success).toBe(true);
+				expect(fareResult.items).toBeInstanceOf(Array);
+				if (fareResult.items.length > 0) {
+					const fareItem = fareResult.items[0];
+					expect(fareItem).toHaveProperty("serviceType");
+					expect(fareItem).toHaveProperty("fare");
+					expect(typeof fareItem.serviceType).toBe("string");
+					expect(typeof fareItem.fare).toBe("string");
+				}
+
+				// Verify routeDirection is normalized to lowercase
+				expect(firstRoute.routeDirection).toMatch(/^(up|down)$/);
+
+				// Print formatted response
+				console.log("\n💰 Fare Data Response:");
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+				console.log(JSON.stringify(fareResult, null, 2));
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+			},
+			{ timeout: 30000 }
+		);
 	});
 
 	describe("Locations API - Real Endpoints", () => {

@@ -3,6 +3,11 @@
  */
 
 import type { z } from "zod";
+
+/**
+ * Route direction type - lowercase normalized values
+ */
+export type RouteDirection = "up" | "down";
 import type {
 	rawRoutePointsResponseSchema,
 	rawRouteSearchResponseSchema,
@@ -10,6 +15,7 @@ import type {
 	rawTimetableResponseSchema,
 	rawRouteDetailsResponseSchema,
 	rawRoutesBetweenStationsResponseSchema,
+	rawFareDataResponseSchema,
 } from "../schemas/routes";
 import type {
 	RouteFeatureCollection,
@@ -568,10 +574,10 @@ export interface RouteBetweenStationsItem {
 	routeNo: string;
 	routeName: string;
 	/**
-	 * Route direction (e.g., "UP", "Down")
+	 * Route direction ("up" or "down" - lowercase normalized)
 	 * Indicates this is a directional subroute
 	 */
-	routeDirection: string;
+	routeDirection: RouteDirection;
 	fromStationName: string;
 	toStationName: string;
 }
@@ -598,4 +604,70 @@ export interface RoutesBetweenStationsParams {
 	 * To station ID (always string for consistency)
 	 */
 	toStationId: string;
+}
+
+/**
+ * Raw fare data item from GetMobileFareData_v2 API
+ */
+export interface RawFareDataItem {
+	servicetype: string;
+	fare: string;
+}
+
+/**
+ * Raw fare data response from GetMobileFareData_v2 API
+ * Uses Zod inferred type to match schema exactly
+ */
+export type RawFareDataResponse = z.infer<typeof rawFareDataResponseSchema>;
+
+/**
+ * Clean, normalized fare data item
+ */
+export interface FareDataItem {
+	/**
+	 * Service type name (e.g., "Vajra", "Volvo Electric")
+	 */
+	serviceType: string;
+	/**
+	 * Fare amount as string (always string for consistency, even if numeric)
+	 */
+	fare: string;
+}
+
+/**
+ * Clean, normalized fare data response
+ */
+export interface FareDataResponse {
+	items: FareDataItem[];
+	message: string;
+	success: boolean;
+	rowCount: number;
+}
+
+/**
+ * Parameters for getting fare data
+ * These parameters match the response from getRoutesBetweenStations()
+ */
+export interface FareDataParams {
+	/**
+	 * Route number (from RouteBetweenStationsItem.routeNo)
+	 */
+	routeNo: string;
+	/**
+	 * Subroute ID (from RouteBetweenStationsItem.subrouteId)
+	 * This is the subroute ID for the specific direction
+	 */
+	subrouteId: string;
+	/**
+	 * Route direction ("up" or "down" - lowercase normalized) from RouteBetweenStationsItem.routeDirection
+	 */
+	routeDirection: RouteDirection;
+	/**
+	 * Source code (from RouteBetweenStationsItem.sourceCode)
+	 */
+	sourceCode: string;
+	/**
+	 * Destination code (from RouteBetweenStationsItem.destinationCode)
+	 */
+	destinationCode: string;
 }

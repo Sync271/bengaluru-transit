@@ -1045,7 +1045,7 @@ describe("RoutesAPI", () => {
 			expect(firstItem.subrouteId).toBe("4977");
 			expect(firstItem.routeNo).toBe("500-CA ITPL-PPLO");
 			expect(firstItem.routeName).toBe("PPLO-ITPL");
-			expect(firstItem.routeDirection).toBe("Down");
+			expect(firstItem.routeDirection).toBe("down");
 			expect(firstItem.fromDistance).toBe(5.29);
 			expect(firstItem.toDistance).toBe(37.43);
 			expect(firstItem.sourceCode).toBe("BSK5");
@@ -1054,7 +1054,7 @@ describe("RoutesAPI", () => {
 			// Verify second item
 			const secondItem = result.items[1];
 			expect(secondItem.subrouteId).toBe("2983");
-			expect(secondItem.routeDirection).toBe("UP");
+			expect(secondItem.routeDirection).toBe("up");
 			expect(secondItem.fromDistance).toBe(0.0);
 		});
 
@@ -1218,6 +1218,187 @@ describe("RoutesAPI", () => {
 					toStationId: "20866",
 				})
 			).rejects.toThrow("Invalid routes between stations response");
+		});
+	});
+
+	describe("getFareData", () => {
+		it("should get fare data successfully", async () => {
+			const mockRawResponse = {
+				data: [
+					{
+						servicetype: "Vajra",
+						fare: "50",
+					},
+					{
+						servicetype: "Volvo Electric",
+						fare: "50",
+					},
+				],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 2,
+				responsecode: 200,
+			};
+
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const result = await client.routes.getFareData({
+				routeNo: "V-500CA",
+				subrouteId: "2981",
+				routeDirection: "UP",
+				sourceCode: "BSK5",
+				destinationCode: "ITL",
+			});
+
+			expect(result.success).toBe(true);
+			expect(result.message).toBe("Success");
+			expect(result.rowCount).toBe(2);
+			expect(result.items).toHaveLength(2);
+
+			// Verify first item
+			expect(result.items[0].serviceType).toBe("Vajra");
+			expect(result.items[0].fare).toBe("50");
+
+			// Verify second item
+			expect(result.items[1].serviceType).toBe("Volvo Electric");
+			expect(result.items[1].fare).toBe("50");
+		});
+
+		it("should convert string subrouteId to number in API request", async () => {
+			const mockRawResponse = {
+				data: [],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 0,
+				responsecode: 200,
+			};
+
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			await client.routes.getFareData({
+				routeNo: "V-500CA",
+				subrouteId: "2981",
+				routeDirection: "UP",
+				sourceCode: "BSK5",
+				destinationCode: "ITL",
+			});
+
+			// Verify the request includes subrouteId as number
+			expect(mockPost).toHaveBeenCalledWith(
+				"GetMobileFareData_v2",
+				expect.objectContaining({
+					json: expect.objectContaining({
+						routeno: "V-500CA",
+						routeid: 2981,
+						route_direction: "UP",
+						source_code: "BSK5",
+						destination_code: "ITL",
+					}),
+				})
+			);
+		});
+
+		it("should handle empty fare data results", async () => {
+			const mockRawResponse = {
+				data: [],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 0,
+				responsecode: 200,
+			};
+
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const result = await client.routes.getFareData({
+				routeNo: "V-500CA",
+				subrouteId: "2981",
+				routeDirection: "UP",
+				sourceCode: "BSK5",
+				destinationCode: "ITL",
+			});
+
+			expect(result.success).toBe(true);
+			expect(result.rowCount).toBe(0);
+			expect(result.items).toHaveLength(0);
+		});
+
+		it("should validate input parameters and throw on invalid data", async () => {
+			await expect(
+				client.routes.getFareData({
+					routeNo: "",
+					subrouteId: "2981",
+					routeDirection: "UP",
+					sourceCode: "BSK5",
+					destinationCode: "ITL",
+				})
+			).rejects.toThrow("Invalid fare data parameters");
+
+			await expect(
+				client.routes.getFareData({
+					routeNo: "V-500CA",
+					subrouteId: "0",
+					routeDirection: "UP",
+					sourceCode: "BSK5",
+					destinationCode: "ITL",
+				})
+			).rejects.toThrow("Invalid fare data parameters");
+		});
+
+		it("should validate response schema and throw on invalid data", async () => {
+			const invalidResponse = {
+				data: "invalid",
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 0,
+				responsecode: 200,
+			};
+
+			mockPost.mockResolvedValue({
+				json: async () => invalidResponse,
+			} as Response);
+
+			await expect(
+				client.routes.getFareData({
+					routeNo: "V-500CA",
+					subrouteId: "2981",
+					routeDirection: "UP",
+					sourceCode: "BSK5",
+					destinationCode: "ITL",
+				})
+			).rejects.toThrow("Invalid fare data response");
+		});
+
+		it("should handle API errors", async () => {
+			// Mock an error response
+			const error = new Error("Internal Server Error");
+			(error as any).response = {
+				status: 500,
+				json: async () => ({ message: "Internal Server Error" }),
+			};
+			mockPost.mockRejectedValue(error);
+
+			await expect(
+				client.routes.getFareData({
+					routeNo: "V-500CA",
+					subrouteId: "2981",
+					routeDirection: "UP",
+					sourceCode: "BSK5",
+					destinationCode: "ITL",
+				})
+			).rejects.toThrow();
 		});
 	});
 });

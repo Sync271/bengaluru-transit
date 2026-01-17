@@ -5,6 +5,15 @@ import { z } from "zod";
  */
 
 /**
+ * Schema for route direction parameter (normalized input/output)
+ * Converts to lowercase and validates enum
+ */
+export const routeDirectionSchema = z
+	.string()
+	.transform((val) => val.toLowerCase())
+	.pipe(z.enum(["up", "down"], { message: "Route direction must be 'up' or 'down'" }));
+
+/**
  * Schema for raw route between stations item from GetFareRoutes API
  */
 export const rawRouteBetweenStationsItemSchema = z.object({
@@ -20,7 +29,7 @@ export const rawRouteBetweenStationsItemSchema = z.object({
 	routeid: z.number(),
 	routeno: z.string(),
 	routename: z.string(),
-	route_direction: z.string(),
+	route_direction: z.string(), // Raw API returns string, we normalize in transformation
 	fromstationname: z.string(),
 	tostationname: z.string(),
 });
@@ -252,4 +261,35 @@ export const rawRouteDetailsResponseSchema = z.object({
 export const routeDetailsParamsSchema = z.object({
 	routeid: z.number().int().positive("Parent route ID must be a positive integer"),
 	servicetypeid: z.number().int().positive().optional(),
+});
+
+/**
+ * Schema for raw fare data item from GetMobileFareData_v2 API
+ */
+export const rawFareDataItemSchema = z.object({
+	servicetype: z.string(),
+	fare: z.string(),
+});
+
+/**
+ * Schema for raw fare data response from GetMobileFareData_v2 API
+ */
+export const rawFareDataResponseSchema = z.object({
+	data: z.array(rawFareDataItemSchema),
+	Message: z.string(),
+	Issuccess: z.boolean(),
+	exception: z.string().nullable(),
+	RowCount: z.number().int().nonnegative(),
+	responsecode: z.number().int(),
+});
+
+/**
+ * Schema for fare data request parameters
+ */
+export const fareDataParamsSchema = z.object({
+	routeno: z.string().min(1, "Route number is required"),
+	routeid: z.number().int().positive("Subroute ID must be a positive integer"),
+	route_direction: routeDirectionSchema, // Normalize to lowercase "up" | "down" for input
+	source_code: z.string().min(1, "Source code is required"),
+	destination_code: z.string().min(1, "Destination code is required"),
 });
