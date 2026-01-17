@@ -93,3 +93,48 @@ export const nearbyBusStopsParamsSchema = z.object({
 	stationname: z.string().min(1, "Station name is required"),
 	stationflag: z.number().int().positive(), // Converted to number for API
 });
+
+/**
+ * Schema for raw nearby station item from NearbyStations_v2 API
+ */
+export const rawNearbyStationItemSchema = z.object({
+	rowno: z.number().int().positive(),
+	geofenceid: z.number().int().positive(),
+	geofencename: z.string(),
+	center_lat: z.number(),
+	center_lon: z.number(),
+	towards: z.string(),
+	distance: z.number().nonnegative(),
+	totalminute: z.number().nonnegative(),
+	responsecode: z.number().int(),
+	radiuskm: z.number().nonnegative(),
+});
+
+/**
+ * Schema for raw nearby stations API response from NearbyStations_v2
+ */
+export const rawNearbyStationsResponseSchema = z.object({
+	data: z.array(rawNearbyStationItemSchema),
+	Message: z.string(),
+	Issuccess: z.boolean(),
+	exception: z.unknown().nullish(),
+	RowCount: z.number().int().nonnegative(),
+	responsecode: z.number().int(),
+});
+
+/**
+ * Schema for nearby stations request parameters
+ */
+export const nearbyStationsParamsSchema = z.object({
+	latitude: z
+		.number()
+		.min(-90, "Latitude must be between -90 and 90")
+		.max(90, "Latitude must be between -90 and 90"),
+	longitude: z
+		.number()
+		.min(-180, "Longitude must be between -180 and 180")
+		.max(180, "Longitude must be between -180 and 180"),
+	radiuskm: z.number().positive("Radius must be positive"), // API expects "radiuskm"
+	stationflag: z.number().int().positive().optional(),
+	flexiflag: z.number().int().positive().optional(),
+});

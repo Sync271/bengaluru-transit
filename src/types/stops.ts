@@ -6,6 +6,7 @@ import type { z } from "zod";
 import type {
 	rawAroundBusStopsResponseSchema,
 	rawNearbyBusStopsResponseSchema,
+	rawNearbyStationsResponseSchema,
 } from "../schemas/stops";
 import type { FacilityFeatureCollection } from "./geojson";
 
@@ -90,26 +91,26 @@ export interface AroundBusStopsParams {
 }
 
 /**
- * Station flag type for FindNearByBusStop_v2
+ * Station type for filtering stops by transport operator
  * Human-readable values that map to API numeric codes
  */
-export type StationFlag =
+export type StationType =
 	| "bmtc" // 1: BMTC Bus Stops (default)
 	| "chartered" // 2: Chartered Stops
 	| "metro" // 163: Metro Stops
 	| "ksrtc"; // 164: KSRTC bus stops
 
 /**
- * Map human-readable station flag to API numeric value
+ * Map human-readable station type to API numeric value
  */
-export function stationFlagToNumber(flag: StationFlag): number {
-	const map: Record<StationFlag, number> = {
+export function stationTypeToNumber(type: StationType): number {
+	const map: Record<StationType, number> = {
 		bmtc: 1,
 		chartered: 2,
 		metro: 163,
 		ksrtc: 164,
 	};
-	return map[flag];
+	return map[type];
 }
 
 /**
@@ -196,11 +197,168 @@ export interface NearbyBusStopsParams {
 	 */
 	stationName: string;
 	/**
-	 * Station flag (optional, defaults to "bmtc")
+	 * Station type (optional, defaults to "bmtc")
 	 * - "bmtc": BMTC Bus Stops (default)
 	 * - "chartered": Chartered Stops
 	 * - "metro": Metro Stops
 	 * - "ksrtc": KSRTC bus stops
 	 */
-	stationFlag?: StationFlag;
+	stationType?: StationType;
 }
+
+/**
+ * BMTC category type for NearbyStations_v2
+ * Used to filter specific subsets of BMTC stops
+ * Only valid when stationType is "bmtc"
+ */
+export type BMTCCategory = "airport" | "all";
+
+/**
+ * Map human-readable BMTC category to API numeric value
+ */
+export function bmtcCategoryToNumber(category: BMTCCategory): number {
+	const map: Record<BMTCCategory, number> = {
+		airport: 1, // Airport bus stops
+		all: 3, // All BMTC stops
+	};
+	return map[category];
+}
+
+/**
+ * Raw station item from NearbyStations_v2 API
+ */
+export interface RawNearbyStationItem {
+	rowno: number;
+	geofenceid: number;
+	geofencename: string;
+	center_lat: number;
+	center_lon: number;
+	towards: string;
+	distance: number;
+	totalminute: number;
+	responsecode: number;
+	radiuskm: number;
+}
+
+/**
+ * Raw nearby stations API response from NearbyStations_v2
+ * Uses Zod inferred type to match schema exactly
+ */
+export type RawNearbyStationsResponse = z.infer<
+	typeof rawNearbyStationsResponseSchema
+>;
+
+/**
+ * Clean, normalized nearby station item
+ */
+export interface NearbyStationItem {
+	/**
+	 * Row number/order
+	 */
+	rowNumber: number;
+	/**
+	 * Station ID (geofence ID, always string for consistency)
+	 */
+	stationId: string;
+	/**
+	 * Station name
+	 */
+	stationName: string;
+	/**
+	 * Latitude coordinate
+	 */
+	latitude: number;
+	/**
+	 * Longitude coordinate
+	 */
+	longitude: number;
+	/**
+	 * Direction indicator (towards)
+	 */
+	towards: string;
+	/**
+	 * Distance from search point in kilometers
+	 */
+	distance: number;
+	/**
+	 * Estimated travel time in minutes
+	 */
+	travelTimeMinutes: number;
+	/**
+	 * Response code
+	 */
+	responseCode: number;
+	/**
+	 * Search radius used in kilometers (from the API response)
+	 */
+	radius: number;
+}
+
+/**
+ * Clean, normalized nearby stations response
+ */
+export interface NearbyStationsResponse {
+	items: NearbyStationItem[];
+	message: string;
+	success: boolean;
+	rowCount: number;
+}
+
+/**
+ * Base parameters for finding nearby stations by location
+ */
+type NearbyStationsParamsBase = {
+	/**
+	 * Latitude of the search location
+	 */
+	latitude: number;
+	/**
+	 * Longitude of the search location
+	 */
+	longitude: number;
+	/**
+	 * Search radius in kilometers
+	 */
+	radius: number;
+};
+
+/**
+ * Parameters when stationType is "bmtc" - allows bmtcCategory
+ */
+type NearbyStationsParamsBMTC = NearbyStationsParamsBase & {
+	/**
+	 * Station type set to "bmtc" (required when using bmtcCategory)
+	 */
+	stationType: "bmtc";
+	/**
+	 * BMTC category (optional) - filter specific subsets of BMTC stops
+	 * - "airport": Airport bus stops only (API value: 1)
+	 * - "all": All BMTC stops (API value: 3)
+	 */
+	bmtcCategory?: BMTCCategory;
+};
+
+/**
+ * Parameters when stationType is not "bmtc" - bmtcCategory not allowed
+ */
+type NearbyStationsParamsOther = NearbyStationsParamsBase & {
+	/**
+	 * Station type (optional, defaults to "bmtc" if not provided)
+	 * - "chartered": Chartered Stops
+	 * - "metro": Metro Stops
+	 * - "ksrtc": KSRTC bus stops
+	 */
+	stationType?: "chartered" | "metro" | "ksrtc";
+	/**
+	 * BMTC category is not allowed when stationType is not "bmtc"
+	 */
+	bmtcCategory?: never;
+};
+
+/**
+ * Parameters for finding nearby stations by location
+ * When bmtcCategory is provided, stationType must be "bmtc"
+ */
+export type NearbyStationsParams =
+	| NearbyStationsParamsBMTC
+	| NearbyStationsParamsOther;

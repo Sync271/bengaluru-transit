@@ -1221,7 +1221,7 @@ describe("RoutesAPI", () => {
 		});
 	});
 
-	describe("getFareData", () => {
+	describe("getFares", () => {
 		it("should get fare data successfully", async () => {
 			const mockRawResponse = {
 				data: [
@@ -1246,7 +1246,7 @@ describe("RoutesAPI", () => {
 				json: async () => mockRawResponse,
 			} as Response);
 
-			const result = await client.routes.getFareData({
+			const result = await client.routes.getFares({
 				routeNo: "V-500CA",
 				subrouteId: "2981",
 				routeDirection: "UP",
@@ -1283,7 +1283,7 @@ describe("RoutesAPI", () => {
 				json: async () => mockRawResponse,
 			} as Response);
 
-			await client.routes.getFareData({
+			await client.routes.getFares({
 				routeNo: "V-500CA",
 				subrouteId: "2981",
 				routeDirection: "UP",
@@ -1321,7 +1321,7 @@ describe("RoutesAPI", () => {
 				json: async () => mockRawResponse,
 			} as Response);
 
-			const result = await client.routes.getFareData({
+			const result = await client.routes.getFares({
 				routeNo: "V-500CA",
 				subrouteId: "2981",
 				routeDirection: "UP",
@@ -1336,7 +1336,7 @@ describe("RoutesAPI", () => {
 
 		it("should validate input parameters and throw on invalid data", async () => {
 			await expect(
-				client.routes.getFareData({
+				client.routes.getFares({
 					routeNo: "",
 					subrouteId: "2981",
 					routeDirection: "UP",
@@ -1346,7 +1346,7 @@ describe("RoutesAPI", () => {
 			).rejects.toThrow("Invalid fare data parameters");
 
 			await expect(
-				client.routes.getFareData({
+				client.routes.getFares({
 					routeNo: "V-500CA",
 					subrouteId: "0",
 					routeDirection: "UP",
@@ -1371,7 +1371,7 @@ describe("RoutesAPI", () => {
 			} as Response);
 
 			await expect(
-				client.routes.getFareData({
+				client.routes.getFares({
 					routeNo: "V-500CA",
 					subrouteId: "2981",
 					routeDirection: "UP",
@@ -1391,7 +1391,7 @@ describe("RoutesAPI", () => {
 			mockPost.mockRejectedValue(error);
 
 			await expect(
-				client.routes.getFareData({
+				client.routes.getFares({
 					routeNo: "V-500CA",
 					subrouteId: "2981",
 					routeDirection: "UP",

@@ -4,6 +4,8 @@ import {
 	aroundBusStopsParamsSchema,
 	rawNearbyBusStopsResponseSchema,
 	nearbyBusStopsParamsSchema,
+	rawNearbyStationsResponseSchema,
+	nearbyStationsParamsSchema,
 } from "../schemas/stops";
 import {
 	createFacilityFeature,
@@ -20,8 +22,12 @@ import type {
 	RawNearbyBusStopsResponse,
 	NearbyBusStopsParams,
 	NearbyBusStopItem,
+	NearbyStationsResponse,
+	RawNearbyStationsResponse,
+	NearbyStationsParams,
+	NearbyStationItem,
 } from "../types/stops";
-import { stationFlagToNumber } from "../types/stops";
+import { stationTypeToNumber, bmtcCategoryToNumber } from "../types/stops";
 import type { FacilityFeature } from "../types/geojson";
 
 /**
@@ -100,6 +106,33 @@ function transformNearbyBusStopsResponse(
 }
 
 /**
+ * Transform raw nearby stations API response to clean, normalized format
+ */
+function transformNearbyStationsResponse(
+	raw: RawNearbyStationsResponse
+): NearbyStationsResponse {
+	const items: NearbyStationItem[] = raw.data.map((item) => ({
+		rowNumber: item.rowno,
+		stationId: item.geofenceid.toString(),
+		stationName: item.geofencename,
+		latitude: item.center_lat,
+		longitude: item.center_lon,
+		towards: item.towards,
+		distance: item.distance,
+		travelTimeMinutes: item.totalminute,
+		responseCode: item.responsecode,
+		radius: item.radiuskm,
+	}));
+
+	return {
+		items,
+		message: raw.Message,
+		success: raw.Issuccess,
+		rowCount: raw.RowCount,
+	};
+}
+
+/**
  * Stops/Stations API methods
  */
 export class StopsAPI {
@@ -142,10 +175,10 @@ export class StopsAPI {
 
 	/**
 	 * Search bus stops by station name
-	 * @param params - Parameters including station name query and optional station flag
+	 * @param params - Parameters including station name query and optional station type
 	 * @returns List of bus stops matching the query
 	 * @remarks
-	 * The stationFlag parameter determines the type of stops to search (defaults to "bmtc"):
+	 * The stationType parameter determines the type of stops to search (defaults to "bmtc"):
 	 * - "bmtc": BMTC Bus Stops (default)
 	 * - "chartered": Chartered Stops
 	 * - "metro": Metro Stops
@@ -154,16 +187,16 @@ export class StopsAPI {
 	async searchBusStops(
 		params: NearbyBusStopsParams
 	): Promise<NearbyBusStopsResponse> {
-		// Convert human-readable stationFlag to API numeric value (default to "bmtc")
-		const stationFlagValue = params.stationFlag || "bmtc";
-		const stationFlagNumber = stationFlagToNumber(stationFlagValue);
+		// Convert human-readable stationType to API numeric value (default to "bmtc")
+		const stationTypeValue = params.stationType || "bmtc";
+		const stationTypeNumber = stationTypeToNumber(stationTypeValue);
 
 		// Validate input parameters
 		const validatedParams = validate(
 			nearbyBusStopsParamsSchema,
 			{
 				stationname: params.stationName,
-				stationflag: stationFlagNumber,
+				stationflag: stationTypeNumber,
 			},
 			"Invalid nearby bus stops parameters"
 		);
@@ -186,5 +219,77 @@ export class StopsAPI {
 
 		// Transform to clean, normalized format
 		return transformNearbyBusStopsResponse(rawResponse);
+	}
+
+	/**
+	 * Find nearby stops by location within a radius
+	 * @param params - Parameters including latitude, longitude, radius, and optional filters
+	 * @returns List of nearby stops with distance and travel time information
+	 * @remarks
+	 * This endpoint returns up to 10 results. Pagination is not supported.
+	 * The bmtcCategory parameter filters specific subsets of BMTC stops:
+	 * - "airport": Airport bus stops only
+	 * - "all": All BMTC stops
+	 * Note: bmtcCategory can only be used when stationType is "bmtc"
+	 */
+	async findNearbyStops(
+		params: NearbyStationsParams
+	): Promise<NearbyStationsResponse> {
+		// Convert human-readable stationType to API numeric value (default to "bmtc")
+		let stationTypeNumber: number | undefined;
+		if (params.stationType) {
+			stationTypeNumber = stationTypeToNumber(params.stationType);
+		}
+
+		// Convert human-readable bmtcCategory to API numeric value if provided
+		// TypeScript ensures this is only possible when stationType is "bmtc"
+		let bmtcCategoryNumber: number | undefined;
+		if ("bmtcCategory" in params && params.bmtcCategory) {
+			bmtcCategoryNumber = bmtcCategoryToNumber(params.bmtcCategory);
+		}
+
+		// Build request payload
+		const requestPayload: {
+			latitude: number;
+			longitude: number;
+			radiuskm: number;
+			stationflag?: number;
+			flexiflag?: number;
+		} = {
+			latitude: params.latitude,
+			longitude: params.longitude,
+			radiuskm: params.radius,
+		};
+
+		// Add optional parameters if provided
+		if (stationTypeNumber !== undefined) {
+			requestPayload.stationflag = stationTypeNumber;
+		}
+		if (bmtcCategoryNumber !== undefined) {
+			requestPayload.flexiflag = bmtcCategoryNumber;
+		}
+
+		// Validate input parameters
+		const validatedParams = validate(
+			nearbyStationsParamsSchema,
+			requestPayload,
+			"Invalid nearby stations parameters"
+		);
+
+		const response = await this.client.getClient().post("NearbyStations_v2", {
+			json: validatedParams,
+		});
+
+		const data = await response.json<unknown>();
+
+		// Validate raw response with Zod schema
+		const rawResponse = validate(
+			rawNearbyStationsResponseSchema,
+			data,
+			"Invalid nearby stations response"
+		);
+
+		// Transform to clean, normalized format
+		return transformNearbyStationsResponse(rawResponse);
 	}
 }

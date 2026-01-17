@@ -570,7 +570,7 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 				// Now get fare data using the route details
 				await delay(RATE_LIMIT_DELAY);
 
-				const fareResult = await client.routes.getFareData({
+				const fareResult = await client.routes.getFares({
 					routeNo: firstRoute.routeNo,
 					subrouteId: firstRoute.subrouteId,
 					routeDirection: firstRoute.routeDirection,
@@ -700,14 +700,14 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 		);
 
 		it.skipIf(!shouldRunTest("stop"))(
-			"should search bus stops with different station flags from real API",
+			"should search bus stops with different station types from real API",
 			async () => {
 				await delay(RATE_LIMIT_DELAY);
 
-				// Test with metro flag
+				// Test with metro type
 				const metroResult = await client.stops.searchBusStops({
 					stationName: "hebbal",
-					stationFlag: "metro",
+					stationType: "metro",
 				});
 
 				expect(metroResult).toBeDefined();
@@ -718,6 +718,83 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 				console.log("\n🚇 Metro Stops Response:");
 				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 				console.log(JSON.stringify(metroResult, null, 2));
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+			},
+			{ timeout: 30000 }
+		);
+
+		it.skipIf(!shouldRunTest("stop"))(
+			"should find nearby stations by location from real API",
+			async () => {
+				await delay(RATE_LIMIT_DELAY);
+
+				const result = await client.stops.findNearbyStops({
+					latitude: 13.07861,
+					longitude: 77.58333,
+					radius: 10,
+				});
+
+				expect(result).toBeDefined();
+				expect(result.success).toBe(true);
+				expect(result.items).toBeInstanceOf(Array);
+				expect(result.items.length).toBeGreaterThan(0);
+
+				if (result.items.length > 0) {
+					const item = result.items[0];
+					expect(item).toHaveProperty("stationId");
+					expect(item).toHaveProperty("stationName");
+					expect(item).toHaveProperty("latitude");
+					expect(item).toHaveProperty("longitude");
+					expect(item).toHaveProperty("distance");
+					expect(item).toHaveProperty("travelTimeMinutes");
+					expect(item).toHaveProperty("towards");
+					expect(typeof item.stationId).toBe("string");
+					expect(typeof item.distance).toBe("number");
+					expect(typeof item.travelTimeMinutes).toBe("number");
+				}
+
+				// Print formatted response (first 5 items only)
+				console.log("\n📍 Nearby Stations by Location Response (first 5 items):");
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+				console.log(
+					JSON.stringify(
+						{
+							...result,
+							items: result.items.slice(0, 5),
+						},
+						null,
+						2
+					)
+				);
+				if (result.items.length > 5) {
+					console.log(`... and ${result.items.length - 5} more items`);
+				}
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+			},
+			{ timeout: 30000 }
+		);
+
+		it.skipIf(!shouldRunTest("stop"))(
+			"should find nearby stations with bmtcCategory when stationType is bmtc from real API",
+			async () => {
+				await delay(RATE_LIMIT_DELAY);
+
+				const result = await client.stops.findNearbyStops({
+					latitude: 13.07861,
+					longitude: 77.58333,
+					radius: 10,
+					stationType: "bmtc",
+					bmtcCategory: "airport",
+				});
+
+				expect(result).toBeDefined();
+				expect(result.success).toBe(true);
+				expect(result.items).toBeInstanceOf(Array);
+
+				// Print formatted response
+				console.log("\n✈️  Airport BMTC Stops Response:");
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+				console.log(JSON.stringify(result, null, 2));
 				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 			},
 			{ timeout: 30000 }

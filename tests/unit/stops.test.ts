@@ -302,7 +302,7 @@ describe("StopsAPI", () => {
 			expect(result.items[1].stationName).toBe("Hebbala Canara Bank");
 		});
 
-		it("should use default stationFlag of 'bmtc' when not provided", async () => {
+		it("should use default stationType of 'bmtc' when not provided", async () => {
 			const mockRawResponse = {
 				data: [],
 				Message: "Success",
@@ -332,7 +332,7 @@ describe("StopsAPI", () => {
 			);
 		});
 
-		it("should use provided stationFlag and convert to API numeric value", async () => {
+		it("should use provided stationType and convert to API numeric value", async () => {
 			const mockRawResponse = {
 				data: [],
 				Message: "Success",
@@ -349,7 +349,7 @@ describe("StopsAPI", () => {
 			// Test with "metro" - should convert to 163
 			await client.stops.searchBusStops({
 				stationName: "hebbal",
-				stationFlag: "metro", // Metro Stops
+				stationType: "metro", // Metro Stops
 			});
 
 			// Verify the request includes the converted stationflag
@@ -390,7 +390,7 @@ describe("StopsAPI", () => {
 				mockPost.mockClear();
 				await client.stops.searchBusStops({
 					stationName: "hebbal",
-					stationFlag: flag,
+					stationType: flag,
 				});
 
 				expect(mockPost).toHaveBeenCalledWith(
@@ -483,6 +483,261 @@ describe("StopsAPI", () => {
 					stationName: "hebbal",
 				})
 			).rejects.toThrow();
+		});
+	});
+
+	describe("findNearbyStops", () => {
+		it("should find nearby stations by location successfully", async () => {
+			const mockRawResponse = {
+				data: [
+					{
+						rowno: 1,
+						geofenceid: 30473,
+						geofencename: "Test Station A",
+						center_lat: 13.07861,
+						center_lon: 77.58333,
+						towards: "Last Stop",
+						distance: 0.0,
+						totalminute: 0.0,
+						responsecode: 200,
+						radiuskm: 1,
+					},
+					{
+						rowno: 2,
+						geofenceid: 30474,
+						geofencename: "Test Station B",
+						center_lat: 13.07852,
+						center_lon: 77.58322,
+						towards: "N E S",
+						distance: 0.02,
+						totalminute: 0.0,
+						responsecode: 200,
+						radiuskm: 1,
+					},
+				],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 2,
+				responsecode: 200,
+			};
+
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			});
+
+			const result = await client.stops.findNearbyStops({
+				latitude: 13.07861,
+				longitude: 77.58333,
+				radius: 10,
+			});
+
+			expect(result).toBeDefined();
+			expect(result.success).toBe(true);
+			expect(result.items).toHaveLength(2);
+			expect(result.items[0].stationId).toBe("30473");
+			expect(result.items[0].stationName).toBe("Test Station A");
+			expect(result.items[0].distance).toBe(0.0);
+			expect(result.items[0].travelTimeMinutes).toBe(0.0);
+			expect(result.items[0].towards).toBe("Last Stop");
+			expect(result.items[0].rowNumber).toBe(1);
+			expect(mockPost).toHaveBeenCalledWith("NearbyStations_v2", {
+				json: {
+					latitude: 13.07861,
+					longitude: 77.58333,
+					radiuskm: 10,
+				},
+			});
+		});
+
+		it("should include bmtcCategory when provided with stationType 'bmtc'", async () => {
+			const mockRawResponse = {
+				data: [],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 0,
+				responsecode: 200,
+			};
+
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			});
+
+			await client.stops.findNearbyStops({
+				latitude: 13.07861,
+				longitude: 77.58333,
+				radius: 5,
+				stationType: "bmtc",
+				bmtcCategory: "airport",
+			});
+
+			expect(mockPost).toHaveBeenCalledWith("NearbyStations_v2", {
+				json: {
+					latitude: 13.07861,
+					longitude: 77.58333,
+					radiuskm: 5,
+					stationflag: 1, // bmtc = 1
+					flexiflag: 1, // airport = 1
+				},
+			});
+		});
+
+		it("should include stationType when provided", async () => {
+			const mockRawResponse = {
+				data: [],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 0,
+				responsecode: 200,
+			};
+
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			});
+
+			await client.stops.findNearbyStops({
+				latitude: 13.07861,
+				longitude: 77.58333,
+				radius: 10,
+				stationType: "metro",
+			});
+
+			expect(mockPost).toHaveBeenCalledWith("NearbyStations_v2", {
+				json: {
+					latitude: 13.07861,
+					longitude: 77.58333,
+					radiuskm: 10,
+					stationflag: 163, // metro = 163
+				},
+			});
+		});
+
+		it("should convert bmtcCategory 'all' to API value 3", async () => {
+			const mockRawResponse = {
+				data: [],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 0,
+				responsecode: 200,
+			};
+
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			});
+
+			await client.stops.findNearbyStops({
+				latitude: 13.07861,
+				longitude: 77.58333,
+				radius: 10,
+				stationType: "bmtc",
+				bmtcCategory: "all",
+			});
+
+			expect(mockPost).toHaveBeenCalledWith("NearbyStations_v2", {
+				json: {
+					latitude: 13.07861,
+					longitude: 77.58333,
+					radiuskm: 10,
+					stationflag: 1, // bmtc = 1
+					flexiflag: 3, // all = 3
+				},
+			});
+		});
+
+		it("should normalize station IDs to strings", async () => {
+			const mockRawResponse = {
+				data: [
+					{
+						rowno: 1,
+						geofenceid: 30473,
+						geofencename: "Test Station",
+						center_lat: 13.07861,
+						center_lon: 77.58333,
+						towards: "Last Stop",
+						distance: 0.0,
+						totalminute: 0.0,
+						responsecode: 200,
+						radiuskm: 1,
+					},
+				],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 1,
+				responsecode: 200,
+			};
+
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			});
+
+			const result = await client.stops.findNearbyStops({
+				latitude: 13.07861,
+				longitude: 77.58333,
+				radius: 10,
+			});
+
+			expect(typeof result.items[0].stationId).toBe("string");
+			expect(result.items[0].stationId).toBe("30473");
+		});
+
+		it("should validate input parameters and throw on invalid coordinates", async () => {
+			await expect(
+				client.stops.findNearbyStops({
+					latitude: 100, // Invalid (> 90)
+					longitude: 77.58333,
+					radius: 10,
+				})
+			).rejects.toThrow();
+
+			await expect(
+				client.stops.findNearbyStops({
+					latitude: 13.07861,
+					longitude: 200, // Invalid (> 180)
+					radius: 10,
+				})
+			).rejects.toThrow();
+
+			await expect(
+				client.stops.findNearbyStops({
+					latitude: 13.07861,
+					longitude: 77.58333,
+					radius: -1, // Invalid (negative)
+				})
+			).rejects.toThrow();
+		});
+
+		it("should validate response schema and throw on invalid data", async () => {
+			mockPost.mockResolvedValue({
+				json: async () => ({
+					data: [{ invalid: "data" }], // Invalid structure
+					Message: "Success",
+					Issuccess: true,
+				}),
+			});
+
+			await expect(
+				client.stops.findNearbyStops({
+					latitude: 13.07861,
+					longitude: 77.58333,
+					radius: 10,
+				})
+			).rejects.toThrow();
+		});
+
+		it("should handle API errors", async () => {
+			mockPost.mockRejectedValue(new Error("Network error"));
+
+			await expect(
+				client.stops.findNearbyStops({
+					latitude: 13.07861,
+					longitude: 77.58333,
+					radius: 10,
+				})
+			).rejects.toThrow("Network error");
 		});
 	});
 });

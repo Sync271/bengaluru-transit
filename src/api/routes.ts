@@ -627,15 +627,15 @@ export class RoutesAPI {
 	}
 
 	/**
-	 * Get fare data for a route between stations
+	 * Get fares for a route between stations
 	 * @param params - Parameters from getRoutesBetweenStations() response
-	 * @returns Fare data with service types and their fares
+	 * @returns Fares with service types and their fare amounts
 	 * @remarks
 	 * The parameters should come from a RouteBetweenStationsItem returned by getRoutesBetweenStations().
 	 * This endpoint requires the subroute ID (not parent route ID) along with route direction,
 	 * source and destination codes to determine the exact fare for that route variant.
 	 */
-	async getFareData(params: FareDataParams): Promise<FareDataResponse> {
+	async getFares(params: FareDataParams): Promise<FareDataResponse> {
 		// Validate input parameters - API expects numbers for routeid, convert from string
 		// Normalize routeDirection to lowercase for validation, then convert to uppercase for API
 		const validatedParams = validate(
