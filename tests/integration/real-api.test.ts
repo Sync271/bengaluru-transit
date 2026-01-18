@@ -896,47 +896,50 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 					],
 				});
 
+				// Verify GeoJSON FeatureCollection structure
 				expect(result).toBeDefined();
-				expect(result.success).toBe(true);
-				expect(result.data).toBeInstanceOf(Array);
-				expect(result.data.length).toBeGreaterThan(0);
+				expect(result.type).toBe("FeatureCollection");
+				expect(result.features).toBeInstanceOf(Array);
+				expect(result.features.length).toBeGreaterThan(0);
 
 				// Verify structure
-				const firstStop = result.data[0];
-				expect(firstStop).toHaveProperty("tripId");
-				expect(firstStop).toHaveProperty("subrouteId");
-				expect(firstStop).toHaveProperty("routeNo");
-				expect(firstStop).toHaveProperty("stationId");
-				expect(firstStop).toHaveProperty("stationName");
-				expect(firstStop).toHaveProperty("latitude");
-				expect(firstStop).toHaveProperty("longitude");
-				expect(firstStop).toHaveProperty("scheduledArrivalTime");
-				expect(firstStop).toHaveProperty("scheduledDepartureTime");
-				expect(firstStop).toHaveProperty("isTransfer");
+				const firstFeature = result.features[0];
+				expect(firstFeature.type).toBe("Feature");
+				expect(firstFeature.geometry.type).toBe("Point");
+				expect(firstFeature.properties).toHaveProperty("tripId");
+				expect(firstFeature.properties).toHaveProperty("subrouteId");
+				expect(firstFeature.properties).toHaveProperty("routeNo");
+				expect(firstFeature.properties).toHaveProperty("stationId");
+				expect(firstFeature.properties).toHaveProperty("stationName");
+				expect(firstFeature.properties).toHaveProperty("scheduledArrivalTime");
+				expect(firstFeature.properties).toHaveProperty("scheduledDepartureTime");
+				expect(firstFeature.properties).toHaveProperty("isTransfer");
 
 				// Verify types
-				expect(typeof firstStop.tripId).toBe("string");
-				expect(typeof firstStop.subrouteId).toBe("string");
-				expect(typeof firstStop.stationId).toBe("string");
-				expect(typeof firstStop.latitude).toBe("number");
-				expect(typeof firstStop.longitude).toBe("number");
-				expect(typeof firstStop.isTransfer).toBe("boolean");
+				expect(typeof firstFeature.properties?.tripId).toBe("string");
+				expect(typeof firstFeature.properties?.subrouteId).toBe("string");
+				expect(typeof firstFeature.properties?.stationId).toBe("string");
+				if (firstFeature.geometry.type === "Point") {
+					expect(typeof firstFeature.geometry.coordinates[0]).toBe("number"); // lng
+					expect(typeof firstFeature.geometry.coordinates[1]).toBe("number"); // lat
+				}
+				expect(typeof firstFeature.properties?.isTransfer).toBe("boolean");
 
 				// Print formatted response (first 5 stops only)
-				console.log("\n🚏 Trip Stops Response (first 5 stops):");
+				console.log("\n🚏 Trip Stops Response (first 5 features):");
 				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 				console.log(
 					JSON.stringify(
 						{
 							...result,
-							data: result.data.slice(0, 5),
+							features: result.features.slice(0, 5),
 						},
 						null,
 						2
 					)
 				);
-				if (result.data.length > 5) {
-					console.log(`... and ${result.data.length - 5} more stops`);
+				if (result.features.length > 5) {
+					console.log(`... and ${result.features.length - 5} more stops`);
 				}
 				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 			},
@@ -964,6 +967,127 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 			},
 			{ timeout: 30000 }
+		);
+	});
+
+	describe("Trip Path - Real Endpoint", () => {
+		it.skipIf(!shouldRunTest("waypoint"))(
+			"should get trip path from real API",
+			async () => {
+				// Test with via points extracted from example
+				const viaPoints: Array<[number, number]> = [
+					[13.09766, 77.59166],
+					[13.09951, 77.58834],
+					[13.09797, 77.58442],
+					[13.09353, 77.58251],
+					[13.0958, 77.57921],
+					[13.09934, 77.57717],
+					[13.09774, 77.56766],
+					[13.09762, 77.563],
+					[13.0923, 77.55954],
+					[13.08945, 77.55629],
+					[13.08605, 77.5556],
+					[13.08381, 77.56027],
+					[13.08182, 77.55979],
+					[13.08005, 77.55933],
+					[13.07654, 77.55829],
+					[13.07443, 77.55743],
+					[13.06849, 77.55995],
+					[13.06492, 77.55971],
+					[13.06001, 77.559],
+					[13.05872, 77.55927],
+					[13.05575, 77.55721],
+					[13.05016, 77.55749],
+					[13.0452, 77.55669],
+					[13.04152, 77.55725],
+					[13.03467, 77.55748],
+					[13.02867, 77.56161],
+					[13.02677, 77.56181],
+					[13.02164, 77.56317],
+					[13.0179, 77.56099],
+					[13.01313, 77.56755],
+					[13.00894, 77.56918],
+					[13.00408, 77.56923],
+					[13.00238, 77.5693],
+					[12.99969, 77.56933],
+					[12.99727, 77.56945],
+					[12.99426, 77.57388],
+					[12.9898, 77.57204],
+					[12.97749, 77.57327],
+					[12.97751, 77.57141],
+					[12.97703, 77.5858],
+					[12.97386, 77.58661],
+					[12.96945, 77.58716],
+					[12.9648, 77.58778],
+					[12.96081, 77.58814],
+					[12.95249, 77.58335],
+					[12.94758, 77.58009],
+					[12.94429, 77.5801],
+					[12.94322, 77.58529],
+					[12.93879, 77.58522],
+					[12.93349, 77.58396],
+				];
+
+				const result = await client.routes.getTripPath({
+					viaPoints,
+				});
+
+				// Verify GeoJSON FeatureCollection structure
+				expect(result).toBeDefined();
+				expect(result.type).toBe("FeatureCollection");
+				expect(result.features).toBeInstanceOf(Array);
+				expect(result.features.length).toBeGreaterThan(0);
+
+				console.log(
+					`\n📍 Trip Path Response (${result.features.length} segments):`
+				);
+				console.log(
+					"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+				);
+
+				// Verify features are LineString features with valid coordinates
+				let totalPoints = 0;
+				for (const feature of result.features) {
+					expect(feature.type).toBe("Feature");
+					expect(feature.geometry.type).toBe("LineString");
+					if (feature.geometry.type === "LineString") {
+						expect(feature.geometry.coordinates).toBeInstanceOf(Array);
+						expect(feature.geometry.coordinates.length).toBeGreaterThan(0);
+						totalPoints += feature.geometry.coordinates.length;
+
+						// Validate coordinates are in valid ranges
+						for (const [lng, lat] of feature.geometry.coordinates) {
+							expect(lng).toBeGreaterThanOrEqual(-180);
+							expect(lng).toBeLessThanOrEqual(180);
+							expect(lat).toBeGreaterThanOrEqual(-90);
+							expect(lat).toBeLessThanOrEqual(90);
+						}
+					}
+				}
+
+				console.log(`Decoded segments: ${result.features.length}`);
+				console.log(`Total points: ${totalPoints}`);
+
+				if (result.features.length > 0) {
+					const firstFeature = result.features[0];
+					const lastFeature = result.features[result.features.length - 1];
+					if (firstFeature.geometry.type === "LineString" && lastFeature.geometry.type === "LineString") {
+						const firstCoords = firstFeature.geometry.coordinates[0];
+						const lastCoords = lastFeature.geometry.coordinates[lastFeature.geometry.coordinates.length - 1];
+						console.log(
+							`First coordinate: [${firstCoords[0]}, ${firstCoords[1]}]`
+						);
+						console.log(
+							`Last coordinate: [${lastCoords[0]}, ${lastCoords[1]}]`
+						);
+					}
+				}
+
+				console.log(
+					"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+				);
+			},
+			{ timeout: 60000 }
 		);
 	});
 });

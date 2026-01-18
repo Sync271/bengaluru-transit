@@ -18,6 +18,8 @@ import {
 	rawPathDetailsResponseSchema,
 	pathDetailsParamsSchema,
 	pathDetailsApiParamsSchema,
+	waypointsParamsSchema,
+	rawWaypointsResponseSchema,
 } from "../schemas/routes";
 import { WALK_ROUTE_PREFIX, WALK_PREFIX, EMPTY_SUBROUTE_ID } from "../constants/routes";
 import {
@@ -25,6 +27,7 @@ import {
 	createFeatureCollection,
 	createLocationFeature,
 } from "../utils/geojson";
+import { decode as hereDecode } from "@here/flexpolyline";
 import type { BaseClient } from "../client/base-client";
 import type {
 	RoutePointsResponse,
@@ -67,6 +70,9 @@ import type {
 	PathDetailsResponse,
 	RawPathDetailsResponse,
 	PathDetailItem,
+	WaypointsParams,
+	TripPathResponse,
+	RawWaypointsResponse,
 } from "../types/routes";
 import { tripPlannerFilterToNumber } from "../types/routes";
 import type {
@@ -74,6 +80,7 @@ import type {
 	LocationFeature,
 } from "../types/geojson";
 import type { RouteDetailStationProperties } from "../types/routes";
+import type { Position } from "geojson";
 
 /**
  * Transform raw route points API response to clean, normalized format
@@ -403,14 +410,29 @@ function transformPathDetailsResponse(
 ): PathDetailsResponse {
 	const items: PathDetailItem[] = raw.data.map(transformPathDetailItem);
 
-	return {
-		data: items,
-		message: raw.message,
-		success: raw.issuccess,
-		exception: raw.exception,
-		rowCount: raw.rowCount,
-		responseCode: raw.responsecode,
-	};
+	// Create GeoJSON FeatureCollection from stops (Point features)
+	const stationFeatures = items.map((item) =>
+		createLocationFeature(
+			[item.longitude, item.latitude],
+			{
+				tripId: item.tripId,
+				subrouteId: item.subrouteId,
+				routeNo: item.routeNo,
+				stationId: item.stationId,
+				stationName: item.stationName,
+				eta: item.eta,
+				scheduledArrivalTime: item.scheduledArrivalTime,
+				scheduledDepartureTime: item.scheduledDepartureTime,
+				actualArrivalTime: item.actualArrivalTime,
+				actualDepartureTime: item.actualDepartureTime,
+				distance: item.distance,
+				duration: item.duration,
+				isTransfer: item.isTransfer,
+			}
+		)
+	);
+
+	return createFeatureCollection(stationFeatures);
 }
 
 /**
@@ -582,6 +604,86 @@ function transformTripPlannerResponse(
 		success: raw.Issuccess,
 		rowCount: raw.RowCount,
 	};
+}
+
+/**
+ * Build centerPoints string from via points array
+ * Format: "&via=lat1,lng1&via=lat2,lng2&..."
+ */
+function buildCenterPoints(viaPoints: Array<[number, number]>): string {
+	if (viaPoints.length === 0) {
+		return "";
+	}
+	return viaPoints.map(([lat, lng]) => `&via=${lat},${lng}`).join("");
+}
+
+/**
+ * Internal path segment type for decoding
+ */
+interface PathSegment {
+	coordinates: Array<[number, number]>;
+	pointCount: number;
+}
+
+/**
+ * Decode polyline strings to path segments
+ * Each encoded string represents a path segment decoded using HERE Flexible Polyline format
+ */
+
+function decodeWaypointsToGeoJSON(encodedStrings: string[]): PathSegment[] {
+	const segments: PathSegment[] = [];
+
+	for (const encoded of encodedStrings) {
+		try {
+			// HERE decoder returns absolute coordinates in [lat, lng] format
+			const decoded = hereDecode(encoded);
+			const polyline = decoded.polyline as Array<[number, number]>;
+
+			// Convert [lat, lng] to [lng, lat] format
+			const coordinates: Position[] = polyline.map((point) => [point[1], point[0]]);
+
+			// Validate coordinates
+			const isValid = coordinates.every(
+				(coord) =>
+					coord[0] >= -180 &&
+					coord[0] <= 180 &&
+					coord[1] >= -90 &&
+					coord[1] <= 90
+			);
+
+			if (isValid && coordinates.length > 0) {
+				segments.push({
+					coordinates: coordinates as Array<[number, number]>,
+					pointCount: coordinates.length,
+				});
+			}
+		} catch (error) {
+			// Skip segments that fail to decode
+		}
+	}
+
+	return segments;
+}
+
+/**
+ * Transform raw waypoints response to GeoJSON FeatureCollection with LineString features
+ * Each encoded string from the API corresponds to one LineString segment
+ */
+function transformWaypointsResponse(raw: RawWaypointsResponse): TripPathResponse {
+	const segments = decodeWaypointsToGeoJSON(raw);
+
+	// Create LineString features for each segment (one API response string = one LineString feature)
+	// Properties are empty as they're not provided by the API
+	const lineFeatures = segments.map((segment) => ({
+		type: "Feature" as const,
+		geometry: {
+			type: "LineString" as const,
+			coordinates: segment.coordinates,
+		},
+		properties: {},
+	}));
+
+	return createFeatureCollection(lineFeatures);
 }
 
 /**
@@ -1043,5 +1145,82 @@ export class RoutesAPI {
 
 		// Transform to clean, normalized format
 		return transformPathDetailsResponse(rawResponse);
+	}
+
+	/**
+	 * Get trip path as GeoJSON FeatureCollection with LineString features
+	 * @param params - Trip path parameters with via points (bus stops)
+	 * @returns GeoJSON FeatureCollection with LineString features representing the route path
+	 * @remarks
+	 * This endpoint returns encoded polyline strings representing path segments between origin, via points, and destination.
+	 * The wrapper decodes these using HERE Flexible Polyline format into GeoJSON LineString features.
+	 * Each segment becomes a LineString feature with [lng, lat] coordinates.
+	 * 
+	 * The first point in viaPoints is the origin, the last point is the destination.
+	 * All intermediate points are treated as via points (bus stops along the route).
+	 * 
+	 * You can pass GeoJSON FeatureCollection from `getTripStops()` - coordinates will be extracted, properties ignored.
+	 */
+	async getTripPath(params: WaypointsParams): Promise<TripPathResponse> {
+		let viaPoints: Array<[number, number]>;
+
+		// Check if viaPoints is a FeatureCollection (GeoJSON)
+		if ("type" in params.viaPoints && params.viaPoints.type === "FeatureCollection") {
+			// Extract coordinates from GeoJSON FeatureCollection (ignore properties)
+			viaPoints = params.viaPoints.features
+				.filter((feature) => feature.geometry.type === "Point")
+				.map((feature) => {
+					// TypeScript knows this is Point geometry after filter
+					const geometry = feature.geometry;
+					if (geometry.type === "Point") {
+						const [lng, lat] = geometry.coordinates;
+						return [lat, lng] as [number, number]; // Convert [lng, lat] to [lat, lng]
+					}
+					return null;
+				})
+				.filter((point): point is [number, number] => point !== null);
+		} else {
+			// Validate input parameters for array of coordinates
+			const validatedParams = validate(
+				waypointsParamsSchema,
+				params,
+				"Invalid waypoints parameters"
+			);
+			viaPoints = validatedParams.viaPoints as Array<[number, number]>;
+		}
+
+		// Extract origin (first point) and destination (last point)
+		const [originLat, originLng] = viaPoints[0];
+		const [destLat, destLng] = viaPoints[viaPoints.length - 1];
+
+		// Build centerPoints string from all via points (origin + intermediate + destination)
+		const centerPoints = buildCenterPoints(viaPoints);
+
+		// Prepare API payload
+		const apiPayload = {
+			FromLat: originLat,
+			FromLong: originLng,
+			ToLat: destLat,
+			ToLong: destLng,
+			centerPoints,
+			AppName: "BMTC",
+			DeviceType: "WEB",
+		};
+
+		const response = await this.client.getClient().post("getWaypoints_v1", {
+			json: apiPayload,
+		});
+
+		const data = await response.json<unknown>();
+
+		// Validate raw response (array of strings)
+		const rawResponse = validate(
+			rawWaypointsResponseSchema,
+			data,
+			"Invalid waypoints response"
+		);
+
+		// Transform to clean, normalized format with decoded coordinates
+		return transformWaypointsResponse(rawResponse);
 	}
 }

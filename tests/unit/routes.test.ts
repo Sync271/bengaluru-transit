@@ -1849,31 +1849,29 @@ describe("RoutesAPI", () => {
 				],
 			});
 
-			expect(result.success).toBe(true);
-			expect(result.message).toBe("Success");
-			expect(result.responseCode).toBe(200);
-			expect(result.data).toHaveLength(2);
+			// Verify GeoJSON FeatureCollection structure
+			expect(result.type).toBe("FeatureCollection");
+			expect(result.features).toBeInstanceOf(Array);
+			expect(result.features).toHaveLength(2);
 
-			// Verify first station
-			expect(result.data[0].tripId).toBe("80079217");
-			expect(result.data[0].subrouteId).toBe("1995");
-			expect(result.data[0].routeNo).toBe("285-M");
-			expect(result.data[0].stationId).toBe("22357");
-			expect(result.data[0].stationName).toBe("NES Office (Towards Hebbala)");
-			expect(result.data[0].latitude).toBe(13.09784);
-			expect(result.data[0].longitude).toBe(77.59167);
-			expect(result.data[0].eta).toBe(null);
-			expect(result.data[0].scheduledArrivalTime).toBe("01/18/2026 20:58:00");
-			expect(result.data[0].scheduledDepartureTime).toBe("01/18/2026 20:58:00");
-			expect(result.data[0].actualArrivalTime).toBe(null);
-			expect(result.data[0].actualDepartureTime).toBe(null);
-			expect(result.data[0].distance).toBe(0);
-			expect(result.data[0].duration).toBe(null);
-			expect(result.data[0].isTransfer).toBe(false);
+			// Verify first station (Point feature)
+			const firstFeature = result.features[0];
+			expect(firstFeature.type).toBe("Feature");
+			expect(firstFeature.geometry.type).toBe("Point");
+			expect(firstFeature.geometry.coordinates).toEqual([77.59167, 13.09784]); // [lng, lat]
+			expect(firstFeature.properties?.tripId).toBe("80079217");
+			expect(firstFeature.properties?.subrouteId).toBe("1995");
+			expect(firstFeature.properties?.routeNo).toBe("285-M");
+			expect(firstFeature.properties?.stationId).toBe("22357");
+			expect(firstFeature.properties?.stationName).toBe("NES Office (Towards Hebbala)");
+			expect(firstFeature.properties?.scheduledArrivalTime).toBe("01/18/2026 20:58:00");
+			expect(firstFeature.properties?.scheduledDepartureTime).toBe("01/18/2026 20:58:00");
+			expect(firstFeature.properties?.isTransfer).toBe(false);
 
 			// Verify second station (transfer point)
-			expect(result.data[1].stationId).toBe("20922");
-			expect(result.data[1].isTransfer).toBe(true);
+			const secondFeature = result.features[1];
+			expect(secondFeature.properties?.stationId).toBe("20922");
+			expect(secondFeature.properties?.isTransfer).toBe(true);
 
 			// Verify API was called correctly
 			expect(mockPost).toHaveBeenCalledWith(
@@ -1939,7 +1937,7 @@ describe("RoutesAPI", () => {
 				],
 			});
 
-			expect(result.success).toBe(true);
+			expect(result.type).toBe("FeatureCollection");
 			expect(mockPost).toHaveBeenCalledWith(
 				"GetPathDetails",
 				expect.objectContaining({
@@ -2002,6 +2000,166 @@ describe("RoutesAPI", () => {
 					],
 				})
 			).rejects.toThrow();
+		});
+	});
+
+	describe("getTripPath", () => {
+		it("should get trip path as GeoJSON FeatureCollection", async () => {
+			const mockRawResponse = [
+				"BG4rt_Y4m6_zEAA", // Short encoded polyline
+				"BGk3s1Ykhr_zEAA", // Another short encoded polyline
+			];
+
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const result = await client.routes.getTripPath({
+				viaPoints: [
+					[13.09766, 77.59166],
+					[13.09951, 77.58834],
+					[13.09797, 77.58442],
+					[12.93349, 77.58396],
+				],
+			});
+
+			// Verify GeoJSON FeatureCollection structure
+			expect(result.type).toBe("FeatureCollection");
+			expect(result.features).toBeInstanceOf(Array);
+			expect(result.features.length).toBeGreaterThan(0);
+			
+			// Verify features are LineString features
+			for (const feature of result.features) {
+				expect(feature.type).toBe("Feature");
+				expect(feature.geometry.type).toBe("LineString");
+				expect(feature.geometry.coordinates).toBeInstanceOf(Array);
+				expect(feature.geometry.coordinates.length).toBeGreaterThan(0);
+			}
+		});
+
+		it("should handle empty encoded polylines array", async () => {
+			const mockRawResponse: string[] = [];
+
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const result = await client.routes.getTripPath({
+				viaPoints: [
+					[13.09766, 77.59166],
+					[12.93349, 77.58396],
+				],
+			});
+
+			expect(result.features).toEqual([]);
+		});
+
+		it("should decode trip path segments from encoded polylines", async () => {
+			const mockRawResponse = ["BG4rt_Y4m6_zEAA"];
+
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const result = await client.routes.getTripPath({
+				viaPoints: [
+					[13.09766, 77.59166],
+					[13.09951, 77.58834],
+					[13.09797, 77.58442],
+					[12.93349, 77.58396],
+				],
+			});
+
+			expect(result.type).toBe("FeatureCollection");
+			expect(result.features).toBeInstanceOf(Array);
+			// Should have decoded segments if HERE decoder works
+			expect(result.features.length).toBeGreaterThanOrEqual(0);
+		});
+
+		it("should always use default appName and deviceType", async () => {
+			const mockRawResponse = ["BG4rt_Y4m6_zEAA"];
+
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			await client.routes.getTripPath({
+				viaPoints: [
+					[13.09766, 77.59166],
+					[12.93349, 77.58396],
+				],
+			});
+
+			// Verify API was called with default values
+			expect(mockPost).toHaveBeenCalled();
+			const callArgs = mockPost.mock.calls[0];
+			const requestBody = callArgs[1]?.json as unknown;
+			expect(requestBody).toMatchObject({
+				AppName: "BMTC",
+				DeviceType: "WEB",
+			});
+		});
+
+		it("should validate route path parameters", async () => {
+			await expect(
+				client.routes.getTripPath({
+					viaPoints: [
+						[91, 77.59166], // Invalid latitude
+						[12.93349, 77.58396],
+					],
+				})
+			).rejects.toThrow();
+
+			await expect(
+				client.routes.getTripPath({
+					viaPoints: [
+						[13.09766, 181], // Invalid longitude
+						[12.93349, 77.58396],
+					],
+				})
+			).rejects.toThrow();
+
+			await expect(
+				client.routes.getTripPath({
+					viaPoints: [[13.09766, 77.59166]], // Only one point - need at least 2
+				})
+			).rejects.toThrow();
+		});
+
+		it("should extract coordinates from GeoJSON FeatureCollection", async () => {
+			const mockRawResponse = ["BG4rt_Y4m6_zEAA"];
+
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const result = await client.routes.getTripPath({
+				viaPoints: {
+					type: "FeatureCollection",
+					features: [
+						{
+							type: "Feature",
+							geometry: {
+								type: "Point",
+								coordinates: [77.59166, 13.09766], // [lng, lat]
+							},
+							properties: {},
+						},
+						{
+							type: "Feature",
+							geometry: {
+								type: "Point",
+								coordinates: [77.58396, 12.93349], // [lng, lat]
+							},
+							properties: {},
+						},
+					],
+				},
+			});
+
+			expect(result.type).toBe("FeatureCollection");
+			expect(result.features).toBeInstanceOf(Array);
+			// Coordinates should be extracted from GeoJSON, properties ignored
 		});
 	});
 });

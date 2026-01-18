@@ -1158,13 +1158,31 @@ export type RawPathDetailsResponse = z.infer<typeof rawPathDetailsResponseSchema
 
 /**
  * Path details response from GetPathDetails API
+ * Returns GeoJSON FeatureCollection of Point features (bus stops)
  */
-export interface PathDetailsResponse {
-	/** Array of path detail items (stations along the trip path) */
-	data: PathDetailItem[];
-	message: string;
-	success: boolean;
-	exception: string | null;
-	rowCount: number;
-	responseCode: number;
+export type PathDetailsResponse = FeatureCollection;
+
+/**
+ * Waypoints request parameters for getWaypoints_v1 API
+ * The first point is the origin, the last point is the destination.
+ */
+export interface WaypointsParams {
+	/** Bus stops along the route path.
+	 * Can be either:
+	 * - Array of [latitude, longitude] tuples
+	 * - GeoJSON FeatureCollection with Point features (coordinates will be extracted, properties ignored)
+	 * Must have at least 2 points (origin and destination).
+	 */
+	viaPoints: Array<[number, number]> | FeatureCollection;
 }
+
+/**
+ * Raw waypoints response from getWaypoints_v1 API
+ */
+export type RawWaypointsResponse = string[];
+
+/**
+ * Trip path response from getWaypoints_v1 API
+ * Returns GeoJSON FeatureCollection with LineString features (route path segments)
+ */
+export type TripPathResponse = FeatureCollection;

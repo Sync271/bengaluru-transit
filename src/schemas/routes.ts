@@ -499,3 +499,22 @@ export const rawPathDetailsResponseSchema = z.object({
 	rowCount: z.number().int().nonnegative(),
 	responsecode: z.number().int(),
 });
+
+/**
+ * Coordinate tuple schema [latitude, longitude]
+ */
+const coordinateTupleSchema = z.tuple([z.number().min(-90).max(90), z.number().min(-180).max(180)]);
+
+/**
+ * Schema for waypoints request parameters
+ */
+export const waypointsParamsSchema = z.object({
+	viaPoints: z
+		.array(coordinateTupleSchema)
+		.min(2, "At least 2 points required (origin and destination)"),
+});
+
+/**
+ * Schema for raw waypoints response (array of encoded strings)
+ */
+export const rawWaypointsResponseSchema = z.array(z.string());
