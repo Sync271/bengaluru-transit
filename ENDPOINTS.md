@@ -23,6 +23,7 @@ This file tracks the progress of implementing wrappers for BMTC API endpoints.
 - [x] `/FindNearByBusStop_v2` - Search bus stops by station name
 - [x] `/NearbyStations_v2` - Find nearby stations by location within a radius
 - [x] `/TripPlannerMSMD` - Trip planner with multiple route options (direct and transfer routes)
+- [x] `/GetPathDetails` - Get detailed station-by-station path information for trip legs
 
 ## In Progress 🚧
 
@@ -31,11 +32,12 @@ None currently.
 ## Pending Endpoints 📋
 
 - [ ] `/GetTimetableByStation_v4` - Get timetable by station
+- [ ] `/getWaypoints_v1` - Get waypoints
 
 ## Total Progress
 
-- **Completed:** 19 / 20 (95%)
-- **Remaining:** 1 endpoint
+- **Completed:** 20 / 22 (91%)
+- **Remaining:** 2 endpoints
 
 **Note:** `/AroundBusStops_v2_Webportal` is the same as `/AroundBusStops_v2` (already completed), so it's been removed from pending.
 

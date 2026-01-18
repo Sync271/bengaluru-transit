@@ -439,3 +439,63 @@ export const tripPlannerParamsSchema = z
 				"Must provide exactly one of: (fromStationId) or (fromLatitude, fromLongitude), and exactly one of: (toStationId) or (toLatitude, toLongitude)",
 		}
 	);
+
+/**
+ * Schema for path detail request item
+ */
+export const pathDetailRequestItemSchema = z.object({
+	tripId: z.number().int().positive("Trip ID must be a positive integer"),
+	fromStationId: z.number().int().positive("From station ID must be a positive integer"),
+	toStationId: z.number().int().positive("To station ID must be a positive integer"),
+});
+
+/**
+ * Schema for path details request parameters (user-facing, uses 'trips')
+ */
+export const pathDetailsParamsSchema = z.object({
+	trips: z
+		.array(pathDetailRequestItemSchema)
+		.min(1, "At least one trip leg is required"),
+});
+
+/**
+ * Schema for path details API request parameters (API format, uses 'data')
+ */
+export const pathDetailsApiParamsSchema = z.object({
+	data: z
+		.array(pathDetailRequestItemSchema)
+		.min(1, "At least one path detail item is required"),
+});
+
+/**
+ * Schema for raw path detail item from GetPathDetails API
+ */
+export const rawPathDetailItemSchema = z.object({
+	tripId: z.number(),
+	routeId: z.number(),
+	routeNo: z.string(),
+	stationId: z.number(),
+	stationName: z.string(),
+	latitude: z.number(),
+	longitude: z.number(),
+	eta: z.string(),
+	sch_arrivaltime: z.string(),
+	sch_departuretime: z.string(),
+	actual_arrivaltime: z.string(),
+	actual_departuretime: z.string(),
+	distance: z.number(),
+	duration: z.string().nullable(),
+	isTransfer: z.boolean(),
+});
+
+/**
+ * Schema for raw path details response from GetPathDetails API
+ */
+export const rawPathDetailsResponseSchema = z.object({
+	data: z.array(rawPathDetailItemSchema),
+	message: z.string(),
+	issuccess: z.boolean(),
+	exception: z.string().nullable(),
+	rowCount: z.number().int().nonnegative(),
+	responsecode: z.number().int(),
+});

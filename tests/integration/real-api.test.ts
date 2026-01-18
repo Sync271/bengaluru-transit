@@ -805,8 +805,14 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 		it.skipIf(!shouldRunTest("trip"))(
 			"should plan trip from location to station from real API",
 			async () => {
+				// Create a client with longer timeout for TripPlannerMSMD (can be slow)
+				const tripClient = new BMTCClient({
+					language: "en",
+					timeout: 60000, // 60 seconds for slow trip planner endpoint
+				});
+
 				// Test with location to station (matching the user's example request)
-				const result = await client.routes.planTrip({
+				const result = await tripClient.routes.planTrip({
 					fromLatitude: 13.079349339853941,
 					fromLongitude: 77.58814089936395,
 					toStationId: "38888", // Kempegowda Bus Station
@@ -873,8 +879,69 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 				}
 				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 			},
-			{ timeout: 30000 }
-		);
+			{ timeout: 60000 }
+		); // 60 second timeout for TripPlannerMSMD (can be slow)
+
+		it.skipIf(!shouldRunTest("trip"))(
+			"should get trip stops from real API",
+			async () => {
+				// Use example trip leg from user's request (tripId, fromStationId, toStationId)
+				const result = await client.routes.getTripStops({
+					trips: [
+						{
+							tripId: 80079217,
+							fromStationId: 22357,
+							toStationId: 20922,
+						},
+					],
+				});
+
+				expect(result).toBeDefined();
+				expect(result.success).toBe(true);
+				expect(result.data).toBeInstanceOf(Array);
+				expect(result.data.length).toBeGreaterThan(0);
+
+				// Verify structure
+				const firstStop = result.data[0];
+				expect(firstStop).toHaveProperty("tripId");
+				expect(firstStop).toHaveProperty("subrouteId");
+				expect(firstStop).toHaveProperty("routeNo");
+				expect(firstStop).toHaveProperty("stationId");
+				expect(firstStop).toHaveProperty("stationName");
+				expect(firstStop).toHaveProperty("latitude");
+				expect(firstStop).toHaveProperty("longitude");
+				expect(firstStop).toHaveProperty("scheduledArrivalTime");
+				expect(firstStop).toHaveProperty("scheduledDepartureTime");
+				expect(firstStop).toHaveProperty("isTransfer");
+
+				// Verify types
+				expect(typeof firstStop.tripId).toBe("string");
+				expect(typeof firstStop.subrouteId).toBe("string");
+				expect(typeof firstStop.stationId).toBe("string");
+				expect(typeof firstStop.latitude).toBe("number");
+				expect(typeof firstStop.longitude).toBe("number");
+				expect(typeof firstStop.isTransfer).toBe("boolean");
+
+				// Print formatted response (first 5 stops only)
+				console.log("\n🚏 Trip Stops Response (first 5 stops):");
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+				console.log(
+					JSON.stringify(
+						{
+							...result,
+							data: result.data.slice(0, 5),
+						},
+						null,
+						2
+					)
+				);
+				if (result.data.length > 5) {
+					console.log(`... and ${result.data.length - 5} more stops`);
+				}
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+			},
+			{ timeout: 60000 }
+		); // 60 second timeout for chained API calls
 	});
 
 	describe("Client Configuration", () => {

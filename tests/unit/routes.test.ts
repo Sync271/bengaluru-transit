@@ -1787,4 +1787,221 @@ describe("RoutesAPI", () => {
 			).rejects.toThrow();
 		});
 	});
+
+	describe("getTripStops", () => {
+		it("should get path details successfully", async () => {
+			const mockRawResponse = {
+				data: [
+					{
+						tripId: 80079217,
+						routeId: 1995,
+						routeNo: "285-M",
+						stationId: 22357,
+						stationName: "NES Office (Towards Hebbala)",
+						latitude: 13.09784,
+						longitude: 77.59167,
+						eta: "",
+						sch_arrivaltime: "01/18/2026 20:58:00",
+						sch_departuretime: "01/18/2026 20:58:00",
+						actual_arrivaltime: "",
+						actual_departuretime: "",
+						distance: 0,
+						duration: null,
+						isTransfer: false,
+					},
+					{
+						tripId: 80079217,
+						routeId: 1995,
+						routeNo: "285-M",
+						stationId: 20922,
+						stationName: "Kempegowda Bus Station (Towards Arrival)",
+						latitude: 12.97749,
+						longitude: 77.57327,
+						eta: "",
+						sch_arrivaltime: "01/18/2026 21:36:00",
+						sch_departuretime: "01/18/2026 21:36:00",
+						actual_arrivaltime: "",
+						actual_departuretime: "",
+						distance: 0,
+						duration: null,
+						isTransfer: true,
+					},
+				],
+				message: "Success",
+				issuccess: true,
+				exception: null,
+				rowCount: 0,
+				responsecode: 200,
+			};
+
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const result = await client.routes.getTripStops({
+				trips: [
+					{
+						tripId: 80079217,
+						fromStationId: 22357,
+						toStationId: 20922,
+					},
+				],
+			});
+
+			expect(result.success).toBe(true);
+			expect(result.message).toBe("Success");
+			expect(result.responseCode).toBe(200);
+			expect(result.data).toHaveLength(2);
+
+			// Verify first station
+			expect(result.data[0].tripId).toBe("80079217");
+			expect(result.data[0].subrouteId).toBe("1995");
+			expect(result.data[0].routeNo).toBe("285-M");
+			expect(result.data[0].stationId).toBe("22357");
+			expect(result.data[0].stationName).toBe("NES Office (Towards Hebbala)");
+			expect(result.data[0].latitude).toBe(13.09784);
+			expect(result.data[0].longitude).toBe(77.59167);
+			expect(result.data[0].eta).toBe(null);
+			expect(result.data[0].scheduledArrivalTime).toBe("01/18/2026 20:58:00");
+			expect(result.data[0].scheduledDepartureTime).toBe("01/18/2026 20:58:00");
+			expect(result.data[0].actualArrivalTime).toBe(null);
+			expect(result.data[0].actualDepartureTime).toBe(null);
+			expect(result.data[0].distance).toBe(0);
+			expect(result.data[0].duration).toBe(null);
+			expect(result.data[0].isTransfer).toBe(false);
+
+			// Verify second station (transfer point)
+			expect(result.data[1].stationId).toBe("20922");
+			expect(result.data[1].isTransfer).toBe(true);
+
+			// Verify API was called correctly
+			expect(mockPost).toHaveBeenCalledWith(
+				"GetPathDetails",
+				expect.objectContaining({
+					json: {
+						data: [
+							{
+								tripId: 80079217,
+								fromStationId: 22357,
+								toStationId: 20922,
+							},
+						],
+					},
+				})
+			);
+		});
+
+		it("should handle multiple trip legs", async () => {
+			const mockRawResponse = {
+				data: [
+					{
+						tripId: 80079217,
+						routeId: 1995,
+						routeNo: "285-M",
+						stationId: 22357,
+						stationName: "Station A",
+						latitude: 13.09784,
+						longitude: 77.59167,
+						eta: "",
+						sch_arrivaltime: "01/18/2026 20:58:00",
+						sch_departuretime: "01/18/2026 20:58:00",
+						actual_arrivaltime: "",
+						actual_departuretime: "",
+						distance: 0,
+						duration: null,
+						isTransfer: false,
+					},
+				],
+				message: "Success",
+				issuccess: true,
+				exception: null,
+				rowCount: 0,
+				responsecode: 200,
+			};
+
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const result = await client.routes.getTripStops({
+				trips: [
+					{
+						tripId: 80079217,
+						fromStationId: 22357,
+						toStationId: 20922,
+					},
+					{
+						tripId: 80211270,
+						fromStationId: 20921,
+						toStationId: 21447,
+					},
+				],
+			});
+
+			expect(result.success).toBe(true);
+			expect(mockPost).toHaveBeenCalledWith(
+				"GetPathDetails",
+				expect.objectContaining({
+					json: {
+						data: [
+							{
+								tripId: 80079217,
+								fromStationId: 22357,
+								toStationId: 20922,
+							},
+							{
+								tripId: 80211270,
+								fromStationId: 20921,
+								toStationId: 21447,
+							},
+						],
+					},
+				})
+			);
+		});
+
+		it("should validate empty trips array", async () => {
+			await expect(
+				client.routes.getTripStops({
+					trips: [],
+				})
+			).rejects.toThrow("At least one trip leg is required");
+		});
+
+		it("should validate required fields in path detail items", async () => {
+			await expect(
+				client.routes.getTripStops({
+					trips: [
+						{
+							tripId: 0, // Invalid: must be positive
+							fromStationId: 22357,
+							toStationId: 20922,
+						} as any,
+					],
+				})
+			).rejects.toThrow("Trip ID must be a positive integer");
+		});
+
+		it("should handle API errors", async () => {
+			const error = new Error("Internal Server Error");
+			(error as any).response = {
+				status: 500,
+				json: async () => ({ message: "Internal Server Error" }),
+			};
+			mockPost.mockRejectedValue(error);
+
+			await expect(
+				client.routes.getTripStops({
+					trips: [
+						{
+							tripId: 80079217,
+							fromStationId: 22357,
+							toStationId: 20922,
+						},
+					],
+				})
+			).rejects.toThrow();
+		});
+	});
 });

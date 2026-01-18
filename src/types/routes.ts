@@ -17,6 +17,7 @@ import type {
 	rawRoutesBetweenStationsResponseSchema,
 	rawFareDataResponseSchema,
 	rawTripPlannerResponseSchema,
+	rawPathDetailsResponseSchema,
 } from "../schemas/routes";
 import type {
 	RouteFeatureCollection,
@@ -1089,4 +1090,81 @@ export interface TripPlannerResponse {
 	message: string;
 	success: boolean;
 	rowCount: number;
+}
+
+/**
+ * Path detail request item - represents a trip leg segment
+ * Used to get detailed station-by-station information for a specific trip segment
+ * Typically derived from TripPlannerPathLeg (tripId, fromStationId, toStationId)
+ */
+export interface PathDetailRequestItem {
+	/** Trip ID for the bus journey */
+	tripId: number;
+	/** Starting station ID */
+	fromStationId: number;
+	/** Ending station ID */
+	toStationId: number;
+}
+
+/**
+ * Path detail request parameters
+ */
+export interface PathDetailsParams {
+	/** Array of trip leg segments to get stops for */
+	trips: PathDetailRequestItem[];
+}
+
+/**
+ * Single path detail item from GetPathDetails API
+ * Represents a single station in a trip's path
+ */
+export interface PathDetailItem {
+	/** Trip ID for the bus journey */
+	tripId: string;
+	/** Subroute ID (specific directional variant) */
+	subrouteId: string;
+	/** Route number (e.g., "285-M", "25-A") */
+	routeNo: string;
+	/** Station ID */
+	stationId: string;
+	/** Station name */
+	stationName: string;
+	/** Station latitude */
+	latitude: number;
+	/** Station longitude */
+	longitude: number;
+	/** Estimated time of arrival (may be empty string) */
+	eta: string | null;
+	/** Scheduled arrival time (format: "MM/DD/YYYY HH:mm:ss") */
+	scheduledArrivalTime: string | null;
+	/** Scheduled departure time (format: "MM/DD/YYYY HH:mm:ss") */
+	scheduledDepartureTime: string | null;
+	/** Actual arrival time (may be empty string) */
+	actualArrivalTime: string | null;
+	/** Actual departure time (may be empty string) */
+	actualDepartureTime: string | null;
+	/** Distance from previous station (in km) */
+	distance: number;
+	/** Duration (may be null) */
+	duration: string | null;
+	/** Whether this is a transfer point */
+	isTransfer: boolean;
+}
+
+/**
+ * Raw path details response from GetPathDetails API
+ */
+export type RawPathDetailsResponse = z.infer<typeof rawPathDetailsResponseSchema>;
+
+/**
+ * Path details response from GetPathDetails API
+ */
+export interface PathDetailsResponse {
+	/** Array of path detail items (stations along the trip path) */
+	data: PathDetailItem[];
+	message: string;
+	success: boolean;
+	exception: string | null;
+	rowCount: number;
+	responseCode: number;
 }

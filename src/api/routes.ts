@@ -15,6 +15,9 @@ import {
 	fareDataParamsSchema,
 	rawTripPlannerResponseSchema,
 	tripPlannerParamsSchema,
+	rawPathDetailsResponseSchema,
+	pathDetailsParamsSchema,
+	pathDetailsApiParamsSchema,
 } from "../schemas/routes";
 import { WALK_ROUTE_PREFIX, WALK_PREFIX, EMPTY_SUBROUTE_ID } from "../constants/routes";
 import {
@@ -60,6 +63,10 @@ import type {
 	TripPlannerPathLeg,
 	RawTripPlannerPathLeg,
 	TripPlannerRoute,
+	PathDetailsParams,
+	PathDetailsResponse,
+	RawPathDetailsResponse,
+	PathDetailItem,
 } from "../types/routes";
 import { tripPlannerFilterToNumber } from "../types/routes";
 import type {
@@ -362,6 +369,47 @@ function transformFareDataResponse(
 		message: raw.Message,
 		success: raw.Issuccess,
 		rowCount: raw.RowCount,
+	};
+}
+
+/**
+ * Transform raw path detail item to clean, normalized format
+ */
+function transformPathDetailItem(raw: RawPathDetailsResponse["data"][0]): PathDetailItem {
+	return {
+		tripId: raw.tripId.toString(),
+		subrouteId: raw.routeId.toString(),
+		routeNo: raw.routeNo,
+		stationId: raw.stationId.toString(),
+		stationName: raw.stationName,
+		latitude: raw.latitude,
+		longitude: raw.longitude,
+		eta: raw.eta || null,
+		scheduledArrivalTime: raw.sch_arrivaltime || null,
+		scheduledDepartureTime: raw.sch_departuretime || null,
+		actualArrivalTime: raw.actual_arrivaltime || null,
+		actualDepartureTime: raw.actual_departuretime || null,
+		distance: raw.distance,
+		duration: raw.duration,
+		isTransfer: raw.isTransfer,
+	};
+}
+
+/**
+ * Transform raw path details response to clean, normalized format
+ */
+function transformPathDetailsResponse(
+	raw: RawPathDetailsResponse
+): PathDetailsResponse {
+	const items: PathDetailItem[] = raw.data.map(transformPathDetailItem);
+
+	return {
+		data: items,
+		message: raw.message,
+		success: raw.issuccess,
+		exception: raw.exception,
+		rowCount: raw.rowCount,
+		responseCode: raw.responsecode,
 	};
 }
 
@@ -936,5 +984,64 @@ export class RoutesAPI {
 
 		// Transform to clean, normalized format
 		return transformTripPlannerResponse(rawResponse);
+	}
+
+	/**
+	 * Get all stops/stations along trip legs
+	 * @param params - Path details parameters with array of trip leg segments
+	 * @returns All stops along the trip legs with station details, scheduled times, and coordinates
+	 * @remarks
+	 * This endpoint is typically used after planning a trip to get detailed
+	 * station-by-station information for each leg of the journey.
+	 * Each item in the request should have tripId, fromStationId, and toStationId
+	 * (typically from TripPlannerPathLeg).
+	 * 
+	 * Note: This returns stops/stations, not a geographic path (for route paths, use getRoutePoints).
+	 */
+	async getTripStops(params: PathDetailsParams): Promise<PathDetailsResponse> {
+		// Validate user-facing params first
+		const validatedUserParams = validate(
+			pathDetailsParamsSchema,
+			params,
+			"Invalid path details parameters"
+		);
+
+		// Convert string IDs to numbers and map 'trips' to 'data' for API
+		const apiPayload = {
+			data: validatedUserParams.trips.map((item) => ({
+				tripId: typeof item.tripId === "string" ? parseInt(item.tripId, 10) : item.tripId,
+				fromStationId:
+					typeof item.fromStationId === "string"
+						? parseInt(item.fromStationId, 10)
+						: item.fromStationId,
+				toStationId:
+					typeof item.toStationId === "string"
+						? parseInt(item.toStationId, 10)
+						: item.toStationId,
+			})),
+		};
+
+		// Validate API payload format
+		const validatedParams = validate(
+			pathDetailsApiParamsSchema,
+			apiPayload,
+			"Invalid path details API parameters"
+		);
+
+		const response = await this.client.getClient().post("GetPathDetails", {
+			json: validatedParams,
+		});
+
+		const data = await response.json<unknown>();
+
+		// Validate raw response with Zod schema
+		const rawResponse = validate(
+			rawPathDetailsResponseSchema,
+			data,
+			"Invalid path details response"
+		);
+
+		// Transform to clean, normalized format
+		return transformPathDetailsResponse(rawResponse);
 	}
 }
