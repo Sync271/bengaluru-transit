@@ -1401,4 +1401,390 @@ describe("RoutesAPI", () => {
 			).rejects.toThrow();
 		});
 	});
+
+	describe("planTrip", () => {
+		it("should plan trip from location to station successfully", async () => {
+			const mockRawResponse = {
+				data: {
+					directRoutes: [],
+					transferRoutes: [
+						[
+							{
+								pathSrno: 44175441,
+								transferSrNo: 0,
+								tripId: 0,
+								routeid: 0,
+								routeno: "walk_source",
+								schNo: null,
+								vehicleId: 0,
+								busNo: null,
+								distance: 0.58803937187,
+								duration: "00:05:00",
+								fromStationId: 0,
+								fromStationName: "Your Location",
+								toStationId: 35376,
+								toStationName: "Jakkur Aerodrum(Towards - Hebbala)",
+								etaFromStation: null,
+								etaToStation: null,
+								serviceTypeId: 0,
+								fromLatitude: 13.079349339853941,
+								fromLongitude: 77.58814089936395,
+								toLatitude: 0.0,
+								toLongitude: 0.0,
+								routeParentId: 0,
+								totalDuration: "00:05:00",
+								waitingDuration: null,
+								platformnumber: "0",
+								baynumber: 0,
+								devicestatusnameflag: "Tracking device is not installed",
+								devicestatusflag: 3,
+								srno: 0,
+								approx_fare: 0.0,
+								fromstagenumber: 0,
+								tostagenumber: 0,
+								minsrno: 0,
+								maxsrno: 0,
+								tollfees: 0,
+								totalStages: null,
+							},
+							{
+								pathSrno: 44175441,
+								transferSrNo: 0,
+								tripId: 80120150,
+								routeid: 1995,
+								routeno: "285-M",
+								schNo: "EV-285M/15",
+								vehicleId: 26298,
+								busNo: "KA51AH4541",
+								distance: 12.774620947049215,
+								duration: "00:33:00",
+								fromStationId: 35376,
+								fromStationName: "Jakkur Aerodrum(Towards - Hebbala)",
+								toStationId: 38888,
+								toStationName: "Kempegowda Bus Station(Towards - Arrival)",
+								etaFromStation: "01/18/2026 17:41:00",
+								etaToStation: "01/18/2026 18:14:00",
+								serviceTypeId: 72,
+								fromLatitude: 0.0,
+								fromLongitude: 0.0,
+								toLatitude: 0.0,
+								toLongitude: 0.0,
+								routeParentId: 1173,
+								totalDuration: "00:33:00",
+								waitingDuration: null,
+								platformnumber: "0",
+								baynumber: 0,
+								devicestatusnameflag: "Running",
+								devicestatusflag: 4,
+								srno: 47,
+								approx_fare: 24.0,
+								fromstagenumber: 0,
+								tostagenumber: 0,
+								minsrno: 0,
+								maxsrno: 0,
+								tollfees: 0,
+								totalStages: null,
+							},
+						],
+					],
+				},
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 0,
+				responsecode: 200,
+			};
+
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const result = await client.routes.planTrip({
+				fromLatitude: 13.079349339853941,
+				fromLongitude: 77.58814089936395,
+				toStationId: "38888",
+				serviceTypeId: "72",
+			});
+
+			expect(result.success).toBe(true);
+			expect(result.message).toBe("Success");
+			expect(result.routes).toHaveLength(1);
+			expect(result.routes[0].legs).toHaveLength(2);
+
+			const route = result.routes[0];
+			
+			// Verify computed totals
+			expect(route.totalFare).toBe(24.0);
+			expect(route.totalDistance).toBeGreaterThan(0);
+			expect(route.transferCount).toBe(0); // One bus segment = no transfers
+			expect(route.hasWalking).toBe(true);
+
+			// Verify first leg (walking segment)
+			const walkLeg = route.legs[0];
+			expect(walkLeg.routeNo).toBe("walk_source");
+			expect(walkLeg.fromStationName).toBe("Your Location");
+			expect(walkLeg.toStationId).toBe("35376");
+			expect(walkLeg.approxFare).toBe(0.0);
+
+			// Verify second leg (bus segment)
+			const busLeg = route.legs[1];
+			expect(busLeg.routeNo).toBe("285-M");
+			expect(busLeg.busNo).toBe("KA51AH4541");
+			expect(busLeg.approxFare).toBe(24.0);
+			expect(busLeg.serviceTypeId).toBe("72");
+		});
+
+		it("should plan trip from station to station successfully", async () => {
+			const mockRawResponse = {
+				data: {
+					directRoutes: [],
+					transferRoutes: [],
+				},
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 0,
+				responsecode: 200,
+			};
+
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const result = await client.routes.planTrip({
+				fromStationId: "35376",
+				toStationId: "38888",
+			});
+
+			expect(result.success).toBe(true);
+			expect(result.routes).toHaveLength(0);
+		});
+
+		it("should plan trip from location to location successfully", async () => {
+			const mockRawResponse = {
+				data: {
+					directRoutes: [],
+					transferRoutes: [],
+				},
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 0,
+				responsecode: 200,
+			};
+
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const result = await client.routes.planTrip({
+				fromLatitude: 13.079349339853941,
+				fromLongitude: 77.58814089936395,
+				toLatitude: 12.9536,
+				toLongitude: 77.54378,
+			});
+
+			expect(result.success).toBe(true);
+		});
+
+		it("should plan trip from station to location successfully", async () => {
+			const mockRawResponse = {
+				data: {
+					directRoutes: [],
+					transferRoutes: [],
+				},
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 0,
+				responsecode: 200,
+			};
+
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const result = await client.routes.planTrip({
+				fromStationId: "35376",
+				toLatitude: 12.9536,
+				toLongitude: 77.54378,
+			});
+
+			expect(result.success).toBe(true);
+		});
+
+		it("should handle optional parameters (fromDateTime, filterBy)", async () => {
+			const mockRawResponse = {
+				data: {
+					directRoutes: [],
+					transferRoutes: [],
+				},
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 0,
+				responsecode: 200,
+			};
+
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const futureDate = new Date();
+			futureDate.setHours(futureDate.getHours() + 1);
+			const fromDateTime = `${futureDate.getFullYear()}-${String(
+				futureDate.getMonth() + 1
+			).padStart(2, "0")}-${String(futureDate.getDate()).padStart(2, "0")} ${String(
+				futureDate.getHours()
+			).padStart(2, "0")}:${String(futureDate.getMinutes()).padStart(2, "0")}`;
+
+			await client.routes.planTrip({
+				fromLatitude: 13.079349339853941,
+				fromLongitude: 77.58814089936395,
+				toStationId: "38888",
+				serviceTypeId: "72",
+				fromDateTime,
+				filterBy: "minimum-transfers",
+			});
+
+			// Verify the request includes optional parameters
+			expect(mockPost).toHaveBeenCalledWith(
+				"TripPlannerMSMD",
+				expect.objectContaining({
+					json: expect.objectContaining({
+						fromLatitude: 13.079349339853941,
+						fromLongitude: 77.58814089936395,
+						toStationId: 38888,
+						serviceTypeId: 72,
+						fromDateTime,
+						filterBy: 1,
+					}),
+				})
+			);
+		});
+
+		it("should convert string IDs to numbers in API request", async () => {
+			const mockRawResponse = {
+				data: {
+					directRoutes: [],
+					transferRoutes: [],
+				},
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 0,
+				responsecode: 200,
+			};
+
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			await client.routes.planTrip({
+				fromStationId: "35376",
+				toStationId: "38888",
+				serviceTypeId: "72",
+			});
+
+			// Verify the request includes IDs as numbers
+			expect(mockPost).toHaveBeenCalledWith(
+				"TripPlannerMSMD",
+				expect.objectContaining({
+					json: expect.objectContaining({
+						fromStationId: 35376,
+						toStationId: 38888,
+						serviceTypeId: 72,
+					}),
+				})
+			);
+		});
+
+		it("should handle empty results", async () => {
+			const mockRawResponse = {
+				data: {
+					directRoutes: [],
+					transferRoutes: [],
+				},
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 0,
+				responsecode: 200,
+			};
+
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const result = await client.routes.planTrip({
+				fromStationId: "99999",
+				toStationId: "88888",
+			});
+
+			expect(result.success).toBe(true);
+			expect(result.routes).toHaveLength(0);
+		});
+
+		it("should validate input parameters and throw on invalid data", async () => {
+			// Missing both fromStationId and fromLatitude
+			await expect(
+				client.routes.planTrip({
+					toStationId: "38888",
+				} as any)
+			).rejects.toThrow("Invalid trip planner parameters");
+
+			// Missing both toStationId and toLatitude
+			await expect(
+				client.routes.planTrip({
+					fromStationId: "35376",
+				} as any)
+			).rejects.toThrow("Invalid trip planner parameters");
+		});
+
+		it("should validate fromDateTime is in future", async () => {
+			const pastDate = "2020-01-01 12:00";
+
+			await expect(
+				client.routes.planTrip({
+					fromStationId: "35376",
+					toStationId: "38888",
+					fromDateTime: pastDate,
+				})
+			).rejects.toThrow("DateTime must be in the future");
+		});
+
+		it("should validate fromDateTime format", async () => {
+			await expect(
+				client.routes.planTrip({
+					fromStationId: "35376",
+					toStationId: "38888",
+					fromDateTime: "invalid-date",
+				})
+			).rejects.toThrow("DateTime must be in format");
+		});
+
+		it("should handle API errors", async () => {
+			// Mock an error response
+			const error = new Error("Internal Server Error");
+			(error as any).response = {
+				status: 500,
+				json: async () => ({ message: "Internal Server Error" }),
+			};
+			mockPost.mockRejectedValue(error);
+
+			await expect(
+				client.routes.planTrip({
+					fromStationId: "35376",
+					toStationId: "38888",
+				})
+			).rejects.toThrow();
+		});
+	});
 });

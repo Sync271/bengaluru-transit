@@ -13,7 +13,10 @@ import {
 	routesBetweenStationsParamsSchema,
 	rawFareDataResponseSchema,
 	fareDataParamsSchema,
+	rawTripPlannerResponseSchema,
+	tripPlannerParamsSchema,
 } from "../schemas/routes";
+import { WALK_ROUTE_PREFIX, WALK_PREFIX, EMPTY_SUBROUTE_ID } from "../constants/routes";
 import {
 	createRouteFeature,
 	createFeatureCollection,
@@ -51,7 +54,14 @@ import type {
 	RawFareDataResponse,
 	FareDataParams,
 	FareDataItem,
+	TripPlannerResponse,
+	RawTripPlannerResponse,
+	TripPlannerParams,
+	TripPlannerPathLeg,
+	RawTripPlannerPathLeg,
+	TripPlannerRoute,
 } from "../types/routes";
+import { tripPlannerFilterToNumber } from "../types/routes";
 import type {
 	RouteFeature,
 	LocationFeature,
@@ -349,6 +359,177 @@ function transformFareDataResponse(
 
 	return {
 		items,
+		message: raw.Message,
+		success: raw.Issuccess,
+		rowCount: raw.RowCount,
+	};
+}
+
+/**
+ * Transform raw trip planner path leg to clean, normalized format
+ */
+function transformTripPlannerPathLeg(
+	raw: RawTripPlannerPathLeg
+): TripPlannerPathLeg {
+	const durationSeconds = parseDurationToSeconds(raw.duration);
+	const totalDurationSeconds = parseDurationToSeconds(raw.totalDuration);
+
+	return {
+		pathSrNo: raw.pathSrno,
+		transferSrNo: raw.transferSrNo,
+		tripId: raw.tripId.toString(),
+		subrouteId: raw.routeid.toString(),
+		routeNo: raw.routeno,
+		scheduleNo: raw.schNo,
+		vehicleId: raw.vehicleId.toString(),
+		busNo: raw.busNo,
+		distance: raw.distance,
+		duration: raw.duration,
+		durationSeconds,
+		fromStationId: raw.fromStationId.toString(),
+		fromStationName: raw.fromStationName,
+		toStationId: raw.toStationId.toString(),
+		toStationName: raw.toStationName,
+		etaFromStation: raw.etaFromStation,
+		etaToStation: raw.etaToStation,
+		serviceTypeId: raw.serviceTypeId.toString(),
+		fromLatitude: raw.fromLatitude,
+		fromLongitude: raw.fromLongitude,
+		toLatitude: raw.toLatitude,
+		toLongitude: raw.toLongitude,
+		routeParentId: raw.routeParentId.toString(),
+		totalDuration: raw.totalDuration,
+		totalDurationSeconds,
+		waitingDuration: raw.waitingDuration,
+		platformNumber: raw.platformnumber,
+		bayNumber: raw.baynumber,
+		deviceStatusName: raw.devicestatusnameflag,
+		deviceStatusFlag: raw.devicestatusflag,
+		srNo: raw.srno,
+		approxFare: raw.approx_fare,
+		fromStageNumber: raw.fromstagenumber,
+		toStageNumber: raw.tostagenumber,
+		minSrNo: raw.minsrno,
+		maxSrNo: raw.maxsrno,
+		tollFees: raw.tollfees,
+		totalStages: raw.totalStages,
+	};
+}
+
+/**
+ * Parse duration string "HH:mm:ss" or "HH:mm" to total seconds
+ */
+function parseDurationToSeconds(duration: string): number {
+	const parts = duration.split(":").map(Number);
+	if (parts.length === 3) {
+		// HH:mm:ss format
+		return parts[0] * 3600 + parts[1] * 60 + parts[2];
+	} else if (parts.length === 2) {
+		// HH:mm format
+		return parts[0] * 3600 + parts[1] * 60;
+	}
+	return 0;
+}
+
+/**
+ * Format seconds to "HH:mm:ss" duration string
+ */
+function formatSecondsToDuration(totalSeconds: number): string {
+	const hours = Math.floor(totalSeconds / 3600);
+	const minutes = Math.floor((totalSeconds % 3600) / 60);
+	const seconds = totalSeconds % 60;
+	return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+/**
+ * Check if a route leg is a walking segment
+ */
+function isWalkingRoute(leg: TripPlannerPathLeg): boolean {
+	return leg.routeNo === WALK_ROUTE_PREFIX || leg.routeNo.startsWith(WALK_PREFIX);
+}
+
+/**
+ * Check if a route leg is a bus segment (not walking, has valid route ID)
+ */
+function isBusSegment(leg: TripPlannerPathLeg): boolean {
+	return leg.subrouteId !== EMPTY_SUBROUTE_ID && !isWalkingRoute(leg);
+}
+
+/**
+ * Calculate route totals from legs
+ */
+function calculateRouteTotals(legs: TripPlannerPathLeg[]): Omit<TripPlannerRoute, "legs"> {
+	let totalFare = 0;
+	let totalDistance = 0;
+	let totalSeconds = 0;
+	let hasWalking = false;
+	let busSegmentCount = 0;
+
+	for (const leg of legs) {
+		totalFare += leg.approxFare;
+		totalDistance += leg.distance;
+		totalSeconds += parseDurationToSeconds(leg.duration);
+
+		// Add waiting duration if present
+		if (leg.waitingDuration) {
+			totalSeconds += parseDurationToSeconds(leg.waitingDuration);
+		}
+
+		// Check for walking segments
+		if (isWalkingRoute(leg)) {
+			hasWalking = true;
+		}
+
+		// Count bus segments (non-walking, non-zero routeId)
+		if (isBusSegment(leg)) {
+			busSegmentCount++;
+		}
+	}
+
+	// Transfer count = bus segments - 1 (0 for direct routes)
+	const transferCount = Math.max(0, busSegmentCount - 1);
+
+	return {
+		totalDuration: formatSecondsToDuration(totalSeconds),
+		totalDurationSeconds: totalSeconds,
+		totalFare,
+		totalDistance,
+		transferCount,
+		hasWalking,
+	};
+}
+
+/**
+ * Transform a single route (array of raw legs) to TripPlannerRoute
+ */
+function transformRoute(route: RawTripPlannerPathLeg[]): TripPlannerRoute {
+	const legs = route.map(transformTripPlannerPathLeg);
+	const totals = calculateRouteTotals(legs);
+	return {
+		legs,
+		...totals,
+	};
+}
+
+/**
+ * Transform raw trip planner API response to clean, normalized format
+ * Includes computed totals for each route
+ * Merges directRoutes and transferRoutes into a single routes array
+ */
+function transformTripPlannerResponse(
+	raw: RawTripPlannerResponse
+): TripPlannerResponse {
+	// Transform direct routes with computed totals
+	const directRoutes: TripPlannerRoute[] = raw.data.directRoutes.map(transformRoute);
+
+	// Transform transfer routes with computed totals
+	const transferRoutes: TripPlannerRoute[] = raw.data.transferRoutes.map(transformRoute);
+
+	// Merge both arrays into a single routes array (preserves all data)
+	const routes = [...directRoutes, ...transferRoutes];
+
+	return {
+		routes,
 		message: raw.Message,
 		success: raw.Issuccess,
 		rowCount: raw.RowCount,
@@ -671,5 +852,89 @@ export class RoutesAPI {
 
 		// Transform to clean, normalized format
 		return transformFareDataResponse(rawResponse);
+	}
+
+	/**
+	 * Plan a trip with multiple route options
+	 * @param params - Trip planner parameters with 4 possible combinations:
+	 *   - Station to Station: fromStationId, toStationId
+	 *   - Station to Location: fromStationId, toLatitude, toLongitude
+	 *   - Location to Station: fromLatitude, fromLongitude, toStationId
+	 *   - Location to Location: fromLatitude, fromLongitude, toLatitude, toLongitude
+	 * @returns Trip plans with all available routes (merged from directRoutes and transferRoutes)
+	 * @remarks
+	 * This endpoint supports 4 combinations of origin/destination:
+	 * - Station IDs (always string for consistency, will be converted to numbers for API)
+	 * - Coordinates (latitude/longitude)
+	 * Optional parameters:
+	 * - serviceTypeId: Filter by service type (from getAllServiceTypes)
+	 * - fromDateTime: Future datetime in format "YYYY-MM-DD HH:mm" (e.g., "2026-01-18 18:00")
+	 * - filterBy: "minimum-transfers" or "shortest-time"
+	 * 
+	 * All routes are returned in a single `routes` array. Filter by `transferCount === 0` to identify direct routes.
+	 */
+	async planTrip(params: TripPlannerParams): Promise<TripPlannerResponse> {
+		// Convert discriminated union params to API payload format
+		const apiPayload: {
+			fromStationId?: number;
+			fromLatitude?: number;
+			fromLongitude?: number;
+			toStationId?: number;
+			toLatitude?: number;
+			toLongitude?: number;
+			serviceTypeId?: number;
+			fromDateTime?: string;
+			filterBy?: 1 | 2;
+		} = {};
+
+		// Set "from" type (either station ID or coordinates)
+		if ("fromStationId" in params && params.fromStationId) {
+			apiPayload.fromStationId = parseInt(params.fromStationId, 10);
+		} else if ("fromLatitude" in params && "fromLongitude" in params) {
+			apiPayload.fromLatitude = params.fromLatitude;
+			apiPayload.fromLongitude = params.fromLongitude;
+		}
+
+		// Set "to" type (either station ID or coordinates)
+		if ("toStationId" in params && params.toStationId) {
+			apiPayload.toStationId = parseInt(params.toStationId, 10);
+		} else if ("toLatitude" in params && "toLongitude" in params) {
+			apiPayload.toLatitude = params.toLatitude;
+			apiPayload.toLongitude = params.toLongitude;
+		}
+
+		// Add optional parameters
+		if (params.serviceTypeId !== undefined) {
+			apiPayload.serviceTypeId = parseInt(params.serviceTypeId, 10);
+		}
+		if (params.fromDateTime !== undefined) {
+			apiPayload.fromDateTime = params.fromDateTime;
+		}
+		if (params.filterBy !== undefined) {
+			apiPayload.filterBy = tripPlannerFilterToNumber(params.filterBy);
+		}
+
+		// Validate API payload format
+		const validatedParams = validate(
+			tripPlannerParamsSchema,
+			apiPayload,
+			"Invalid trip planner parameters"
+		);
+
+		const response = await this.client.getClient().post("TripPlannerMSMD", {
+			json: validatedParams,
+		});
+
+		const data = await response.json<unknown>();
+
+		// Validate raw response with Zod schema
+		const rawResponse = validate(
+			rawTripPlannerResponseSchema,
+			data,
+			"Invalid trip planner response"
+		);
+
+		// Transform to clean, normalized format
+		return transformTripPlannerResponse(rawResponse);
 	}
 }

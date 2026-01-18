@@ -22,6 +22,7 @@ This file tracks the progress of implementing wrappers for BMTC API endpoints.
 - [x] `/GetMobileFareData_v2` - Get mobile fare data for routes between stations
 - [x] `/FindNearByBusStop_v2` - Search bus stops by station name
 - [x] `/NearbyStations_v2` - Find nearby stations by location within a radius
+- [x] `/TripPlannerMSMD` - Trip planner with multiple route options (direct and transfer routes)
 
 ## In Progress 🚧
 
@@ -30,12 +31,11 @@ None currently.
 ## Pending Endpoints 📋
 
 - [ ] `/GetTimetableByStation_v4` - Get timetable by station
-- [ ] `/TripPlannerMSMD` - Trip planner
 
 ## Total Progress
 
-- **Completed:** 18 / 20 (90%)
-- **Remaining:** 2 endpoints
+- **Completed:** 19 / 20 (95%)
+- **Remaining:** 1 endpoint
 
 **Note:** `/AroundBusStops_v2_Webportal` is the same as `/AroundBusStops_v2` (already completed), so it's been removed from pending.
 

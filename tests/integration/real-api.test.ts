@@ -801,6 +801,82 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 		);
 	});
 
+	describe("Trip Planner - Real Endpoint", () => {
+		it.skipIf(!shouldRunTest("trip"))(
+			"should plan trip from location to station from real API",
+			async () => {
+				// Test with location to station (matching the user's example request)
+				const result = await client.routes.planTrip({
+					fromLatitude: 13.079349339853941,
+					fromLongitude: 77.58814089936395,
+					toStationId: "38888", // Kempegowda Bus Station
+					serviceTypeId: "72", // AC service
+				});
+
+				expect(result).toBeDefined();
+				expect(result.success).toBe(true);
+				expect(result.routes).toBeInstanceOf(Array);
+				expect(result.routes.length).toBeGreaterThan(0);
+
+				// Check first route structure
+				const route = result.routes[0];
+				expect(route).toHaveProperty("legs");
+				expect(route).toHaveProperty("totalDuration");
+				expect(route).toHaveProperty("totalDurationSeconds");
+				expect(route).toHaveProperty("totalFare");
+				expect(route).toHaveProperty("totalDistance");
+				expect(route).toHaveProperty("transferCount");
+				expect(route).toHaveProperty("hasWalking");
+
+				// Verify computed totals are numbers
+				expect(typeof route.totalDurationSeconds).toBe("number");
+				expect(typeof route.totalFare).toBe("number");
+				expect(typeof route.totalDistance).toBe("number");
+				expect(typeof route.transferCount).toBe("number");
+				expect(typeof route.hasWalking).toBe("boolean");
+
+				// Verify legs structure
+				expect(route.legs.length).toBeGreaterThan(0);
+				const firstLeg = route.legs[0];
+				expect(firstLeg).toHaveProperty("duration");
+				expect(firstLeg).toHaveProperty("durationSeconds");
+				expect(typeof firstLeg.durationSeconds).toBe("number");
+
+				// Print formatted response (first route only)
+				console.log("\n🚌 Trip Planner Response (first route):");
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+				console.log(JSON.stringify(
+					{
+						...result,
+						routes: result.routes.slice(0, 1).map(r => ({
+							...r,
+							legs: r.legs.map(l => ({
+								routeNo: l.routeNo,
+								duration: l.duration,
+								durationSeconds: l.durationSeconds,
+								approxFare: l.approxFare,
+								distance: l.distance,
+							})),
+							totalDuration: r.totalDuration,
+							totalDurationSeconds: r.totalDurationSeconds,
+							totalFare: r.totalFare,
+							totalDistance: r.totalDistance,
+							transferCount: r.transferCount,
+							hasWalking: r.hasWalking,
+						})),
+					},
+					null,
+					2
+				));
+				if (result.routes.length > 1) {
+					console.log(`... and ${result.routes.length - 1} more routes`);
+				}
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+			},
+			{ timeout: 30000 }
+		);
+	});
+
 	describe("Client Configuration", () => {
 		it.skipIf(!shouldRunTest("kannada"))(
 			"should work with Kannada language",

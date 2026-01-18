@@ -293,3 +293,149 @@ export const fareDataParamsSchema = z.object({
 	source_code: z.string().min(1, "Source code is required"),
 	destination_code: z.string().min(1, "Destination code is required"),
 });
+
+/**
+ * Schema for validating duration strings
+ * Format: "HH:mm:ss" (e.g., "01:30:45", "00:05:00")
+ */
+const durationStringSchema = z
+	.string()
+	.regex(/^\d{2}:\d{2}:\d{2}$/, {
+		message: 'Duration must be in format "HH:mm:ss" (e.g., "01:30:45")',
+	})
+	.refine(
+		(durationStr) => {
+			const parts = durationStr.split(":").map(Number);
+			const [hours, minutes, seconds] = parts;
+			// Validate ranges: hours 0-23 (or more for longer durations), minutes 0-59, seconds 0-59
+			return minutes < 60 && seconds < 60 && hours >= 0;
+		},
+		{
+			message: "Duration must have valid time components (minutes and seconds < 60)",
+		}
+	);
+
+/**
+ * Schema for raw trip planner path leg from TripPlannerMSMD API
+ */
+export const rawTripPlannerPathLegSchema = z.object({
+	pathSrno: z.number(),
+	transferSrNo: z.number(),
+	tripId: z.number(),
+	routeid: z.number(),
+	routeno: z.string(),
+	schNo: z.string().nullable(),
+	vehicleId: z.number(),
+	busNo: z.string().nullable(),
+	distance: z.number(),
+	duration: durationStringSchema,
+	fromStationId: z.number(),
+	fromStationName: z.string(),
+	toStationId: z.number(),
+	toStationName: z.string(),
+	etaFromStation: z.string().nullable(),
+	etaToStation: z.string().nullable(),
+	serviceTypeId: z.number(),
+	fromLatitude: z.number(),
+	fromLongitude: z.number(),
+	toLatitude: z.number(),
+	toLongitude: z.number(),
+	routeParentId: z.number(),
+	totalDuration: durationStringSchema,
+	waitingDuration: durationStringSchema.nullable(),
+	platformnumber: z.string(),
+	baynumber: z.number(),
+	devicestatusnameflag: z.string(),
+	devicestatusflag: z.number(),
+	srno: z.number(),
+	approx_fare: z.number(),
+	fromstagenumber: z.number(),
+	tostagenumber: z.number(),
+	minsrno: z.number(),
+	maxsrno: z.number(),
+	tollfees: z.number(),
+	totalStages: z.number().nullable(),
+});
+
+/**
+ * Schema for raw trip planner response data structure
+ */
+export const rawTripPlannerDataSchema = z.object({
+	directRoutes: z.array(z.array(rawTripPlannerPathLegSchema)),
+	transferRoutes: z.array(z.array(rawTripPlannerPathLegSchema)),
+});
+
+/**
+ * Schema for raw trip planner response from TripPlannerMSMD API
+ */
+export const rawTripPlannerResponseSchema = z.object({
+	data: rawTripPlannerDataSchema,
+	Message: z.string(),
+	Issuccess: z.boolean(),
+	exception: z.string().nullable(),
+	RowCount: z.number().int().nonnegative(),
+	responsecode: z.number().int(),
+});
+
+/**
+ * Schema for validating future datetime strings
+ * Format: "YYYY-MM-DD HH:mm"
+ */
+const futureDateTimeSchema = z
+	.string()
+	.regex(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/, {
+		message: "DateTime must be in format 'YYYY-MM-DD HH:mm'",
+	})
+	.refine(
+		(dateTimeStr) => {
+			const dateTime = new Date(dateTimeStr.replace(" ", "T"));
+			const now = new Date();
+			return dateTime > now;
+		},
+		{
+			message: "DateTime must be in the future",
+		}
+	)
+	.optional();
+
+/**
+ * Schema for trip planner request parameters (API format)
+ * Note: This validates the final API payload, not the discriminated union input
+ */
+export const tripPlannerParamsSchema = z
+	.object({
+		fromStationId: z.number().int().nonnegative().optional(),
+		fromLatitude: z.number().min(-90).max(90).optional(),
+		fromLongitude: z.number().min(-180).max(180).optional(),
+		toStationId: z.number().int().nonnegative().optional(),
+		toLatitude: z.number().min(-90).max(90).optional(),
+		toLongitude: z.number().min(-180).max(180).optional(),
+		serviceTypeId: z.number().int().positive().optional(),
+		fromDateTime: futureDateTimeSchema,
+		filterBy: z.union([z.literal(1), z.literal(2)]).optional(),
+	})
+	.refine(
+		(data) => {
+			// Must have exactly one "from" type
+			const hasFromStation = data.fromStationId !== undefined;
+			const hasFromLocation =
+				data.fromLatitude !== undefined && data.fromLongitude !== undefined;
+			if (hasFromStation === hasFromLocation) {
+				return false;
+			}
+
+			// Must have exactly one "to" type
+			const hasToStation = data.toStationId !== undefined;
+			const hasToLocation =
+				data.toLatitude !== undefined && data.toLongitude !== undefined;
+			if (hasToStation === hasToLocation) {
+				return false;
+			}
+
+			return true;
+		},
+		{
+			message:
+				"Must provide exactly one of: (fromStationId) or (fromLatitude, fromLongitude), and exactly one of: (toStationId) or (toLatitude, toLongitude)",
+		}
+	);

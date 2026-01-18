@@ -16,6 +16,7 @@ import type {
 	rawRouteDetailsResponseSchema,
 	rawRoutesBetweenStationsResponseSchema,
 	rawFareDataResponseSchema,
+	rawTripPlannerResponseSchema,
 } from "../schemas/routes";
 import type {
 	RouteFeatureCollection,
@@ -670,4 +671,422 @@ export interface FareDataParams {
 	 * Destination code (from RouteBetweenStationsItem.destinationCode)
 	 */
 	destinationCode: string;
+}
+
+/**
+ * Filter option for trip planner
+ * Human-readable values that map to API numeric codes
+ */
+export type TripPlannerFilter = "minimum-transfers" | "shortest-time";
+
+/**
+ * Map human-readable filter option to API numeric value
+ */
+export function tripPlannerFilterToNumber(filter: TripPlannerFilter): 1 | 2 {
+	const map: Record<TripPlannerFilter, 1 | 2> = {
+		"minimum-transfers": 1,
+		"shortest-time": 2,
+	};
+	return map[filter];
+}
+
+/**
+ * Base parameters for trip planner (common fields)
+ */
+type TripPlannerParamsBase = {
+	/**
+	 * Service type ID (from getAllServiceTypes)
+	 * Optional - if not provided, searches all service types
+	 */
+	serviceTypeId?: string;
+	/**
+	 * Start date/time for the trip (must be in the future)
+	 * Format: "YYYY-MM-DD HH:mm" (e.g., "2026-01-18 18:00")
+	 * Optional - if not provided, uses current time
+	 */
+	fromDateTime?: string;
+	/**
+	 * Filter option for route selection
+	 * - "minimum-transfers": Prioritize fewer transfers
+	 * - "shortest-time": Prioritize faster routes
+	 * Optional - if not provided, API uses default sorting
+	 */
+	filterBy?: TripPlannerFilter;
+};
+
+/**
+ * Station to Station trip parameters
+ */
+type TripPlannerStationToStation = TripPlannerParamsBase & {
+	/**
+	 * From station ID (always string for consistency)
+	 */
+	fromStationId: string;
+	/**
+	 * To station ID (always string for consistency)
+	 */
+	toStationId: string;
+	/**
+	 * From coordinates are not used for station-to-station trips
+	 */
+	fromLatitude?: never;
+	fromLongitude?: never;
+	/**
+	 * To coordinates are not used for station-to-station trips
+	 */
+	toLatitude?: never;
+	toLongitude?: never;
+};
+
+/**
+ * Station to Location trip parameters
+ */
+type TripPlannerStationToLocation = TripPlannerParamsBase & {
+	/**
+	 * From station ID (always string for consistency)
+	 */
+	fromStationId: string;
+	/**
+	 * To latitude
+	 */
+	toLatitude: number;
+	/**
+	 * To longitude
+	 */
+	toLongitude: number;
+	/**
+	 * To station ID is not used for station-to-location trips
+	 */
+	toStationId?: never;
+	/**
+	 * From coordinates are not used for station-to-location trips
+	 */
+	fromLatitude?: never;
+	fromLongitude?: never;
+};
+
+/**
+ * Location to Station trip parameters
+ */
+type TripPlannerLocationToStation = TripPlannerParamsBase & {
+	/**
+	 * From latitude
+	 */
+	fromLatitude: number;
+	/**
+	 * From longitude
+	 */
+	fromLongitude: number;
+	/**
+	 * To station ID (always string for consistency)
+	 */
+	toStationId: string;
+	/**
+	 * From station ID is not used for location-to-station trips
+	 */
+	fromStationId?: never;
+	/**
+	 * To coordinates are not used for location-to-station trips
+	 */
+	toLatitude?: never;
+	toLongitude?: never;
+};
+
+/**
+ * Location to Location trip parameters
+ */
+type TripPlannerLocationToLocation = TripPlannerParamsBase & {
+	/**
+	 * From latitude
+	 */
+	fromLatitude: number;
+	/**
+	 * From longitude
+	 */
+	fromLongitude: number;
+	/**
+	 * To latitude
+	 */
+	toLatitude: number;
+	/**
+	 * To longitude
+	 */
+	toLongitude: number;
+	/**
+	 * Station IDs are not used for location-to-location trips
+	 */
+	fromStationId?: never;
+	toStationId?: never;
+};
+
+/**
+ * Parameters for trip planner
+ * Supports 4 combinations: Station-Station, Station-Location, Location-Station, Location-Location
+ */
+export type TripPlannerParams =
+	| TripPlannerStationToStation
+	| TripPlannerStationToLocation
+	| TripPlannerLocationToStation
+	| TripPlannerLocationToLocation;
+
+/**
+ * Raw trip planner path leg item from TripPlannerMSMD API
+ */
+export interface RawTripPlannerPathLeg {
+	pathSrno: number;
+	transferSrNo: number;
+	tripId: number;
+	routeid: number;
+	routeno: string;
+	schNo: string | null;
+	vehicleId: number;
+	busNo: string | null;
+	distance: number;
+	duration: string;
+	fromStationId: number;
+	fromStationName: string;
+	toStationId: number;
+	toStationName: string;
+	etaFromStation: string | null;
+	etaToStation: string | null;
+	serviceTypeId: number;
+	fromLatitude: number;
+	fromLongitude: number;
+	toLatitude: number;
+	toLongitude: number;
+	routeParentId: number;
+	totalDuration: string;
+	waitingDuration: string | null;
+	platformnumber: string;
+	baynumber: number;
+	devicestatusnameflag: string;
+	devicestatusflag: number;
+	srno: number;
+	approx_fare: number;
+	fromstagenumber: number;
+	tostagenumber: number;
+	minsrno: number;
+	maxsrno: number;
+	tollfees: number;
+	totalStages: number | null;
+}
+
+/**
+ * Raw trip planner response from TripPlannerMSMD API
+ * Uses Zod inferred type to match schema exactly
+ */
+export type RawTripPlannerResponse = z.infer<typeof rawTripPlannerResponseSchema>;
+
+/**
+ * Clean, normalized trip planner path leg
+ */
+export interface TripPlannerPathLeg {
+	/**
+	 * Path sequence number
+	 */
+	pathSrNo: number;
+	/**
+	 * Transfer sequence number (0 for direct routes, increments for transfers)
+	 */
+	transferSrNo: number;
+	/**
+	 * Trip ID (0 for walking segments)
+	 */
+	tripId: string;
+	/**
+	 * Subroute ID (specific directional variant, 0 for walking segments)
+	 * This is the subroute ID for the specific direction/variant
+	 */
+	subrouteId: string;
+	/**
+	 * Route number (e.g., "285-M", "walk_source")
+	 */
+	routeNo: string;
+	/**
+	 * Schedule number (null for walking segments)
+	 */
+	scheduleNo: string | null;
+	/**
+	 * Vehicle ID (0 for walking segments)
+	 */
+	vehicleId: string;
+	/**
+	 * Bus registration number (null for walking segments)
+	 */
+	busNo: string | null;
+	/**
+	 * Distance in kilometers
+	 */
+	distance: number;
+	/**
+	 * Duration (format: "HH:mm:ss")
+	 */
+	duration: string;
+	/**
+	 * Duration in seconds (computed from duration string for easier comparisons)
+	 */
+	durationSeconds: number;
+	/**
+	 * From station ID (0 for "Your Location")
+	 */
+	fromStationId: string;
+	/**
+	 * From station name
+	 */
+	fromStationName: string;
+	/**
+	 * To station ID (0 for "Your Location")
+	 */
+	toStationId: string;
+	/**
+	 * To station name
+	 */
+	toStationName: string;
+	/**
+	 * ETA at from station (null for walking segments)
+	 */
+	etaFromStation: string | null;
+	/**
+	 * ETA at to station (null for walking segments)
+	 */
+	etaToStation: string | null;
+	/**
+	 * Service type ID (0 for walking segments)
+	 */
+	serviceTypeId: string;
+	/**
+	 * From latitude
+	 */
+	fromLatitude: number;
+	/**
+	 * From longitude
+	 */
+	fromLongitude: number;
+	/**
+	 * To latitude
+	 */
+	toLatitude: number;
+	/**
+	 * To longitude
+	 */
+	toLongitude: number;
+	/**
+	 * Route parent ID (0 for walking segments)
+	 */
+	routeParentId: string;
+	/**
+	 * Total duration for this leg (format: "HH:mm:ss")
+	 */
+	totalDuration: string;
+	/**
+	 * Total duration for this leg in seconds (computed from totalDuration string)
+	 */
+	totalDurationSeconds: number;
+	/**
+	 * Waiting duration before next leg (null if not applicable)
+	 */
+	waitingDuration: string | null;
+	/**
+	 * Platform number
+	 */
+	platformNumber: string;
+	/**
+	 * Bay number
+	 */
+	bayNumber: number;
+	/**
+	 * Device status name (e.g., "Running", "Tracking device is not installed")
+	 */
+	deviceStatusName: string;
+	/**
+	 * Device status flag
+	 * - 1: Tracking device is installed
+	 * - 3: Tracking device is not installed
+	 * - 4: Running
+	 */
+	deviceStatusFlag: number;
+	/**
+	 * Sequence number
+	 */
+	srNo: number;
+	/**
+	 * Approximate fare (0 for walking segments)
+	 */
+	approxFare: number;
+	/**
+	 * From stage number
+	 */
+	fromStageNumber: number;
+	/**
+	 * To stage number
+	 */
+	toStageNumber: number;
+	/**
+	 * Minimum sequence number
+	 */
+	minSrNo: number;
+	/**
+	 * Maximum sequence number
+	 */
+	maxSrNo: number;
+	/**
+	 * Toll fees
+	 */
+	tollFees: number;
+	/**
+	 * Total stages (null if not applicable)
+	 */
+	totalStages: number | null;
+}
+
+/**
+ * Trip planner route with computed totals
+ * Represents a complete route path (array of legs) with aggregated statistics
+ */
+export interface TripPlannerRoute {
+	/**
+	 * Route legs (ordered sequence of path segments)
+	 */
+	legs: TripPlannerPathLeg[];
+	/**
+	 * Total duration across all legs (format: "HH:mm:ss")
+	 * Sum of all leg durations plus waiting times
+	 */
+	totalDuration: string;
+	/**
+	 * Total duration in seconds (computed from totalDuration for easier comparisons)
+	 */
+	totalDurationSeconds: number;
+	/**
+	 * Total fare in rupees (sum of all leg fares)
+	 * Walking segments have 0 fare
+	 */
+	totalFare: number;
+	/**
+	 * Total distance in kilometers (sum of all leg distances)
+	 */
+	totalDistance: number;
+	/**
+	 * Number of transfers (number of bus segments minus 1, or 0 for direct routes)
+	 */
+	transferCount: number;
+	/**
+	 * Whether this route includes walking segments
+	 */
+	hasWalking: boolean;
+}
+
+/**
+ * Clean, normalized trip planner response
+ */
+export interface TripPlannerResponse {
+	/**
+	 * All available routes (merged from directRoutes and transferRoutes)
+	 * Each route includes computed totals for easy comparison
+	 * Filter by `transferCount === 0` to identify direct routes (no transfers)
+	 */
+	routes: TripPlannerRoute[];
+	message: string;
+	success: boolean;
+	rowCount: number;
 }
