@@ -56,10 +56,8 @@ describe("LocationsAPI", () => {
 				query: "cbi",
 			});
 
-			expect(result.success).toBe(true);
-			expect(result.message).toBe("Success");
 			expect(result.items).toHaveLength(3);
-			expect(result.rowCount).toBe(3);
+			expect(result.items.length).toBe(3);
 
 			// Verify first place
 			expect(result.items[0].title).toBe("Cbi Quarters");
@@ -104,9 +102,8 @@ describe("LocationsAPI", () => {
 				query: "nonexistentplace",
 			});
 
-			expect(result.success).toBe(true);
 			expect(result.items).toHaveLength(0);
-			expect(result.rowCount).toBe(0);
+			expect(result.items.length).toBe(0);
 		});
 
 		it("should handle single result", async () => {
@@ -135,7 +132,6 @@ describe("LocationsAPI", () => {
 				query: "test",
 			});
 
-			expect(result.success).toBe(true);
 			expect(result.items).toHaveLength(1);
 			expect(result.items[0].title).toBe("Test Place");
 			expect(result.items[0].latitude).toBe(12.9716);

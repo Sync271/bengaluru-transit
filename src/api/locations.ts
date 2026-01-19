@@ -26,9 +26,6 @@ function transformSearchPlacesResponse(
 
 	return {
 		items,
-		message: raw.Message,
-		success: raw.Issuccess,
-		rowCount: raw.RowCount,
 	};
 }
 

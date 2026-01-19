@@ -39,9 +39,6 @@ export interface HelplineDataItem {
  */
 export interface HelplineResponse {
 	items: HelplineDataItem[];
-	message: string;
-	success: boolean;
-	rowCount: number;
 }
 
 /**
@@ -67,9 +64,6 @@ export interface ServiceTypeDataItem {
  */
 export interface ServiceTypesResponse {
 	items: ServiceTypeDataItem[];
-	message: string;
-	success: boolean;
-	rowCount: number;
 }
 
 /**
@@ -105,8 +99,6 @@ export interface AboutDataItem {
  */
 export interface AboutDataResponse {
 	item: AboutDataItem;
-	message: string;
-	success: boolean;
 }
 
 /**
@@ -136,9 +128,6 @@ export interface EmergencyMessageDataItem {
  */
 export interface EmergencyMessagesResponse {
 	items: EmergencyMessageDataItem[];
-	message: string;
-	success: boolean;
-	rowCount: number;
 }
 
 /**
@@ -165,7 +154,4 @@ export interface FareScrollMessageDataItem {
  */
 export interface FareScrollMessagesResponse {
 	items: FareScrollMessageDataItem[];
-	message: string;
-	success: boolean;
-	rowCount: number;
 }

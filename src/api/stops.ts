@@ -73,9 +73,6 @@ function transformAroundBusStopsResponse(
 
 	return {
 		stations,
-		message: raw.Message,
-		success: raw.Issuccess,
-		rowCount: raw.RowCount,
 	};
 }
 
@@ -99,9 +96,6 @@ function transformNearbyBusStopsResponse(
 
 	return {
 		items,
-		message: raw.Message,
-		success: raw.Issuccess,
-		rowCount: raw.RowCount,
 	};
 }
 
@@ -126,9 +120,6 @@ function transformNearbyStationsResponse(
 
 	return {
 		items,
-		message: raw.Message,
-		success: raw.Issuccess,
-		rowCount: raw.RowCount,
 	};
 }
 
@@ -140,18 +131,19 @@ export class StopsAPI {
 
 	/**
 	 * Find nearby bus stations with facilities around a location
-	 * @param params - Parameters including latitude and longitude
+	 * @param params - Parameters including coordinates [latitude, longitude]
 	 * @returns List of nearby stations with facilities as GeoJSON Point features
 	 */
 	async findNearbyStations(
 		params: AroundBusStopsParams
 	): Promise<AroundBusStopsResponse> {
 		// Validate input parameters
+		const [latitude, longitude] = params.coordinates;
 		const validatedParams = validate(
 			aroundBusStopsParamsSchema,
 			{
-				latitude: params.latitude,
-				longitude: params.longitude,
+				latitude,
+				longitude,
 			},
 			"Invalid around bus stops parameters"
 		);
@@ -223,7 +215,7 @@ export class StopsAPI {
 
 	/**
 	 * Find nearby stops by location within a radius
-	 * @param params - Parameters including latitude, longitude, radius, and optional filters
+	 * @param params - Parameters including coordinates [latitude, longitude], radius, and optional filters
 	 * @returns List of nearby stops with distance and travel time information
 	 * @remarks
 	 * This endpoint returns up to 10 results. Pagination is not supported.
@@ -249,6 +241,7 @@ export class StopsAPI {
 		}
 
 		// Build request payload
+		const [latitude, longitude] = params.coordinates;
 		const requestPayload: {
 			latitude: number;
 			longitude: number;
@@ -256,8 +249,8 @@ export class StopsAPI {
 			stationflag?: number;
 			flexiflag?: number;
 		} = {
-			latitude: params.latitude,
-			longitude: params.longitude,
+			latitude,
+			longitude,
 			radiuskm: params.radius,
 		};
 

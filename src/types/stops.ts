@@ -3,6 +3,7 @@
  */
 
 import type { z } from "zod";
+import type { Coordinate } from "./coordinates";
 import type {
 	rawAroundBusStopsResponseSchema,
 	rawNearbyBusStopsResponseSchema,
@@ -71,9 +72,6 @@ export interface NearbyStation {
  */
 export interface AroundBusStopsResponse {
 	stations: NearbyStation[];
-	message: string;
-	success: boolean;
-	rowCount: number;
 }
 
 /**
@@ -81,13 +79,9 @@ export interface AroundBusStopsResponse {
  */
 export interface AroundBusStopsParams {
 	/**
-	 * Latitude of the search location
+	 * Coordinates of the search location [latitude, longitude]
 	 */
-	latitude: number;
-	/**
-	 * Longitude of the search location
-	 */
-	longitude: number;
+	coordinates: Coordinate;
 }
 
 /**
@@ -183,9 +177,6 @@ export interface NearbyBusStopItem {
  */
 export interface NearbyBusStopsResponse {
 	items: NearbyBusStopItem[];
-	message: string;
-	success: boolean;
-	rowCount: number;
 }
 
 /**
@@ -299,9 +290,6 @@ export interface NearbyStationItem {
  */
 export interface NearbyStationsResponse {
 	items: NearbyStationItem[];
-	message: string;
-	success: boolean;
-	rowCount: number;
 }
 
 /**
@@ -309,13 +297,9 @@ export interface NearbyStationsResponse {
  */
 type NearbyStationsParamsBase = {
 	/**
-	 * Latitude of the search location
+	 * Coordinates of the search location [latitude, longitude]
 	 */
-	latitude: number;
-	/**
-	 * Longitude of the search location
-	 */
-	longitude: number;
+	coordinates: Coordinate;
 	/**
 	 * Search radius in kilometers
 	 */

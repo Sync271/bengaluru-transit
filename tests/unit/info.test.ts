@@ -39,13 +39,11 @@ describe("InfoAPI", () => {
 
 			const result = await client.info.getHelpline();
 
-			expect(result.success).toBe(true);
-			expect(result.message).toBe("Success");
 			expect(result.items).toHaveLength(1);
 			expect(result.items[0].helplineNumber).toBe("08022483777");
 			expect(result.items[0].labelName).toBe("BMTC Helpline No");
 			expect(result.items[0].busStopName).toBeNull();
-			expect(result.rowCount).toBe(1);
+			expect(result.items.length).toBe(1);
 		});
 
 		it("should handle multiple helpline entries", async () => {
@@ -79,7 +77,7 @@ describe("InfoAPI", () => {
 			const result = await client.info.getHelpline();
 
 			expect(result.items).toHaveLength(2);
-			expect(result.rowCount).toBe(2);
+			expect(result.items.length).toBe(2);
 			expect(result.items[1].labelName).toBe("Customer Care");
 			expect(result.items[1].busStopName).toBe("Central");
 		});
@@ -142,14 +140,12 @@ describe("InfoAPI", () => {
 
 			const result = await client.info.getServiceTypes();
 
-			expect(result.success).toBe(true);
-			expect(result.message).toBe("Success");
 			expect(result.items).toHaveLength(2);
 			expect(result.items[0].serviceType).toBe("AC");
 			expect(result.items[0].serviceTypeId).toBe("73");
 			expect(result.items[1].serviceType).toBe("Non AC/Ordinary");
 			expect(result.items[1].serviceTypeId).toBe("72");
-			expect(result.rowCount).toBe(2);
+			expect(result.items.length).toBe(2);
 		});
 
 		it("should handle single service type", async () => {
@@ -241,8 +237,6 @@ describe("InfoAPI", () => {
 
 			const result = await client.info.getAbout();
 
-			expect(result.success).toBe(true);
-			expect(result.message).toBe("Success");
 			expect(result.item.termsAndConditionsUrl).toBe(
 				"https://bmtcmobileapi.karnataka.gov.in/StaticFiles/TermsAndConditions.html"
 			);
@@ -323,7 +317,6 @@ describe("InfoAPI", () => {
 
 			const result = await client.info.getEmergencyMessages();
 
-			expect(result.success).toBe(true);
 			expect(result.items).toHaveLength(2);
 			expect(result.items[0].id).toBe("1");
 			expect(result.items[0].messageEnglish).toContain("6287 buses");
@@ -419,10 +412,8 @@ describe("InfoAPI", () => {
 
 			const result = await client.info.getFareScrollMessages();
 
-			expect(result.success).toBe(true);
-			expect(result.message).toBe("");
 			expect(result.items).toHaveLength(1);
-			expect(result.rowCount).toBe(1);
+			expect(result.items.length).toBe(1);
 			expect(result.items[0].id).toBe("3");
 			expect(result.items[0].messageEnglish).toContain(
 				"approx fares are inclusive"
@@ -454,9 +445,8 @@ describe("InfoAPI", () => {
 
 			const result = await client.info.getFareScrollMessages();
 
-			expect(result.success).toBe(true);
 			expect(result.items).toHaveLength(0);
-			expect(result.rowCount).toBe(0);
+			expect(result.items.length).toBe(0);
 		});
 
 		it("should convert isdisplay 0 to false", async () => {

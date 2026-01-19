@@ -64,12 +64,9 @@ describe("StopsAPI", () => {
 			} as Response);
 
 			const result = await client.stops.findNearbyStations({
-				latitude: 13.079389141522491,
-				longitude: 77.58817675200433,
+				coordinates: [13.079389141522491, 77.58817675200433],
 			});
 
-			expect(result.success).toBe(true);
-			expect(result.message).toBe("Success");
 			expect(result.stations).toHaveLength(1);
 			expect(result.stations[0].stationName).toBe(
 				"Yelahanka Satellite Town"
@@ -127,13 +124,10 @@ describe("StopsAPI", () => {
 			} as Response);
 
 			const result = await client.stops.findNearbyStations({
-				latitude: 0,
-				longitude: 0,
+				coordinates: [0, 0],
 			});
 
-			expect(result.success).toBe(true);
 			expect(result.stations).toHaveLength(0);
-			expect(result.rowCount).toBe(0);
 		});
 
 		it("should handle stations with multiple facilities of same type", async () => {
@@ -178,8 +172,7 @@ describe("StopsAPI", () => {
 			} as Response);
 
 			const result = await client.stops.findNearbyStations({
-				latitude: 13.0,
-				longitude: 77.0,
+				coordinates: [13.0, 77.0],
 			});
 
 			expect(result.stations[0].facilityTypes[0].facilities.features).toHaveLength(
@@ -190,15 +183,13 @@ describe("StopsAPI", () => {
 		it("should validate input parameters and throw on invalid coordinates", async () => {
 			await expect(
 				client.stops.findNearbyStations({
-					latitude: 91, // Invalid latitude
-					longitude: 77.0,
+					coordinates: [91, 77.0], // Invalid latitude
 				})
 			).rejects.toThrow("Invalid around bus stops parameters");
 
 			await expect(
 				client.stops.findNearbyStations({
-					latitude: 13.0,
-					longitude: 181, // Invalid longitude
+					coordinates: [13.0, 181], // Invalid longitude
 				})
 			).rejects.toThrow("Invalid around bus stops parameters");
 		});
@@ -216,8 +207,7 @@ describe("StopsAPI", () => {
 
 			await expect(
 				client.stops.findNearbyStations({
-					latitude: 13.079389141522491,
-					longitude: 77.58817675200433,
+					coordinates: [13.079389141522491, 77.58817675200433],
 				})
 			).rejects.toThrow("Invalid around bus stops response");
 		});
@@ -233,8 +223,7 @@ describe("StopsAPI", () => {
 
 			await expect(
 				client.stops.findNearbyStations({
-					latitude: 13.079389141522491,
-					longitude: 77.58817675200433,
+					coordinates: [13.079389141522491, 77.58817675200433],
 				})
 			).rejects.toThrow();
 		});
@@ -283,9 +272,7 @@ describe("StopsAPI", () => {
 				stationName: "hebbal",
 			});
 
-			expect(result.success).toBe(true);
-			expect(result.message).toBe("Success");
-			expect(result.rowCount).toBe(2);
+			expect(result.items.length).toBe(2);
 			expect(result.items).toHaveLength(2);
 
 			// Verify first item
@@ -527,13 +514,11 @@ describe("StopsAPI", () => {
 			});
 
 			const result = await client.stops.findNearbyStops({
-				latitude: 13.07861,
-				longitude: 77.58333,
+				coordinates: [13.07861, 77.58333],
 				radius: 10,
 			});
 
 			expect(result).toBeDefined();
-			expect(result.success).toBe(true);
 			expect(result.items).toHaveLength(2);
 			expect(result.items[0].stationId).toBe("30473");
 			expect(result.items[0].stationName).toBe("Test Station A");
@@ -565,8 +550,7 @@ describe("StopsAPI", () => {
 			});
 
 			await client.stops.findNearbyStops({
-				latitude: 13.07861,
-				longitude: 77.58333,
+				coordinates: [13.07861, 77.58333],
 				radius: 5,
 				stationType: "bmtc",
 				bmtcCategory: "airport",
@@ -598,8 +582,7 @@ describe("StopsAPI", () => {
 			});
 
 			await client.stops.findNearbyStops({
-				latitude: 13.07861,
-				longitude: 77.58333,
+				coordinates: [13.07861, 77.58333],
 				radius: 10,
 				stationType: "metro",
 			});
@@ -629,8 +612,7 @@ describe("StopsAPI", () => {
 			});
 
 			await client.stops.findNearbyStops({
-				latitude: 13.07861,
-				longitude: 77.58333,
+				coordinates: [13.07861, 77.58333],
 				radius: 10,
 				stationType: "bmtc",
 				bmtcCategory: "all",
@@ -675,8 +657,7 @@ describe("StopsAPI", () => {
 			});
 
 			const result = await client.stops.findNearbyStops({
-				latitude: 13.07861,
-				longitude: 77.58333,
+				coordinates: [13.07861, 77.58333],
 				radius: 10,
 			});
 
@@ -687,24 +668,21 @@ describe("StopsAPI", () => {
 		it("should validate input parameters and throw on invalid coordinates", async () => {
 			await expect(
 				client.stops.findNearbyStops({
-					latitude: 100, // Invalid (> 90)
-					longitude: 77.58333,
+					coordinates: [100, 77.58333], // Invalid (> 90)
 					radius: 10,
 				})
 			).rejects.toThrow();
 
 			await expect(
 				client.stops.findNearbyStops({
-					latitude: 13.07861,
-					longitude: 200, // Invalid (> 180)
+					coordinates: [13.07861, 200], // Invalid (> 180)
 					radius: 10,
 				})
 			).rejects.toThrow();
 
 			await expect(
 				client.stops.findNearbyStops({
-					latitude: 13.07861,
-					longitude: 77.58333,
+					coordinates: [13.07861, 77.58333],
 					radius: -1, // Invalid (negative)
 				})
 			).rejects.toThrow();
@@ -721,8 +699,7 @@ describe("StopsAPI", () => {
 
 			await expect(
 				client.stops.findNearbyStops({
-					latitude: 13.07861,
-					longitude: 77.58333,
+					coordinates: [13.07861, 77.58333],
 					radius: 10,
 				})
 			).rejects.toThrow();
@@ -733,8 +710,7 @@ describe("StopsAPI", () => {
 
 			await expect(
 				client.stops.findNearbyStops({
-					latitude: 13.07861,
-					longitude: 77.58333,
+					coordinates: [13.07861, 77.58333],
 					radius: 10,
 				})
 			).rejects.toThrow("Network error");

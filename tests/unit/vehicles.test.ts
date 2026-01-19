@@ -50,13 +50,10 @@ describe("VehiclesAPI", () => {
 				query: "KA57f183",
 			});
 
-			expect(result.success).toBe(true);
-			expect(result.message).toBe("Success");
 			expect(result.items).toHaveLength(3);
 			expect(result.items[0].vehicleId).toBe("13270");
 			expect(result.items[0].vehicleRegNo).toBe("KA57F1831");
 			expect(result.items[1].vehicleRegNo).toBe("KA57F1832");
-			expect(result.rowCount).toBe(3);
 		});
 
 		it("should handle empty results", async () => {
@@ -78,9 +75,7 @@ describe("VehiclesAPI", () => {
 				query: "INVALID",
 			});
 
-			expect(result.success).toBe(true);
 			expect(result.items).toHaveLength(0);
-			expect(result.rowCount).toBe(0);
 		});
 
 		it("should validate input parameters and throw on empty query", async () => {
@@ -205,8 +200,6 @@ describe("VehiclesAPI", () => {
 				vehicleId: "21537",
 			});
 
-			expect(result.success).toBe(true);
-			expect(result.message).toBe("Success");
 
 			// Verify route stops GeoJSON
 			expect(result.routeStops).toBeDefined();
@@ -261,8 +254,7 @@ describe("VehiclesAPI", () => {
 				vehicleId: "99999",
 			});
 
-			expect(result.success).toBe(true);
-			expect(result.rowCount).toBe(0);
+			expect(result.routeStops.features.length).toBe(0);
 			// Verify empty GeoJSON collections
 			expect(result.routeStops.type).toBe("FeatureCollection");
 			expect(result.routeStops.features).toHaveLength(0);

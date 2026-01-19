@@ -17,17 +17,7 @@ export interface BMTCApiResponse<T> {
 /**
  * Common API request parameters
  */
-export interface PaginationParams {
-  page?: number;
-  limit?: number;
-}
-
 export interface SortParams {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 }
-
-/**
- * Base request parameters that can be extended
- */
-export type BaseRequestParams = PaginationParams & SortParams;

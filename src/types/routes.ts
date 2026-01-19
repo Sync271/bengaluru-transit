@@ -25,6 +25,7 @@ import type {
 	StopProperties,
 } from "./geojson";
 import type { Feature, FeatureCollection, Point } from "geojson";
+import type { Coordinate } from "./coordinates";
 
 /**
  * Raw route point data item from BMTC API
@@ -51,9 +52,6 @@ export interface RoutePointsResponse {
 	 * Route path as GeoJSON FeatureCollection (LineString feature)
 	 */
 	routePath: RouteFeatureCollection;
-	message: string;
-	success: boolean;
-	rowCount: number;
 }
 
 /**
@@ -112,9 +110,6 @@ export interface RouteSearchItem {
  */
 export interface RouteSearchResponse {
 	items: RouteSearchItem[];
-	message: string;
-	success: boolean;
-	rowCount: number;
 }
 
 /**
@@ -187,9 +182,6 @@ export interface RouteListItem {
  */
 export interface AllRoutesResponse {
 	items: RouteListItem[];
-	message: string;
-	success: boolean;
-	rowCount: number;
 }
 
 /**
@@ -287,9 +279,6 @@ export interface TimetableItem {
  */
 export interface TimetableResponse {
 	items: TimetableItem[];
-	message: string;
-	success: boolean;
-	rowCount: number;
 }
 
 /**
@@ -505,9 +494,6 @@ export interface RouteDetailDirectionData {
 export interface RouteDetailsResponse {
 	up: RouteDetailDirectionData;
 	down: RouteDetailDirectionData;
-	message: string;
-	success: boolean;
-	rowCount: number;
 }
 
 /**
@@ -589,9 +575,6 @@ export interface RouteBetweenStationsItem {
  */
 export interface RoutesBetweenStationsResponse {
 	items: RouteBetweenStationsItem[];
-	message: string;
-	success: boolean;
-	rowCount: number;
 }
 
 /**
@@ -641,9 +624,6 @@ export interface FareDataItem {
  */
 export interface FareDataResponse {
 	items: FareDataItem[];
-	message: string;
-	success: boolean;
-	rowCount: number;
 }
 
 /**
@@ -730,13 +710,11 @@ type TripPlannerStationToStation = TripPlannerParamsBase & {
 	/**
 	 * From coordinates are not used for station-to-station trips
 	 */
-	fromLatitude?: never;
-	fromLongitude?: never;
+	fromCoordinates?: never;
 	/**
 	 * To coordinates are not used for station-to-station trips
 	 */
-	toLatitude?: never;
-	toLongitude?: never;
+	toCoordinates?: never;
 };
 
 /**
@@ -748,13 +726,9 @@ type TripPlannerStationToLocation = TripPlannerParamsBase & {
 	 */
 	fromStationId: string;
 	/**
-	 * To latitude
+	 * To coordinates [latitude, longitude]
 	 */
-	toLatitude: number;
-	/**
-	 * To longitude
-	 */
-	toLongitude: number;
+	toCoordinates: Coordinate;
 	/**
 	 * To station ID is not used for station-to-location trips
 	 */
@@ -762,8 +736,7 @@ type TripPlannerStationToLocation = TripPlannerParamsBase & {
 	/**
 	 * From coordinates are not used for station-to-location trips
 	 */
-	fromLatitude?: never;
-	fromLongitude?: never;
+	fromCoordinates?: never;
 };
 
 /**
@@ -771,13 +744,9 @@ type TripPlannerStationToLocation = TripPlannerParamsBase & {
  */
 type TripPlannerLocationToStation = TripPlannerParamsBase & {
 	/**
-	 * From latitude
+	 * From coordinates [latitude, longitude]
 	 */
-	fromLatitude: number;
-	/**
-	 * From longitude
-	 */
-	fromLongitude: number;
+	fromCoordinates: Coordinate;
 	/**
 	 * To station ID (always string for consistency)
 	 */
@@ -789,8 +758,7 @@ type TripPlannerLocationToStation = TripPlannerParamsBase & {
 	/**
 	 * To coordinates are not used for location-to-station trips
 	 */
-	toLatitude?: never;
-	toLongitude?: never;
+	toCoordinates?: never;
 };
 
 /**
@@ -798,21 +766,13 @@ type TripPlannerLocationToStation = TripPlannerParamsBase & {
  */
 type TripPlannerLocationToLocation = TripPlannerParamsBase & {
 	/**
-	 * From latitude
+	 * From coordinates [latitude, longitude]
 	 */
-	fromLatitude: number;
+	fromCoordinates: Coordinate;
 	/**
-	 * From longitude
+	 * To coordinates [latitude, longitude]
 	 */
-	fromLongitude: number;
-	/**
-	 * To latitude
-	 */
-	toLatitude: number;
-	/**
-	 * To longitude
-	 */
-	toLongitude: number;
+	toCoordinates: Coordinate;
 	/**
 	 * Station IDs are not used for location-to-location trips
 	 */
@@ -1087,9 +1047,6 @@ export interface TripPlannerResponse {
 	 * Filter by `transferCount === 0` to identify direct routes (no transfers)
 	 */
 	routes: TripPlannerRoute[];
-	message: string;
-	success: boolean;
-	rowCount: number;
 }
 
 /**
@@ -1169,11 +1126,11 @@ export type PathDetailsResponse = FeatureCollection;
 export interface WaypointsParams {
 	/** Bus stops along the route path.
 	 * Can be either:
-	 * - Array of [latitude, longitude] tuples
+	 * - Array of Coordinate [latitude, longitude] tuples
 	 * - GeoJSON FeatureCollection with Point features (coordinates will be extracted, properties ignored)
 	 * Must have at least 2 points (origin and destination).
 	 */
-	viaPoints: Array<[number, number]> | FeatureCollection;
+	viaPoints: Array<Coordinate> | FeatureCollection;
 }
 
 /**

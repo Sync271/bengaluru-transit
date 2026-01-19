@@ -35,9 +35,6 @@ function transformSearchVehiclesResponse(
 				responseCode: item.responsecode,
 			})
 		),
-		message: raw.Message,
-		success: raw.Issuccess,
-		rowCount: raw.RowCount,
 	};
 }
 
@@ -123,9 +120,6 @@ function transformVehicleTripResponse(
 	return {
 		routeStops: createFeatureCollection(routeStopsFeatures),
 		vehicleLocation: createFeatureCollection(vehicleLocationFeatures),
-		message: raw.Message,
-		success: raw.Issuccess,
-		rowCount: raw.RowCount,
 	};
 }
 

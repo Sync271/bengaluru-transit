@@ -43,9 +43,6 @@ export interface VehicleDataItem {
  */
 export interface SearchVehiclesResponse {
 	items: VehicleDataItem[];
-	message: string;
-	success: boolean;
-	rowCount: number;
 }
 
 /**
@@ -149,9 +146,6 @@ export interface VehicleTripResponse {
 	 * Vehicle live location as GeoJSON FeatureCollection (Point feature for current vehicle position)
 	 */
 	vehicleLocation: LocationFeatureCollection;
-	message: string;
-	success: boolean;
-	rowCount: number;
 }
 
 /**

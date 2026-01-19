@@ -41,9 +41,6 @@ function transformHelplineResponse(raw: RawHelplineResponse): HelplineResponse {
 				responseCode: item.responsecode,
 			})
 		),
-		message: raw.Message,
-		success: raw.Issuccess,
-		rowCount: raw.RowCount,
 	};
 }
 
@@ -61,9 +58,6 @@ function transformServiceTypesResponse(
 				responseCode: item.responsecode,
 			})
 		),
-		message: raw.Message,
-		success: raw.Issuccess,
-		rowCount: raw.RowCount,
 	};
 }
 
@@ -86,8 +80,6 @@ function transformAboutDataResponse(
 			airportStationName: item.airportstationname,
 			responseCode: item.responsecode,
 		},
-		message: raw.Message,
-		success: raw.Issuccess,
 	};
 }
 
@@ -107,9 +99,6 @@ function transformEmergencyMessagesResponse(
 				displayKey: item.display_key,
 			})
 		),
-		message: raw.Message,
-		success: raw.Issuccess,
-		rowCount: raw.RowCount,
 	};
 }
 
@@ -129,9 +118,6 @@ function transformFareScrollMessagesResponse(
 				displayKey: item.display_key,
 			})
 		),
-		message: raw.Message,
-		success: raw.Issuccess,
-		rowCount: raw.RowCount,
 	};
 }
 

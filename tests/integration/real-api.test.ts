@@ -61,7 +61,6 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 				const result = await client.info.getHelpline();
 
 				expect(result).toBeDefined();
-				expect(result.success).toBe(true);
 				expect(result.items).toBeInstanceOf(Array);
 				expect(result.items.length).toBeGreaterThan(0);
 				expect(result.items[0]).toHaveProperty("helplineNumber");
@@ -82,7 +81,6 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 				const result = await client.info.getServiceTypes();
 
 				expect(result).toBeDefined();
-				expect(result.success).toBe(true);
 				expect(result.items).toBeInstanceOf(Array);
 				expect(result.items.length).toBeGreaterThan(0);
 				expect(result.items[0]).toHaveProperty("serviceType");
@@ -103,7 +101,6 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 				const result = await client.info.getAbout();
 
 				expect(result).toBeDefined();
-				expect(result.success).toBe(true);
 				expect(result.item).toBeDefined();
 				expect(result.item).toHaveProperty("termsAndConditionsUrl");
 				expect(result.item).toHaveProperty("aboutBmtcUrl");
@@ -125,7 +122,6 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 				const result = await client.info.getEmergencyMessages();
 
 				expect(result).toBeDefined();
-				expect(result.success).toBe(true);
 				expect(result.items).toBeInstanceOf(Array);
 				if (result.items.length > 0) {
 					expect(result.items[0]).toHaveProperty("messageEnglish");
@@ -153,7 +149,6 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 				});
 
 				expect(result).toBeDefined();
-				expect(result.success).toBe(true);
 				expect(result.items).toBeInstanceOf(Array);
 				if (result.items.length > 0) {
 					expect(result.items[0]).toHaveProperty("vehicleId");
@@ -178,7 +173,6 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 				});
 
 				expect(result).toBeDefined();
-				expect(result.success).toBe(true);
 				expect(result.routeStops).toBeDefined();
 				expect(result.routeStops.type).toBe("FeatureCollection");
 				expect(result.vehicleLocation).toBeDefined();
@@ -222,12 +216,10 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 			"should find nearby stations from real API",
 			async () => {
 				const result = await client.stops.findNearbyStations({
-					latitude: 13.079389141522491,
-					longitude: 77.58817675200433,
+					coordinates: [13.079389141522491, 77.58817675200433],
 				});
 
 				expect(result).toBeDefined();
-				expect(result.success).toBe(true);
 				expect(result.stations).toBeInstanceOf(Array);
 				if (result.stations.length > 0) {
 					expect(result.stations[0]).toHaveProperty("stationName");
@@ -273,7 +265,6 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 				const result = await client.routes.getAllRoutes();
 
 				expect(result).toBeDefined();
-				expect(result.success).toBe(true);
 				expect(result.items).toBeInstanceOf(Array);
 				expect(result.items.length).toBeGreaterThan(0);
 				if (result.items.length > 0) {
@@ -314,7 +305,6 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 				});
 
 				expect(result).toBeDefined();
-				expect(result.success).toBe(true);
 				expect(result.items).toBeInstanceOf(Array);
 				if (result.items.length > 0) {
 					expect(result.items[0]).toHaveProperty("routeNo");
@@ -342,7 +332,6 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 				});
 
 				expect(result).toBeDefined();
-				expect(result.success).toBe(true);
 				expect(result.routePath).toBeDefined();
 				expect(result.routePath.type).toBe("FeatureCollection");
 				expect(result.routePath.features).toHaveLength(1);
@@ -383,7 +372,6 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 				});
 
 				expect(result).toBeDefined();
-				expect(result.success).toBe(true);
 				expect(result.items).toBeInstanceOf(Array);
 				if (result.items.length > 0) {
 					const item = result.items[0];
@@ -444,7 +432,6 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 				});
 
 				expect(result).toBeDefined();
-				expect(result.success).toBe(true);
 				expect(result).toHaveProperty("up");
 				expect(result).toHaveProperty("down");
 				expect(result.up).toHaveProperty("stops");
@@ -611,7 +598,6 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 				});
 
 				expect(result).toBeDefined();
-				expect(result.success).toBe(true);
 				expect(result.items).toBeInstanceOf(Array);
 				expect(result.items.length).toBeGreaterThan(0);
 				if (result.items.length > 0) {
@@ -661,7 +647,6 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 				});
 
 				expect(result).toBeDefined();
-				expect(result.success).toBe(true);
 				expect(result.items).toBeInstanceOf(Array);
 				expect(result.items.length).toBeGreaterThan(0);
 				if (result.items.length > 0) {
@@ -729,13 +714,11 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 				await delay(RATE_LIMIT_DELAY);
 
 				const result = await client.stops.findNearbyStops({
-					latitude: 13.07861,
-					longitude: 77.58333,
+					coordinates: [13.07861, 77.58333],
 					radius: 10,
 				});
 
 				expect(result).toBeDefined();
-				expect(result.success).toBe(true);
 				expect(result.items).toBeInstanceOf(Array);
 				expect(result.items.length).toBeGreaterThan(0);
 
@@ -780,15 +763,13 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 				await delay(RATE_LIMIT_DELAY);
 
 				const result = await client.stops.findNearbyStops({
-					latitude: 13.07861,
-					longitude: 77.58333,
+					coordinates: [13.07861, 77.58333],
 					radius: 10,
 					stationType: "bmtc",
 					bmtcCategory: "airport",
 				});
 
 				expect(result).toBeDefined();
-				expect(result.success).toBe(true);
 				expect(result.items).toBeInstanceOf(Array);
 
 				// Print formatted response
@@ -813,14 +794,12 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 
 				// Test with location to station (matching the user's example request)
 				const result = await tripClient.routes.planTrip({
-					fromLatitude: 13.079349339853941,
-					fromLongitude: 77.58814089936395,
+					fromCoordinates: [13.079349339853941, 77.58814089936395],
 					toStationId: "38888", // Kempegowda Bus Station
 					serviceTypeId: "72", // AC service
 				});
 
 				expect(result).toBeDefined();
-				expect(result.success).toBe(true);
 				expect(result.routes).toBeInstanceOf(Array);
 				expect(result.routes.length).toBeGreaterThan(0);
 
@@ -958,7 +937,6 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 				const result = await kannadaClient.info.getHelpline();
 
 				expect(result).toBeDefined();
-				expect(result.success).toBe(true);
 
 				// Print formatted response
 				console.log("\n🌐 Kannada Language Response:");

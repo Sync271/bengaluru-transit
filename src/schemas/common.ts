@@ -5,25 +5,12 @@ import { z } from 'zod';
  */
 
 /**
- * Schema for pagination parameters
- */
-export const paginationSchema = z.object({
-  page: z.number().int().positive().optional(),
-  limit: z.number().int().positive().max(100).optional(),
-});
-
-/**
  * Schema for sort parameters
  */
 export const sortSchema = z.object({
   sortBy: z.string().optional(),
   sortOrder: z.enum(['asc', 'desc']).optional(),
 });
-
-/**
- * Base request parameters schema
- */
-export const baseRequestParamsSchema = paginationSchema.merge(sortSchema);
 
 /**
  * Schema for API error response

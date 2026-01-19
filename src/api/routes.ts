@@ -99,6 +99,13 @@ function transformRoutePointsResponse(
 			]
 	);
 
+	// If no coordinates, return empty FeatureCollection
+	if (coordinates.length === 0) {
+		return {
+			routePath: createFeatureCollection([]),
+		};
+	}
+
 	// Create a single LineString feature for the route path
 	const routeFeature: RouteFeature = createRouteFeature(coordinates, {
 		routeId: routeId,
@@ -106,9 +113,6 @@ function transformRoutePointsResponse(
 
 	return {
 		routePath: createFeatureCollection([routeFeature]),
-		message: raw.Message,
-		success: raw.Issuccess,
-		rowCount: raw.RowCount,
 	};
 }
 
@@ -127,9 +131,6 @@ function transformRouteSearchResponse(
 
 	return {
 		items,
-		message: raw.Message,
-		success: raw.Issuccess,
-		rowCount: raw.RowCount,
 	};
 }
 
@@ -151,9 +152,6 @@ function transformAllRoutesResponse(
 
 	return {
 		items,
-		message: raw.Message,
-		success: raw.Issuccess,
-		rowCount: raw.RowCount,
 	};
 }
 
@@ -181,9 +179,6 @@ function transformTimetableResponse(
 
 	return {
 		items,
-		message: raw.Message,
-		success: raw.Issuccess,
-		rowCount: raw.RowCount,
 	};
 }
 
@@ -315,9 +310,6 @@ function transformRouteDetailsResponse(
 	return {
 		up: transformDirectionData(raw.up),
 		down: transformDirectionData(raw.down),
-		message: raw.message,
-		success: raw.issuccess,
-		rowCount: raw.rowCount,
 	};
 }
 
@@ -354,9 +346,6 @@ function transformRoutesBetweenStationsResponse(
 ): RoutesBetweenStationsResponse {
 	return {
 		items: raw.data.map(transformRouteBetweenStationsItem),
-		message: raw.Message,
-		success: raw.Issuccess,
-		rowCount: raw.RowCount,
 	};
 }
 
@@ -373,9 +362,6 @@ function transformFareDataResponse(
 
 	return {
 		items,
-		message: raw.Message,
-		success: raw.Issuccess,
-		rowCount: raw.RowCount,
 	};
 }
 
@@ -600,9 +586,6 @@ function transformTripPlannerResponse(
 
 	return {
 		routes,
-		message: raw.Message,
-		success: raw.Issuccess,
-		rowCount: raw.RowCount,
 	};
 }
 
@@ -1008,9 +991,9 @@ export class RoutesAPI {
 	 * Plan a trip with multiple route options
 	 * @param params - Trip planner parameters with 4 possible combinations:
 	 *   - Station to Station: fromStationId, toStationId
-	 *   - Station to Location: fromStationId, toLatitude, toLongitude
-	 *   - Location to Station: fromLatitude, fromLongitude, toStationId
-	 *   - Location to Location: fromLatitude, fromLongitude, toLatitude, toLongitude
+	 *   - Station to Location: fromStationId, toCoordinates
+	 *   - Location to Station: fromCoordinates, toStationId
+	 *   - Location to Location: fromCoordinates, toCoordinates
 	 * @returns Trip plans with all available routes (merged from directRoutes and transferRoutes)
 	 * @remarks
 	 * This endpoint supports 4 combinations of origin/destination:
@@ -1040,17 +1023,19 @@ export class RoutesAPI {
 		// Set "from" type (either station ID or coordinates)
 		if ("fromStationId" in params && params.fromStationId) {
 			apiPayload.fromStationId = parseInt(params.fromStationId, 10);
-		} else if ("fromLatitude" in params && "fromLongitude" in params) {
-			apiPayload.fromLatitude = params.fromLatitude;
-			apiPayload.fromLongitude = params.fromLongitude;
+		} else if ("fromCoordinates" in params && params.fromCoordinates) {
+			const [lat, lng] = params.fromCoordinates;
+			apiPayload.fromLatitude = lat;
+			apiPayload.fromLongitude = lng;
 		}
 
 		// Set "to" type (either station ID or coordinates)
 		if ("toStationId" in params && params.toStationId) {
 			apiPayload.toStationId = parseInt(params.toStationId, 10);
-		} else if ("toLatitude" in params && "toLongitude" in params) {
-			apiPayload.toLatitude = params.toLatitude;
-			apiPayload.toLongitude = params.toLongitude;
+		} else if ("toCoordinates" in params && params.toCoordinates) {
+			const [lat, lng] = params.toCoordinates;
+			apiPayload.toLatitude = lat;
+			apiPayload.toLongitude = lng;
 		}
 
 		// Add optional parameters

@@ -50,9 +50,7 @@ describe("RoutesAPI", () => {
 				routeId: "11797",
 			});
 
-			expect(result.success).toBe(true);
-			expect(result.message).toBe("Success");
-			expect(result.rowCount).toBe(3);
+			expect(result.routePath.features).toHaveLength(1);
 
 			// Verify route path GeoJSON
 			expect(result.routePath).toBeDefined();
@@ -88,12 +86,9 @@ describe("RoutesAPI", () => {
 				routeId: 99999,
 			});
 
-			expect(result.success).toBe(true);
-			expect(result.rowCount).toBe(0);
+			expect(result.routePath.features).toHaveLength(0);
 			// Verify empty GeoJSON collection
 			expect(result.routePath.type).toBe("FeatureCollection");
-			expect(result.routePath.features).toHaveLength(1); // Still one feature, but with empty coordinates
-			expect(result.routePath.features[0].geometry.coordinates).toHaveLength(0);
 		});
 
 		it("should validate input parameters and throw on invalid routeId", async () => {
@@ -179,10 +174,8 @@ describe("RoutesAPI", () => {
 				query: "80-a",
 			});
 
-			expect(result.success).toBe(true);
-			expect(result.message).toBe("Success");
 			expect(result.items).toHaveLength(3);
-			expect(result.rowCount).toBe(3);
+			expect(result.items.length).toBe(3);
 
 			// Verify first item
 			expect(result.items[0].unionRowNo).toBe(2);
@@ -218,9 +211,8 @@ describe("RoutesAPI", () => {
 				query: "nonexistent",
 			});
 
-			expect(result.success).toBe(true);
 			expect(result.items).toHaveLength(0);
-			expect(result.rowCount).toBe(0);
+			expect(result.items.length).toBe(0);
 		});
 
 		it("should validate input parameters and throw on empty query", async () => {
@@ -299,10 +291,8 @@ describe("RoutesAPI", () => {
 
 			const result = await client.routes.getAllRoutes();
 
-			expect(result.success).toBe(true);
-			expect(result.message).toBe("Success");
 			expect(result.items).toHaveLength(2);
-			expect(result.rowCount).toBe(2);
+			expect(result.items.length).toBe(2);
 
 			// Verify first item
 			expect(result.items[0].subrouteId).toBe("1657");
@@ -340,9 +330,8 @@ describe("RoutesAPI", () => {
 
 			const result = await client.routes.getAllRoutes();
 
-			expect(result.success).toBe(true);
 			expect(result.items).toHaveLength(0);
-			expect(result.rowCount).toBe(0);
+			expect(result.items.length).toBe(0);
 		});
 
 		it("should validate response schema and throw on invalid data", async () => {
@@ -423,10 +412,8 @@ describe("RoutesAPI", () => {
 				endTime,
 			});
 
-			expect(result.success).toBe(true);
-			expect(result.message).toBe("Success");
 			expect(result.items).toHaveLength(1);
-			expect(result.rowCount).toBe(1);
+			expect(result.items.length).toBe(1);
 
 			// Verify first item
 			const item = result.items[0];
@@ -492,7 +479,6 @@ describe("RoutesAPI", () => {
 				routeId: "2981",
 			});
 
-			expect(result.success).toBe(true);
 			expect(result.items).toHaveLength(1);
 
 			// Verify request was made with auto-generated defaults
@@ -577,9 +563,8 @@ describe("RoutesAPI", () => {
 				routeId: "2981",
 			});
 
-			expect(result.success).toBe(true);
 			expect(result.items).toHaveLength(0);
-			expect(result.rowCount).toBe(0);
+			expect(result.items.length).toBe(0);
 		});
 
 		it("should validate response schema and throw on invalid data", async () => {
@@ -709,9 +694,9 @@ describe("RoutesAPI", () => {
 				parentRouteId: "2124",
 			});
 
-			expect(result.success).toBe(true);
-			expect(result.message).toBe("Success");
-			expect(result.rowCount).toBe(0);
+			// Mock has 1 station in up direction, 0 in down direction
+			expect(result.up.stops.features).toHaveLength(1);
+			expect(result.down.stops.features).toHaveLength(0);
 
 			// Verify up direction - GeoJSON FeatureCollections
 			expect(result.up.stops.type).toBe("FeatureCollection");
@@ -930,7 +915,6 @@ describe("RoutesAPI", () => {
 				parentRouteId: "2124",
 			});
 
-			expect(result.success).toBe(true);
 			expect(result.up.stops.type).toBe("FeatureCollection");
 			expect(result.up.stops.features).toHaveLength(0);
 			expect(result.up.stationVehicles.type).toBe("FeatureCollection");
@@ -1032,9 +1016,7 @@ describe("RoutesAPI", () => {
 				toStationId: "20866",
 			});
 
-			expect(result.success).toBe(true);
-			expect(result.message).toBe("Success");
-			expect(result.rowCount).toBe(2);
+			expect(result.items.length).toBe(2);
 			expect(result.items).toHaveLength(2);
 
 			// Verify first item
@@ -1191,9 +1173,8 @@ describe("RoutesAPI", () => {
 				toStationId: "20866",
 			});
 
-			expect(result.success).toBe(true);
 			expect(result.items).toHaveLength(0);
-			expect(result.rowCount).toBe(0);
+			expect(result.items.length).toBe(0);
 		});
 
 		it("should validate response schema and throw on invalid data", async () => {
@@ -1254,9 +1235,7 @@ describe("RoutesAPI", () => {
 				destinationCode: "ITL",
 			});
 
-			expect(result.success).toBe(true);
-			expect(result.message).toBe("Success");
-			expect(result.rowCount).toBe(2);
+			expect(result.items.length).toBe(2);
 			expect(result.items).toHaveLength(2);
 
 			// Verify first item
@@ -1329,8 +1308,7 @@ describe("RoutesAPI", () => {
 				destinationCode: "ITL",
 			});
 
-			expect(result.success).toBe(true);
-			expect(result.rowCount).toBe(0);
+			expect(result.items.length).toBe(0);
 			expect(result.items).toHaveLength(0);
 		});
 
@@ -1501,14 +1479,11 @@ describe("RoutesAPI", () => {
 			} as Response);
 
 			const result = await client.routes.planTrip({
-				fromLatitude: 13.079349339853941,
-				fromLongitude: 77.58814089936395,
+				fromCoordinates: [13.079349339853941, 77.58814089936395],
 				toStationId: "38888",
 				serviceTypeId: "72",
 			});
 
-			expect(result.success).toBe(true);
-			expect(result.message).toBe("Success");
 			expect(result.routes).toHaveLength(1);
 			expect(result.routes[0].legs).toHaveLength(2);
 
@@ -1558,7 +1533,6 @@ describe("RoutesAPI", () => {
 				toStationId: "38888",
 			});
 
-			expect(result.success).toBe(true);
 			expect(result.routes).toHaveLength(0);
 		});
 
@@ -1581,13 +1555,10 @@ describe("RoutesAPI", () => {
 			} as Response);
 
 			const result = await client.routes.planTrip({
-				fromLatitude: 13.079349339853941,
-				fromLongitude: 77.58814089936395,
-				toLatitude: 12.9536,
-				toLongitude: 77.54378,
+				fromCoordinates: [13.079349339853941, 77.58814089936395],
+				toCoordinates: [12.9536, 77.54378],
 			});
 
-			expect(result.success).toBe(true);
 		});
 
 		it("should plan trip from station to location successfully", async () => {
@@ -1610,11 +1581,9 @@ describe("RoutesAPI", () => {
 
 			const result = await client.routes.planTrip({
 				fromStationId: "35376",
-				toLatitude: 12.9536,
-				toLongitude: 77.54378,
+				toCoordinates: [12.9536, 77.54378],
 			});
 
-			expect(result.success).toBe(true);
 		});
 
 		it("should handle optional parameters (fromDateTime, filterBy)", async () => {
@@ -1644,8 +1613,7 @@ describe("RoutesAPI", () => {
 			).padStart(2, "0")}:${String(futureDate.getMinutes()).padStart(2, "0")}`;
 
 			await client.routes.planTrip({
-				fromLatitude: 13.079349339853941,
-				fromLongitude: 77.58814089936395,
+				fromCoordinates: [13.079349339853941, 77.58814089936395],
 				toStationId: "38888",
 				serviceTypeId: "72",
 				fromDateTime,
@@ -1728,19 +1696,18 @@ describe("RoutesAPI", () => {
 				toStationId: "88888",
 			});
 
-			expect(result.success).toBe(true);
 			expect(result.routes).toHaveLength(0);
 		});
 
 		it("should validate input parameters and throw on invalid data", async () => {
-			// Missing both fromStationId and fromLatitude
+			// Missing both fromStationId and fromCoordinates
 			await expect(
 				client.routes.planTrip({
 					toStationId: "38888",
 				} as any)
 			).rejects.toThrow("Invalid trip planner parameters");
 
-			// Missing both toStationId and toLatitude
+			// Missing both toStationId and toCoordinates
 			await expect(
 				client.routes.planTrip({
 					fromStationId: "35376",

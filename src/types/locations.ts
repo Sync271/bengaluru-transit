@@ -53,18 +53,6 @@ export interface SearchPlacesResponse {
 	 * List of matching places
 	 */
 	items: PlaceItem[];
-	/**
-	 * Response message
-	 */
-	message: string;
-	/**
-	 * Whether the request was successful
-	 */
-	success: boolean;
-	/**
-	 * Number of results returned
-	 */
-	rowCount: number;
 }
 
 /**
