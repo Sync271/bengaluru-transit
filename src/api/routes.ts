@@ -20,6 +20,8 @@ import {
 	pathDetailsApiParamsSchema,
 	waypointsParamsSchema,
 	rawWaypointsResponseSchema,
+	rawTimetableByStationResponseSchema,
+	timetableByStationRequestSchema,
 } from "../schemas/routes";
 import { WALK_ROUTE_PREFIX, WALK_PREFIX, EMPTY_SUBROUTE_ID } from "../constants/routes";
 import {
@@ -73,6 +75,10 @@ import type {
 	WaypointsParams,
 	TripPathResponse,
 	RawWaypointsResponse,
+	TimetableByStationParams,
+	TimetableByStationResponse,
+	RawTimetableByStationResponse,
+	TimetableByStationItem,
 } from "../types/routes";
 import { tripPlannerFilterToNumber } from "../types/routes";
 import type {
@@ -175,6 +181,38 @@ function transformTimetableResponse(
 			startTime: trip.starttime,
 			endTime: trip.endtime,
 		})),
+	}));
+
+	return {
+		items,
+	};
+}
+
+/**
+ * Transform raw timetable by station API response to clean, normalized format
+ */
+function transformTimetableByStationResponse(
+	raw: RawTimetableByStationResponse
+): TimetableByStationResponse {
+	const items: TimetableByStationItem[] = raw.data.map((item) => ({
+		routeId: item.routeid.toString(),
+		id: item.id,
+		fromStationId: item.fromstationid.toString(),
+		toStationId: item.tostationid.toString(),
+		fromStationOffset: item.f,
+		toStationOffset: item.t,
+		routeNo: item.routeno,
+		routeName: item.routename,
+		fromStationName: item.fromstationname,
+		toStationName: item.tostationname,
+		travelTime: item.traveltime,
+		distance: item.distance,
+		approximateTime: item.apptime,
+		approximateTimeSeconds: parseInt(item.apptimesecs, 10),
+		startTime: item.starttime,
+		platformName: item.platformname,
+		platformNumber: item.platformnumber,
+		bayNumber: item.baynumber,
 	}));
 
 	return {
@@ -1207,5 +1245,68 @@ export class RoutesAPI {
 
 		// Transform to clean, normalized format with decoded coordinates
 		return transformWaypointsResponse(rawResponse);
+	}
+
+	/**
+	 * Get routes that pass through both stations (in sequence)
+	 * @param params - Parameters including from station ID, to station ID, and optional filters
+	 * @returns Routes that go through both stations with schedule information
+	 * @remarks
+	 * This endpoint returns all routes that pass through both the fromStation and toStation in sequence.
+	 * The routes may start before fromStation and/or continue after toStation - they just need to pass through both.
+	 * Returns one startTime per route (not a full timetable with multiple trips).
+	 * For a full timetable with multiple trips, use getTimetableByRoute() instead.
+	 * The date, start time, and end time parameters are required by the API but don't affect the output.
+	 * Use routeId to filter results to a specific route.
+	 */
+	async getRoutesThroughStations(
+		params: TimetableByStationParams
+	): Promise<TimetableByStationResponse> {
+		// Use provided date or default to current date
+		const date = params.date ?? new Date();
+		const dateStr = date.toISOString().split("T")[0]; // Format: "YYYY-MM-DD"
+
+		// Build request payload - API expects numbers for IDs, convert from strings
+		const requestPayload: {
+			fromStationId: number;
+			toStationId: number;
+			p_startdate: string;
+			p_enddate: string;
+			p_isshortesttime?: number;
+			p_routeid: string;
+			p_date: string;
+		} = {
+			fromStationId: parseInt(params.fromStationId, 10),
+			toStationId: parseInt(params.toStationId, 10),
+			p_startdate: `${dateStr} 00:00`,
+			p_enddate: `${dateStr} 23:59`,
+			p_routeid: params.routeId ?? "",
+			p_date: dateStr,
+		};
+
+		// Validate request payload
+		const validatedParams = validate(
+			timetableByStationRequestSchema,
+			requestPayload,
+			"Invalid timetable by station parameters"
+		);
+
+		const response = await this.client
+			.getClient()
+			.post("GetTimetableByStation_v4", {
+				json: validatedParams,
+			});
+
+		const data = await response.json<unknown>();
+
+		// Validate raw response with Zod schema
+		const rawResponse = validate(
+			rawTimetableByStationResponseSchema,
+			data,
+			"Invalid timetable by station response"
+		);
+
+		// Transform to clean, normalized format
+		return transformTimetableByStationResponse(rawResponse);
 	}
 }

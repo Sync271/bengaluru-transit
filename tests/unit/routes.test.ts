@@ -1755,6 +1755,247 @@ describe("RoutesAPI", () => {
 		});
 	});
 
+	describe("getRoutesThroughStations", () => {
+		it("should get timetable by station successfully", async () => {
+			const mockRawResponse = {
+				data: [
+					{
+						routeid: 2292,
+						id: 2,
+						fromstationid: 30475,
+						tostationid: 35376,
+						f: 1.63,
+						t: 6.34,
+						routeno: "402-D JLOW-VSD-SBS",
+						routename: "JLOW-SBS",
+						fromstationname: "Judicial Layout YHK",
+						tostationname: "Jakkur Aerodrum",
+						traveltime: "00:12:00",
+						distance: 4.71,
+						apptime: "00:12:00",
+						apptimesecs: "720",
+						starttime: "09:24:00",
+						platformname: null,
+						platformnumber: null,
+						baynumber: null,
+					},
+					{
+						routeid: 4443,
+						id: 2,
+						fromstationid: 30475,
+						tostationid: 35376,
+						f: 0.0,
+						t: 4.77,
+						routeno: "284-C",
+						routename: "JDLO-KBS",
+						fromstationname: "Judicial Layout YHK",
+						tostationname: "Jakkur Aerodrum",
+						traveltime: "00:10:00",
+						distance: 4.77,
+						apptime: "00:10:00",
+						apptimesecs: "600",
+						starttime: "11:45:00",
+						platformname: null,
+						platformnumber: null,
+						baynumber: null,
+					},
+				],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 2,
+				responsecode: 200,
+			};
+
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const result = await client.routes.getRoutesThroughStations({
+				fromStationId: "30475",
+				toStationId: "35376",
+			});
+
+			expect(result.items).toHaveLength(2);
+
+			// Verify first item
+			const item = result.items[0];
+			expect(item.routeId).toBe("2292");
+			expect(item.id).toBe(2);
+			expect(item.fromStationId).toBe("30475");
+			expect(item.toStationId).toBe("35376");
+			expect(item.fromStationOffset).toBe(1.63);
+			expect(item.toStationOffset).toBe(6.34);
+			// Verify relationship: distance = toStationOffset - fromStationOffset = 6.34 - 1.63 = 4.71
+			expect(item.distance).toBeCloseTo(item.toStationOffset - item.fromStationOffset, 2);
+			expect(item.routeNo).toBe("402-D JLOW-VSD-SBS");
+			expect(item.routeName).toBe("JLOW-SBS");
+			expect(item.fromStationName).toBe("Judicial Layout YHK");
+			expect(item.toStationName).toBe("Jakkur Aerodrum");
+			expect(item.travelTime).toBe("00:12:00");
+			expect(item.distance).toBe(4.71);
+			expect(item.approximateTime).toBe("00:12:00");
+			expect(item.approximateTimeSeconds).toBe(720);
+			expect(item.startTime).toBe("09:24:00");
+			expect(item.platformName).toBeNull();
+			expect(item.platformNumber).toBeNull();
+			expect(item.bayNumber).toBeNull();
+
+			// Verify second item
+			const item2 = result.items[1];
+			expect(item2.routeId).toBe("4443");
+			expect(item2.routeNo).toBe("284-C");
+			expect(item2.approximateTimeSeconds).toBe(600);
+
+			// Verify request was made with correct parameters
+			expect(mockPost).toHaveBeenCalledWith(
+				"GetTimetableByStation_v4",
+				expect.objectContaining({
+					json: expect.objectContaining({
+						fromStationId: 30475,
+						toStationId: 35376,
+						p_routeid: "",
+					}),
+				})
+			);
+		});
+
+		it("should get timetable by station with routeId filter", async () => {
+			const mockRawResponse = {
+				data: [
+					{
+						routeid: 2292,
+						id: 2,
+						fromstationid: 30475,
+						tostationid: 35376,
+						f: 1.63,
+						t: 6.34,
+						routeno: "402-D JLOW-VSD-SBS",
+						routename: "JLOW-SBS",
+						fromstationname: "Judicial Layout YHK",
+						tostationname: "Jakkur Aerodrum",
+						traveltime: "00:12:00",
+						distance: 4.71,
+						apptime: "00:12:00",
+						apptimesecs: "720",
+						starttime: "09:24:00",
+						platformname: null,
+						platformnumber: null,
+						baynumber: null,
+					},
+				],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 1,
+				responsecode: 200,
+			};
+
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const result = await client.routes.getRoutesThroughStations({
+				fromStationId: "30475",
+				toStationId: "35376",
+				routeId: "2292",
+			});
+
+			expect(result.items).toHaveLength(1);
+			expect(result.items[0].routeId).toBe("2292");
+
+			// Verify request was made with routeId filter
+			expect(mockPost).toHaveBeenCalledWith(
+				"GetTimetableByStation_v4",
+				expect.objectContaining({
+					json: expect.objectContaining({
+						fromStationId: 30475,
+						toStationId: 35376,
+						p_routeid: "2292",
+					}),
+				})
+			);
+		});
+
+		it("should get timetable by station with custom date", async () => {
+			const mockRawResponse = {
+				data: [],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 0,
+				responsecode: 200,
+			};
+
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const customDate = new Date("2026-01-20");
+			const result = await client.routes.getRoutesThroughStations({
+				fromStationId: "30475",
+				toStationId: "35376",
+				date: customDate,
+			});
+
+			expect(result.items).toHaveLength(0);
+
+			// Verify request was made with custom date
+			expect(mockPost).toHaveBeenCalledWith(
+				"GetTimetableByStation_v4",
+				expect.objectContaining({
+					json: expect.objectContaining({
+						p_date: "2026-01-20",
+						p_startdate: "2026-01-20 00:00",
+						p_enddate: "2026-01-20 23:59",
+					}),
+				})
+			);
+		});
+
+		it("should handle empty timetable response", async () => {
+			const mockRawResponse = {
+				data: [],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 0,
+				responsecode: 200,
+			};
+
+			// Mock the response
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const result = await client.routes.getRoutesThroughStations({
+				fromStationId: "30475",
+				toStationId: "35376",
+			});
+
+			expect(result.items).toHaveLength(0);
+		});
+
+		it("should validate input parameters and throw on invalid station IDs", async () => {
+			await expect(
+				client.routes.getRoutesThroughStations({
+					fromStationId: "0",
+					toStationId: "35376",
+				})
+			).rejects.toThrow("Invalid timetable by station parameters");
+
+			await expect(
+				client.routes.getRoutesThroughStations({
+					fromStationId: "30475",
+					toStationId: "-1",
+				})
+			).rejects.toThrow("Invalid timetable by station parameters");
+		});
+	});
+
 	describe("getTripStops", () => {
 		it("should get path details successfully", async () => {
 			const mockRawResponse = {

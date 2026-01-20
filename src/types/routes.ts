@@ -18,6 +18,7 @@ import type {
 	rawFareDataResponseSchema,
 	rawTripPlannerResponseSchema,
 	rawPathDetailsResponseSchema,
+	rawTimetableByStationResponseSchema,
 } from "../schemas/routes";
 import type {
 	RouteFeatureCollection,
@@ -1143,3 +1144,101 @@ export type RawWaypointsResponse = string[];
  * Returns GeoJSON FeatureCollection with LineString features (route path segments)
  */
 export type TripPathResponse = FeatureCollection;
+
+/**
+ * Raw timetable by station item from GetTimetableByStation_v4 API
+ */
+export interface RawTimetableByStationItem {
+	routeid: number;
+	id: number;
+	fromstationid: number;
+	tostationid: number;
+	f: number;
+	t: number;
+	routeno: string;
+	routename: string;
+	fromstationname: string;
+	tostationname: string;
+	traveltime: string;
+	distance: number;
+	apptime: string;
+	apptimesecs: string;
+	starttime: string;
+	platformname: string | null;
+	platformnumber: string | null;
+	baynumber: string | null;
+}
+
+/**
+ * Raw timetable by station API response from BMTC API (for validation)
+ */
+export type RawTimetableByStationResponse = z.infer<
+	typeof rawTimetableByStationResponseSchema
+>;
+
+/**
+ * Route that passes through both stations (in sequence) with schedule information
+ * Note: This is NOT a full timetable - it contains one startTime per route, not multiple scheduled trips.
+ * The route may start before fromStation and/or continue after toStation.
+ */
+export interface TimetableByStationItem {
+	/** Route ID */
+	routeId: string;
+	/** Internal ID */
+	id: number;
+	/** From station ID */
+	fromStationId: string;
+	/** To station ID */
+	toStationId: string;
+	/** Distance from route start (first stop) to fromStation (km) - cumulative distance along route */
+	fromStationOffset: number;
+	/** Total distance from route start (first stop) to toStation (km) - cumulative distance along route */
+	toStationOffset: number;
+	/** Route number */
+	routeNo: string;
+	/** Route name */
+	routeName: string;
+	/** From station name */
+	fromStationName: string;
+	/** To station name */
+	toStationName: string;
+	/** Travel time in format "HH:mm:ss" - actual/scheduled travel time between stations */
+	travelTime: string;
+	/** Distance from fromStation to toStation (km) - distance along the route path between stations (calculated as toStationOffset - fromStationOffset) */
+	distance: number;
+	/** Approximate time in format "HH:mm:ss" - approximate travel time (always <= travelTime) */
+	approximateTime: string;
+	/** Approximate time in seconds - approximate travel time in seconds (always <= travelTime) */
+	approximateTimeSeconds: number;
+	/** Start time in format "HH:mm:ss" */
+	startTime: string;
+	/** Platform name (may be null) */
+	platformName: string | null;
+	/** Platform number (may be null) */
+	platformNumber: string | null;
+	/** Bay number (may be null) */
+	bayNumber: string | null;
+}
+
+/**
+ * Routes that pass through both stations (in sequence) with schedule information
+ * Note: This is NOT a full timetable - each route has one startTime, not multiple scheduled trips.
+ * Routes may start before fromStation and/or continue after toStation.
+ */
+export interface TimetableByStationResponse {
+	items: TimetableByStationItem[];
+}
+
+/**
+ * Parameters for getting route options between stations
+ */
+export interface TimetableByStationParams {
+	/** From station ID (always string for consistency) */
+	fromStationId: string;
+	/** To station ID (always string for consistency) */
+	toStationId: string;
+	/** Optional: Filter by specific route ID */
+	routeId?: string;
+	/** Optional: Date for timetable (defaults to current date) */
+	date?: Date;
+}

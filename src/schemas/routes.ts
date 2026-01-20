@@ -518,3 +518,52 @@ export const waypointsParamsSchema = z.object({
  * Schema for raw waypoints response (array of encoded strings)
  */
 export const rawWaypointsResponseSchema = z.array(z.string());
+
+/**
+ * Schema for raw timetable by station item from GetTimetableByStation_v4 API
+ */
+export const rawTimetableByStationItemSchema = z.object({
+	routeid: z.number(),
+	id: z.number(),
+	fromstationid: z.number(),
+	tostationid: z.number(),
+	f: z.number(),
+	t: z.number(),
+	routeno: z.string(),
+	routename: z.string(),
+	fromstationname: z.string(),
+	tostationname: z.string(),
+	traveltime: z.string(),
+	distance: z.number(),
+	apptime: z.string(),
+	apptimesecs: z.string(),
+	starttime: z.string(),
+	platformname: z.string().nullable(),
+	platformnumber: z.string().nullable(),
+	baynumber: z.string().nullable(),
+});
+
+/**
+ * Schema for raw timetable by station API response from BMTC API
+ */
+export const rawTimetableByStationResponseSchema = z.object({
+	data: z.array(rawTimetableByStationItemSchema),
+	Message: z.string(),
+	Issuccess: z.boolean(),
+	exception: z.string().nullable(),
+	RowCount: z.number(),
+	responsecode: z.number(),
+});
+
+/**
+ * Schema for timetable by station request parameters (internal - for API call)
+ */
+export const timetableByStationRequestSchema = z.object({
+	fromStationId: z.number().int().positive(),
+	toStationId: z.number().int().positive(),
+	p_startdate: z.string(),
+	p_enddate: z.string(),
+	p_isshortesttime: z.number().optional(),
+	p_routeid: z.string().optional(),
+	p_date: z.string(),
+});
