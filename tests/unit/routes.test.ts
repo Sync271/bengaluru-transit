@@ -298,19 +298,19 @@ describe("RoutesAPI", () => {
 			expect(result.items[0].subrouteId).toBe("1657");
 			expect(result.items[0].routeNo).toBe("89-C UP");
 			expect(result.items[0].routeName).toBe("KBS-CVN");
-			expect(result.items[0].fromStationId).toBe("20921");
-			expect(result.items[0].fromStation).toBe("Kempegowda Bus Station");
-			expect(result.items[0].toStationId).toBe("32209");
-			expect(result.items[0].toStation).toBe("Cauvery Nagara");
+			expect(result.items[0].fromStopId).toBe("20921");
+			expect(result.items[0].fromStop).toBe("Kempegowda Bus Station");
+			expect(result.items[0].toStopId).toBe("32209");
+			expect(result.items[0].toStop).toBe("Cauvery Nagara");
 
 			// Verify second item
 			expect(result.items[1].subrouteId).toBe("1658");
 			expect(result.items[1].routeNo).toBe("89-C DOWN");
 			expect(result.items[1].routeName).toBe("CVN-KBS");
-			expect(result.items[1].fromStationId).toBe("24379");
-			expect(result.items[1].fromStation).toBe("Cauvery Nagara");
-			expect(result.items[1].toStationId).toBe("20922");
-			expect(result.items[1].toStation).toBe("Kempegowda Bus Station");
+			expect(result.items[1].fromStopId).toBe("24379");
+			expect(result.items[1].fromStop).toBe("Cauvery Nagara");
+			expect(result.items[1].toStopId).toBe("20922");
+			expect(result.items[1].toStop).toBe("Kempegowda Bus Station");
 		});
 
 		it("should handle empty results", async () => {
@@ -406,8 +406,8 @@ describe("RoutesAPI", () => {
 
 			const result = await client.routes.getTimetableByRoute({
 				routeId: "2981",
-				fromStationId: "20623",
-				toStationId: "20866",
+				fromStopId: "20623",
+				toStopId: "20866",
 				startTime,
 				endTime,
 			});
@@ -417,10 +417,10 @@ describe("RoutesAPI", () => {
 
 			// Verify first item
 			const item = result.items[0];
-			expect(item.fromStationName).toBe("Banashankari Bus Station");
-			expect(item.toStationName).toBe("ITPL");
-			expect(item.fromStationId).toBe("20623");
-			expect(item.toStationId).toBe("20866");
+			expect(item.fromStopName).toBe("Banashankari Bus Station");
+			expect(item.toStopName).toBe("ITPL");
+			expect(item.fromStopId).toBe("20623");
+			expect(item.toStopId).toBe("20866");
 			expect(item.approximateTime).toBe("01:35:00");
 			expect(item.distance).toBe(27.0);
 			expect(item.platformName).toBe("9");
@@ -436,10 +436,10 @@ describe("RoutesAPI", () => {
 			expect(mockPost).toHaveBeenCalledWith(
 				"GetTimetableByRouteid_v3",
 				expect.objectContaining({
-					json: expect.objectContaining({
+					json: 					expect.objectContaining({
 						routeid: 2981,
-						fromStationId: "20623",
-						toStationId: "20866",
+						fromStationId: "20623", // API uses "station" in field names
+						toStationId: "20866", // API uses "station" in field names
 						starttime: "2025-10-07 10:00",
 						endtime: "2025-10-07 23:59",
 					}),
@@ -494,11 +494,11 @@ describe("RoutesAPI", () => {
 				})
 			);
 
-			// Verify fromStationId and toStationId are not in the request
+			// Verify fromStopId and toStopId are not in the request (API uses fromStationId/toStationId)
 			const callArgs = mockPost.mock.calls[0];
 			const requestJson = (callArgs[1] as any).json;
-			expect(requestJson.fromStationId).toBeUndefined();
-			expect(requestJson.toStationId).toBeUndefined();
+			expect(requestJson.fromStationId).toBeUndefined(); // API field name
+			expect(requestJson.toStationId).toBeUndefined(); // API field name
 		});
 
 		it("should get timetable with auto-generated endTime based on startTime", async () => {
@@ -960,7 +960,7 @@ describe("RoutesAPI", () => {
 		});
 	});
 
-	describe("getRoutesBetweenStations", () => {
+	describe("getRoutesBetweenStops", () => {
 		it("should get fare routes successfully", async () => {
 			const mockRawResponse = {
 				data: [
@@ -1011,9 +1011,9 @@ describe("RoutesAPI", () => {
 				json: async () => mockRawResponse,
 			} as Response);
 
-			const result = await client.routes.getRoutesBetweenStations({
-				fromStationId: "20623",
-				toStationId: "20866",
+			const result = await client.routes.getRoutesBetweenStops({
+				fromStopId: "20623",
+				toStopId: "20866",
 			});
 
 			expect(result.items.length).toBe(2);
@@ -1022,8 +1022,8 @@ describe("RoutesAPI", () => {
 			// Verify first item
 			const firstItem = result.items[0];
 			expect(firstItem.id).toBe("6");
-			expect(firstItem.fromStationId).toBe("20623");
-			expect(firstItem.toStationId).toBe("20866");
+			expect(firstItem.fromStopId).toBe("20623");
+			expect(firstItem.toStopId).toBe("20866");
 			expect(firstItem.subrouteId).toBe("4977");
 			expect(firstItem.routeNo).toBe("500-CA ITPL-PPLO");
 			expect(firstItem.routeName).toBe("PPLO-ITPL");
@@ -1072,14 +1072,14 @@ describe("RoutesAPI", () => {
 				json: async () => mockRawResponse,
 			} as Response);
 
-			const result = await client.routes.getRoutesBetweenStations({
-				fromStationId: "20623",
-				toStationId: "20866",
+			const result = await client.routes.getRoutesBetweenStops({
+				fromStopId: "20623",
+				toStopId: "20866",
 			});
 
 			expect(typeof result.items[0].id).toBe("string");
-			expect(typeof result.items[0].fromStationId).toBe("string");
-			expect(typeof result.items[0].toStationId).toBe("string");
+			expect(typeof result.items[0].fromStopId).toBe("string");
+			expect(typeof result.items[0].toStopId).toBe("string");
 			expect(typeof result.items[0].subrouteId).toBe("string");
 		});
 
@@ -1106,9 +1106,9 @@ describe("RoutesAPI", () => {
 				json: async () => mockRawResponse,
 			} as Response);
 
-			await englishClient.routes.getRoutesBetweenStations({
-				fromStationId: "20623",
-				toStationId: "20866",
+			await englishClient.routes.getRoutesBetweenStops({
+				fromStopId: "20623",
+				toStopId: "20866",
 			});
 
 			expect(mockPostEn).toHaveBeenCalledWith("GetFareRoutes", {
@@ -1126,9 +1126,9 @@ describe("RoutesAPI", () => {
 				json: async () => mockRawResponse,
 			} as Response);
 
-			await kannadaClient.routes.getRoutesBetweenStations({
-				fromStationId: "20623",
-				toStationId: "20866",
+			await kannadaClient.routes.getRoutesBetweenStops({
+				fromStopId: "20623",
+				toStopId: "20866",
 			});
 
 			expect(mockPostKn).toHaveBeenCalledWith("GetFareRoutes", {
@@ -1140,16 +1140,16 @@ describe("RoutesAPI", () => {
 
 		it("should validate input parameters and throw on invalid station IDs", async () => {
 			await expect(
-				client.routes.getRoutesBetweenStations({
-					fromStationId: "0", // Invalid: must be positive
-					toStationId: "20866",
+				client.routes.getRoutesBetweenStops({
+					fromStopId: "0", // Invalid: must be positive
+					toStopId: "20866",
 				})
 			).rejects.toThrow();
 
 			await expect(
-				client.routes.getRoutesBetweenStations({
-					fromStationId: "20623",
-					toStationId: "-1", // Invalid: must be positive
+				client.routes.getRoutesBetweenStops({
+					fromStopId: "20623",
+					toStopId: "-1", // Invalid: must be positive
 				})
 			).rejects.toThrow();
 		});
@@ -1168,9 +1168,9 @@ describe("RoutesAPI", () => {
 				json: async () => mockRawResponse,
 			} as Response);
 
-			const result = await client.routes.getRoutesBetweenStations({
-				fromStationId: "20623",
-				toStationId: "20866",
+			const result = await client.routes.getRoutesBetweenStops({
+				fromStopId: "20623",
+				toStopId: "20866",
 			});
 
 			expect(result.items).toHaveLength(0);
@@ -1194,11 +1194,11 @@ describe("RoutesAPI", () => {
 			} as Response);
 
 			await expect(
-				client.routes.getRoutesBetweenStations({
-					fromStationId: "20623",
-					toStationId: "20866",
+				client.routes.getRoutesBetweenStops({
+					fromStopId: "20623",
+					toStopId: "20866",
 				})
-			).rejects.toThrow("Invalid routes between stations response");
+			).rejects.toThrow("Invalid routes between stops response");
 		});
 	});
 
@@ -1480,7 +1480,7 @@ describe("RoutesAPI", () => {
 
 			const result = await client.routes.planTrip({
 				fromCoordinates: [13.079349339853941, 77.58814089936395],
-				toStationId: "38888",
+				toStopId: "38888",
 				serviceTypeId: "72",
 			});
 
@@ -1498,8 +1498,8 @@ describe("RoutesAPI", () => {
 			// Verify first leg (walking segment)
 			const walkLeg = route.legs[0];
 			expect(walkLeg.routeNo).toBe("walk_source");
-			expect(walkLeg.fromStationName).toBe("Your Location");
-			expect(walkLeg.toStationId).toBe("35376");
+			expect(walkLeg.fromStopName).toBe("Your Location");
+			expect(walkLeg.toStopId).toBe("35376");
 			expect(walkLeg.approxFare).toBe(0.0);
 
 			// Verify second leg (bus segment)
@@ -1529,8 +1529,8 @@ describe("RoutesAPI", () => {
 			} as Response);
 
 			const result = await client.routes.planTrip({
-				fromStationId: "35376",
-				toStationId: "38888",
+				fromStopId: "35376",
+				toStopId: "38888",
 			});
 
 			expect(result.routes).toHaveLength(0);
@@ -1580,7 +1580,7 @@ describe("RoutesAPI", () => {
 			} as Response);
 
 			const result = await client.routes.planTrip({
-				fromStationId: "35376",
+				fromStopId: "35376",
 				toCoordinates: [12.9536, 77.54378],
 			});
 
@@ -1614,7 +1614,7 @@ describe("RoutesAPI", () => {
 
 			await client.routes.planTrip({
 				fromCoordinates: [13.079349339853941, 77.58814089936395],
-				toStationId: "38888",
+				toStopId: "38888",
 				serviceTypeId: "72",
 				fromDateTime,
 				filterBy: "minimum-transfers",
@@ -1655,18 +1655,18 @@ describe("RoutesAPI", () => {
 			} as Response);
 
 			await client.routes.planTrip({
-				fromStationId: "35376",
-				toStationId: "38888",
+				fromStopId: "35376",
+				toStopId: "38888",
 				serviceTypeId: "72",
 			});
 
-			// Verify the request includes IDs as numbers
+			// Verify the request includes IDs as numbers (API uses "station" in field names)
 			expect(mockPost).toHaveBeenCalledWith(
 				"TripPlannerMSMD",
 				expect.objectContaining({
 					json: expect.objectContaining({
-						fromStationId: 35376,
-						toStationId: 38888,
+						fromStationId: 35376, // API uses "station" in field names
+						toStationId: 38888, // API uses "station" in field names
 						serviceTypeId: 72,
 					}),
 				})
@@ -1692,25 +1692,25 @@ describe("RoutesAPI", () => {
 			} as Response);
 
 			const result = await client.routes.planTrip({
-				fromStationId: "99999",
-				toStationId: "88888",
+				fromStopId: "99999",
+				toStopId: "88888",
 			});
 
 			expect(result.routes).toHaveLength(0);
 		});
 
 		it("should validate input parameters and throw on invalid data", async () => {
-			// Missing both fromStationId and fromCoordinates
+			// Missing both fromStopId and fromCoordinates
 			await expect(
 				client.routes.planTrip({
-					toStationId: "38888",
+					toStopId: "38888",
 				} as any)
 			).rejects.toThrow("Invalid trip planner parameters");
 
-			// Missing both toStationId and toCoordinates
+			// Missing both toStopId and toCoordinates
 			await expect(
 				client.routes.planTrip({
-					fromStationId: "35376",
+					fromStopId: "35376",
 				} as any)
 			).rejects.toThrow("Invalid trip planner parameters");
 		});
@@ -1813,8 +1813,8 @@ describe("RoutesAPI", () => {
 			} as Response);
 
 			const result = await client.routes.getRoutesThroughStations({
-				fromStationId: "30475",
-				toStationId: "35376",
+				fromStopId: "30475",
+				toStopId: "35376",
 			});
 
 			expect(result.items).toHaveLength(2);
@@ -1823,16 +1823,16 @@ describe("RoutesAPI", () => {
 			const item = result.items[0];
 			expect(item.routeId).toBe("2292");
 			expect(item.id).toBe(2);
-			expect(item.fromStationId).toBe("30475");
-			expect(item.toStationId).toBe("35376");
-			expect(item.fromStationOffset).toBe(1.63);
-			expect(item.toStationOffset).toBe(6.34);
-			// Verify relationship: distance = toStationOffset - fromStationOffset = 6.34 - 1.63 = 4.71
-			expect(item.distance).toBeCloseTo(item.toStationOffset - item.fromStationOffset, 2);
+			expect(item.fromStopId).toBe("30475");
+			expect(item.toStopId).toBe("35376");
+			expect(item.fromStopOffset).toBe(1.63);
+			expect(item.toStopOffset).toBe(6.34);
+			// Verify relationship: distance = toStopOffset - fromStopOffset = 6.34 - 1.63 = 4.71
+			expect(item.distance).toBeCloseTo(item.toStopOffset - item.fromStopOffset, 2);
 			expect(item.routeNo).toBe("402-D JLOW-VSD-SBS");
 			expect(item.routeName).toBe("JLOW-SBS");
-			expect(item.fromStationName).toBe("Judicial Layout YHK");
-			expect(item.toStationName).toBe("Jakkur Aerodrum");
+			expect(item.fromStopName).toBe("Judicial Layout YHK");
+			expect(item.toStopName).toBe("Jakkur Aerodrum");
 			expect(item.travelTime).toBe("00:12:00");
 			expect(item.distance).toBe(4.71);
 			expect(item.approximateTime).toBe("00:12:00");
@@ -1898,8 +1898,8 @@ describe("RoutesAPI", () => {
 			} as Response);
 
 			const result = await client.routes.getRoutesThroughStations({
-				fromStationId: "30475",
-				toStationId: "35376",
+				fromStopId: "30475",
+				toStopId: "35376",
 				routeId: "2292",
 			});
 
@@ -1911,8 +1911,8 @@ describe("RoutesAPI", () => {
 				"GetTimetableByStation_v4",
 				expect.objectContaining({
 					json: expect.objectContaining({
-						fromStationId: 30475,
-						toStationId: 35376,
+						fromStationId: 30475, // API uses "station" in field names
+						toStationId: 35376, // API uses "station" in field names
 						p_routeid: "2292",
 					}),
 				})
@@ -1936,8 +1936,8 @@ describe("RoutesAPI", () => {
 
 			const customDate = new Date("2026-01-20");
 			const result = await client.routes.getRoutesThroughStations({
-				fromStationId: "30475",
-				toStationId: "35376",
+				fromStopId: "30475",
+				toStopId: "35376",
 				date: customDate,
 			});
 
@@ -1951,6 +1951,8 @@ describe("RoutesAPI", () => {
 						p_date: "2026-01-20",
 						p_startdate: "2026-01-20 00:00",
 						p_enddate: "2026-01-20 23:59",
+						fromStationId: 30475, // API uses "station" in field names
+						toStationId: 35376, // API uses "station" in field names
 					}),
 				})
 			);
@@ -1972,8 +1974,8 @@ describe("RoutesAPI", () => {
 			} as Response);
 
 			const result = await client.routes.getRoutesThroughStations({
-				fromStationId: "30475",
-				toStationId: "35376",
+				fromStopId: "30475",
+				toStopId: "35376",
 			});
 
 			expect(result.items).toHaveLength(0);
@@ -1982,15 +1984,15 @@ describe("RoutesAPI", () => {
 		it("should validate input parameters and throw on invalid station IDs", async () => {
 			await expect(
 				client.routes.getRoutesThroughStations({
-					fromStationId: "0",
-					toStationId: "35376",
+					fromStopId: "0",
+					toStopId: "35376",
 				})
 			).rejects.toThrow("Invalid timetable by station parameters");
 
 			await expect(
 				client.routes.getRoutesThroughStations({
-					fromStationId: "30475",
-					toStationId: "-1",
+					fromStopId: "30475",
+					toStopId: "-1",
 				})
 			).rejects.toThrow("Invalid timetable by station parameters");
 		});
@@ -2051,8 +2053,8 @@ describe("RoutesAPI", () => {
 				trips: [
 					{
 						tripId: 80079217,
-						fromStationId: 22357,
-						toStationId: 20922,
+						fromStopId: 22357,
+						toStopId: 20922,
 					},
 				],
 			});
@@ -2134,13 +2136,13 @@ describe("RoutesAPI", () => {
 				trips: [
 					{
 						tripId: 80079217,
-						fromStationId: 22357,
-						toStationId: 20922,
+						fromStopId: 22357,
+						toStopId: 20922,
 					},
 					{
 						tripId: 80211270,
-						fromStationId: 20921,
-						toStationId: 21447,
+						fromStopId: 20921,
+						toStopId: 21447,
 					},
 				],
 			});
@@ -2153,13 +2155,13 @@ describe("RoutesAPI", () => {
 						data: [
 							{
 								tripId: 80079217,
-								fromStationId: 22357,
-								toStationId: 20922,
+								fromStationId: 22357, // API uses "station" in field names
+								toStationId: 20922, // API uses "station" in field names
 							},
 							{
 								tripId: 80211270,
-								fromStationId: 20921,
-								toStationId: 21447,
+								fromStationId: 20921, // API uses "station" in field names
+								toStationId: 21447, // API uses "station" in field names
 							},
 						],
 					},

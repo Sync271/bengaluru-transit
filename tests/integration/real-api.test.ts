@@ -271,10 +271,10 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 					expect(result.items[0]).toHaveProperty("subrouteId");
 					expect(result.items[0]).toHaveProperty("routeNo");
 					expect(result.items[0]).toHaveProperty("routeName");
-					expect(result.items[0]).toHaveProperty("fromStationId");
-					expect(result.items[0]).toHaveProperty("fromStation");
-					expect(result.items[0]).toHaveProperty("toStationId");
-					expect(result.items[0]).toHaveProperty("toStation");
+					expect(result.items[0]).toHaveProperty("fromStopId");
+					expect(result.items[0]).toHaveProperty("fromStop");
+					expect(result.items[0]).toHaveProperty("toStopId");
+					expect(result.items[0]).toHaveProperty("toStop");
 					expect(typeof result.items[0].subrouteId).toBe("string");
 				}
 
@@ -375,10 +375,10 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 				expect(result.items).toBeInstanceOf(Array);
 				if (result.items.length > 0) {
 					const item = result.items[0];
-					expect(item).toHaveProperty("fromStationName");
-					expect(item).toHaveProperty("toStationName");
-					expect(item).toHaveProperty("fromStationId");
-					expect(item).toHaveProperty("toStationId");
+					expect(item).toHaveProperty("fromStopName");
+					expect(item).toHaveProperty("toStopName");
+					expect(item).toHaveProperty("fromStopId");
+					expect(item).toHaveProperty("toStopId");
 					expect(item).toHaveProperty("approximateTime");
 					expect(item).toHaveProperty("distance");
 					expect(item).toHaveProperty("platformName");
@@ -386,8 +386,8 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 					expect(item).toHaveProperty("bayNumber");
 					expect(item).toHaveProperty("tripDetails");
 					expect(item.tripDetails).toBeInstanceOf(Array);
-					expect(typeof item.fromStationId).toBe("string");
-					expect(typeof item.toStationId).toBe("string");
+					expect(typeof item.fromStopId).toBe("string");
+					expect(typeof item.toStopId).toBe("string");
 					expect(typeof item.distance).toBe("number");
 					if (item.tripDetails.length > 0) {
 						expect(item.tripDetails[0]).toHaveProperty("startTime");
@@ -541,14 +541,14 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 			async () => {
 				await delay(RATE_LIMIT_DELAY);
 
-				// First, get routes between stations
-				const routesResult = await client.routes.getRoutesBetweenStations({
-					fromStationId: "20623", // Banashankari Bus Station
-					toStationId: "20866", // ITPL
+				// First, get routes between stops
+				const routesResult = await client.routes.getRoutesBetweenStops({
+					fromStopId: "20623", // Banashankari Bus Station
+					toStopId: "20866", // ITPL
 				});
 
 				expect(routesResult).toBeDefined();
-				expect(routesResult.success).toBe(true);
+				expect(routesResult.items).toBeInstanceOf(Array);
 				expect(routesResult.items.length).toBeGreaterThan(0);
 
 				// Get the first route item for fare data
@@ -566,7 +566,6 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 				});
 
 				expect(fareResult).toBeDefined();
-				expect(fareResult.success).toBe(true);
 				expect(fareResult.items).toBeInstanceOf(Array);
 				if (fareResult.items.length > 0) {
 					const fareItem = fareResult.items[0];
@@ -696,7 +695,6 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 				});
 
 				expect(metroResult).toBeDefined();
-				expect(metroResult.success).toBe(true);
 				expect(metroResult.items).toBeInstanceOf(Array);
 
 				// Print formatted response
@@ -792,10 +790,10 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 					timeout: 60000, // 60 seconds for slow trip planner endpoint
 				});
 
-				// Test with location to station (matching the user's example request)
+				// Test with location to stop (matching the user's example request)
 				const result = await tripClient.routes.planTrip({
 					fromCoordinates: [13.079349339853941, 77.58814089936395],
-					toStationId: "38888", // Kempegowda Bus Station
+					toStopId: "38888", // Kempegowda Bus Station
 					serviceTypeId: "72", // AC service
 				});
 
@@ -864,13 +862,13 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 		it.skipIf(!shouldRunTest("trip"))(
 			"should get trip stops from real API",
 			async () => {
-				// Use example trip leg from user's request (tripId, fromStationId, toStationId)
+				// Use example trip leg from user's request (tripId, fromStopId, toStopId)
 				const result = await client.routes.getTripStops({
 					trips: [
 						{
 							tripId: 80079217,
-							fromStationId: 22357,
-							toStationId: 20922,
+							fromStopId: 22357,
+							toStopId: 20922,
 						},
 					],
 				});

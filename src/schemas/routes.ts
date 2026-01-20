@@ -47,11 +47,11 @@ export const rawRoutesBetweenStationsResponseSchema = z.object({
 });
 
 /**
- * Schema for routes between stations request parameters
+ * Schema for routes between stops request parameters
  */
-export const routesBetweenStationsParamsSchema = z.object({
-	fromStationId: z.number().int().positive(),
-	toStationId: z.number().int().positive(),
+export const routesBetweenStopsParamsSchema = z.object({
+	fromStationId: z.number().int().positive(), // API uses "station" in field names
+	toStationId: z.number().int().positive(), // API uses "station" in field names
 });
 
 /**
@@ -445,8 +445,8 @@ export const tripPlannerParamsSchema = z
  */
 export const pathDetailRequestItemSchema = z.object({
 	tripId: z.number().int().positive("Trip ID must be a positive integer"),
-	fromStationId: z.number().int().positive("From station ID must be a positive integer"),
-	toStationId: z.number().int().positive("To station ID must be a positive integer"),
+	fromStopId: z.number().int().positive("From stop ID must be a positive integer"),
+	toStopId: z.number().int().positive("To stop ID must be a positive integer"),
 });
 
 /**
@@ -459,11 +459,20 @@ export const pathDetailsParamsSchema = z.object({
 });
 
 /**
+ * Schema for path detail API request item (internal - for API call, uses station IDs to match API)
+ */
+export const pathDetailApiRequestItemSchema = z.object({
+	tripId: z.number().int().positive("Trip ID must be a positive integer"),
+	fromStationId: z.number().int().positive("From station ID must be a positive integer"), // API uses "station"
+	toStationId: z.number().int().positive("To station ID must be a positive integer"), // API uses "station"
+});
+
+/**
  * Schema for path details API request parameters (API format, uses 'data')
  */
 export const pathDetailsApiParamsSchema = z.object({
 	data: z
-		.array(pathDetailRequestItemSchema)
+		.array(pathDetailApiRequestItemSchema)
 		.min(1, "At least one path detail item is required"),
 });
 

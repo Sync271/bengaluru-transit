@@ -10,7 +10,7 @@ import {
 	rawRouteDetailsResponseSchema,
 	routeDetailsParamsSchema,
 	rawRoutesBetweenStationsResponseSchema,
-	routesBetweenStationsParamsSchema,
+	routesBetweenStopsParamsSchema,
 	rawFareDataResponseSchema,
 	fareDataParamsSchema,
 	rawTripPlannerResponseSchema,
@@ -53,10 +53,10 @@ import type {
 	RouteDetailDirectionData,
 	RawRouteDetailVehicleItem,
 	RawRouteDetailDirectionData,
-	RoutesBetweenStationsResponse,
+	RoutesBetweenStopsResponse,
 	RawRoutesBetweenStationsResponse,
-	RoutesBetweenStationsParams,
-	RouteBetweenStationsItem,
+	RoutesBetweenStopsParams,
+	RouteBetweenStopsItem,
 	RawRouteBetweenStationsItem,
 	FareDataResponse,
 	RawFareDataResponse,
@@ -150,10 +150,10 @@ function transformAllRoutesResponse(
 		subrouteId: item.routeid.toString(),
 		routeNo: item.routeno,
 		routeName: item.routename,
-		fromStationId: item.fromstationid.toString(),
-		fromStation: item.fromstation,
-		toStationId: item.tostationid.toString(),
-		toStation: item.tostation,
+		fromStopId: item.fromstationid.toString(),
+		fromStop: item.fromstation,
+		toStopId: item.tostationid.toString(),
+		toStop: item.tostation,
 	}));
 
 	return {
@@ -168,10 +168,10 @@ function transformTimetableResponse(
 	raw: RawTimetableResponse
 ): TimetableResponse {
 	const items: TimetableItem[] = raw.data.map((item) => ({
-		fromStationName: item.fromstationname,
-		toStationName: item.tostationname,
-		fromStationId: item.fromstationid,
-		toStationId: item.tostationid,
+		fromStopName: item.fromstationname,
+		toStopName: item.tostationname,
+		fromStopId: item.fromstationid,
+		toStopId: item.tostationid,
 		approximateTime: item.apptime,
 		distance: parseFloat(item.distance),
 		platformName: item.platformname,
@@ -197,14 +197,14 @@ function transformTimetableByStationResponse(
 	const items: TimetableByStationItem[] = raw.data.map((item) => ({
 		routeId: item.routeid.toString(),
 		id: item.id,
-		fromStationId: item.fromstationid.toString(),
-		toStationId: item.tostationid.toString(),
-		fromStationOffset: item.f,
-		toStationOffset: item.t,
+		fromStopId: item.fromstationid.toString(),
+		toStopId: item.tostationid.toString(),
+		fromStopOffset: item.f,
+		toStopOffset: item.t,
 		routeNo: item.routeno,
 		routeName: item.routename,
-		fromStationName: item.fromstationname,
-		toStationName: item.tostationname,
+		fromStopName: item.fromstationname,
+		toStopName: item.tostationname,
 		travelTime: item.traveltime,
 		distance: item.distance,
 		approximateTime: item.apptime,
@@ -352,17 +352,17 @@ function transformRouteDetailsResponse(
 }
 
 /**
- * Transform raw route between stations item to clean, normalized format
+ * Transform raw route between stops item to clean, normalized format
  */
-function transformRouteBetweenStationsItem(
+function transformRouteBetweenStopsItem(
 	raw: RawRouteBetweenStationsItem
-): RouteBetweenStationsItem {
+): RouteBetweenStopsItem {
 	return {
 		id: raw.id.toString(),
-		fromStationId: raw.fromstationid.toString(),
+		fromStopId: raw.fromstationid.toString(),
 		sourceCode: raw.source_code,
 		fromDisplayName: raw.from_displayname,
-		toStationId: raw.tostationid.toString(),
+		toStopId: raw.tostationid.toString(),
 		destinationCode: raw.destination_code,
 		toDisplayName: raw.to_displayname,
 		fromDistance: raw.fromdistance,
@@ -371,19 +371,19 @@ function transformRouteBetweenStationsItem(
 		routeNo: raw.routeno,
 		routeName: raw.routename,
 		routeDirection: raw.route_direction.toLowerCase() as "up" | "down",
-		fromStationName: raw.fromstationname,
-		toStationName: raw.tostationname,
+		fromStopName: raw.fromstationname,
+		toStopName: raw.tostationname,
 	};
 }
 
 /**
- * Transform raw routes between stations API response to clean, normalized format
+ * Transform raw routes between stops API response to clean, normalized format
  */
-function transformRoutesBetweenStationsResponse(
+function transformRoutesBetweenStopsResponse(
 	raw: RawRoutesBetweenStationsResponse
-): RoutesBetweenStationsResponse {
-	return {
-		items: raw.data.map(transformRouteBetweenStationsItem),
+): RoutesBetweenStopsResponse {
+		return {
+		items: raw.data.map(transformRouteBetweenStopsItem),
 	};
 }
 
@@ -480,12 +480,12 @@ function transformTripPlannerPathLeg(
 		distance: raw.distance,
 		duration: raw.duration,
 		durationSeconds,
-		fromStationId: raw.fromStationId.toString(),
-		fromStationName: raw.fromStationName,
-		toStationId: raw.toStationId.toString(),
-		toStationName: raw.toStationName,
-		etaFromStation: raw.etaFromStation,
-		etaToStation: raw.etaToStation,
+		fromStopId: raw.fromStationId.toString(),
+		fromStopName: raw.fromStationName,
+		toStopId: raw.toStationId.toString(),
+		toStopName: raw.toStationName,
+		etaFromStop: raw.etaFromStation,
+		etaToStop: raw.etaToStation,
 		serviceTypeId: raw.serviceTypeId.toString(),
 		fromLatitude: raw.fromLatitude,
 		fromLongitude: raw.fromLongitude,
@@ -838,8 +838,8 @@ export class RoutesAPI {
 		const requestPayload: {
 			current_date: string;
 			routeid: number;
-			fromStationId?: string;
-			toStationId?: string;
+			fromStationId?: string; // API uses "station" in field names
+			toStationId?: string; // API uses "station" in field names
 			starttime: string;
 			endtime: string;
 		} = {
@@ -849,10 +849,10 @@ export class RoutesAPI {
 			endtime: endTime,
 		};
 
-		// Add station IDs if provided (type-safe: both are required together)
-		if ("fromStationId" in params && "toStationId" in params) {
-			requestPayload.fromStationId = params.fromStationId;
-			requestPayload.toStationId = params.toStationId;
+		// Add stop IDs if provided (type-safe: both are required together)
+		if ("fromStopId" in params && "toStopId" in params) {
+			requestPayload.fromStationId = params.fromStopId;
+			requestPayload.toStationId = params.toStopId;
 		}
 
 		// Validate request payload
@@ -932,25 +932,25 @@ export class RoutesAPI {
 	}
 
 	/**
-	 * Get routes between two stations
-	 * @param params - Parameters including from and to station IDs
-	 * @returns List of routes connecting the two stations in normalized format
+	 * Get routes between two stops
+	 * @param params - Parameters including from and to stop IDs
+	 * @returns List of routes connecting the two stops in normalized format
 	 * @remarks
 	 * The routeId in the response is likely a subroute ID (specific to direction/variant).
 	 * It can be used with searchByRouteDetails() endpoint.
 	 * Note: This differs from parentRouteId returned by searchRoutes().
 	 */
-	async getRoutesBetweenStations(
-		params: RoutesBetweenStationsParams
-	): Promise<RoutesBetweenStationsResponse> {
+	async getRoutesBetweenStops(
+		params: RoutesBetweenStopsParams
+	): Promise<RoutesBetweenStopsResponse> {
 		// Validate input parameters - API expects numbers, convert from strings
 		const validatedParams = validate(
-			routesBetweenStationsParamsSchema,
+			routesBetweenStopsParamsSchema,
 			{
-				fromStationId: parseInt(params.fromStationId, 10),
-				toStationId: parseInt(params.toStationId, 10),
+				fromStationId: parseInt(params.fromStopId, 10), // API uses "station" in field names
+				toStationId: parseInt(params.toStopId, 10), // API uses "station" in field names
 			},
-			"Invalid routes between stations parameters"
+			"Invalid routes between stops parameters"
 		);
 
 		// Get language from client and map to API format
@@ -971,16 +971,16 @@ export class RoutesAPI {
 		const rawResponse = validate(
 			rawRoutesBetweenStationsResponseSchema,
 			data,
-			"Invalid routes between stations response"
+			"Invalid routes between stops response"
 		);
 
 		// Transform to clean, normalized format
-		return transformRoutesBetweenStationsResponse(rawResponse);
+		return transformRoutesBetweenStopsResponse(rawResponse);
 	}
 
 	/**
-	 * Get fares for a route between stations
-	 * @param params - Parameters from getRoutesBetweenStations() response
+	 * Get fares for a route between stops
+	 * @param params - Parameters from getRoutesBetweenStops() response
 	 * @returns Fares with service types and their fare amounts
 	 * @remarks
 	 * The parameters should come from a RouteBetweenStationsItem returned by getRoutesBetweenStations().
@@ -1028,14 +1028,14 @@ export class RoutesAPI {
 	/**
 	 * Plan a trip with multiple route options
 	 * @param params - Trip planner parameters with 4 possible combinations:
-	 *   - Station to Station: fromStationId, toStationId
-	 *   - Station to Location: fromStationId, toCoordinates
-	 *   - Location to Station: fromCoordinates, toStationId
+	 *   - Stop to Stop: fromStopId, toStopId
+	 *   - Stop to Location: fromStopId, toCoordinates
+	 *   - Location to Stop: fromCoordinates, toStopId
 	 *   - Location to Location: fromCoordinates, toCoordinates
 	 * @returns Trip plans with all available routes (merged from directRoutes and transferRoutes)
 	 * @remarks
 	 * This endpoint supports 4 combinations of origin/destination:
-	 * - Station IDs (always string for consistency, will be converted to numbers for API)
+	 * - Stop IDs (always string for consistency, will be converted to numbers for API)
 	 * - Coordinates (latitude/longitude)
 	 * Optional parameters:
 	 * - serviceTypeId: Filter by service type (from getAllServiceTypes)
@@ -1047,10 +1047,10 @@ export class RoutesAPI {
 	async planTrip(params: TripPlannerParams): Promise<TripPlannerResponse> {
 		// Convert discriminated union params to API payload format
 		const apiPayload: {
-			fromStationId?: number;
+			fromStationId?: number; // API uses "station" in field names
 			fromLatitude?: number;
 			fromLongitude?: number;
-			toStationId?: number;
+			toStationId?: number; // API uses "station" in field names
 			toLatitude?: number;
 			toLongitude?: number;
 			serviceTypeId?: number;
@@ -1058,18 +1058,18 @@ export class RoutesAPI {
 			filterBy?: 1 | 2;
 		} = {};
 
-		// Set "from" type (either station ID or coordinates)
-		if ("fromStationId" in params && params.fromStationId) {
-			apiPayload.fromStationId = parseInt(params.fromStationId, 10);
+		// Set "from" type (either stop ID or coordinates)
+		if ("fromStopId" in params && params.fromStopId) {
+			apiPayload.fromStationId = parseInt(params.fromStopId, 10);
 		} else if ("fromCoordinates" in params && params.fromCoordinates) {
 			const [lat, lng] = params.fromCoordinates;
 			apiPayload.fromLatitude = lat;
 			apiPayload.fromLongitude = lng;
 		}
 
-		// Set "to" type (either station ID or coordinates)
-		if ("toStationId" in params && params.toStationId) {
-			apiPayload.toStationId = parseInt(params.toStationId, 10);
+		// Set "to" type (either stop ID or coordinates)
+		if ("toStopId" in params && params.toStopId) {
+			apiPayload.toStationId = parseInt(params.toStopId, 10);
 		} else if ("toCoordinates" in params && params.toCoordinates) {
 			const [lat, lng] = params.toCoordinates;
 			apiPayload.toLatitude = lat;
@@ -1135,14 +1135,14 @@ export class RoutesAPI {
 		const apiPayload = {
 			data: validatedUserParams.trips.map((item) => ({
 				tripId: typeof item.tripId === "string" ? parseInt(item.tripId, 10) : item.tripId,
-				fromStationId:
-					typeof item.fromStationId === "string"
-						? parseInt(item.fromStationId, 10)
-						: item.fromStationId,
-				toStationId:
-					typeof item.toStationId === "string"
-						? parseInt(item.toStationId, 10)
-						: item.toStationId,
+				fromStationId: // API uses "station" in field names
+					typeof item.fromStopId === "string"
+						? parseInt(item.fromStopId, 10)
+						: item.fromStopId,
+				toStationId: // API uses "station" in field names
+					typeof item.toStopId === "string"
+						? parseInt(item.toStopId, 10)
+						: item.toStopId,
 			})),
 		};
 
@@ -1268,16 +1268,16 @@ export class RoutesAPI {
 
 		// Build request payload - API expects numbers for IDs, convert from strings
 		const requestPayload: {
-			fromStationId: number;
-			toStationId: number;
+			fromStationId: number; // API uses "station" in field names
+			toStationId: number; // API uses "station" in field names
 			p_startdate: string;
 			p_enddate: string;
 			p_isshortesttime?: number;
 			p_routeid: string;
 			p_date: string;
 		} = {
-			fromStationId: parseInt(params.fromStationId, 10),
-			toStationId: parseInt(params.toStationId, 10),
+			fromStationId: parseInt(params.fromStopId, 10),
+			toStationId: parseInt(params.toStopId, 10),
 			p_startdate: `${dateStr} 00:00`,
 			p_enddate: `${dateStr} 23:59`,
 			p_routeid: params.routeId ?? "",

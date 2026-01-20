@@ -41,7 +41,7 @@ Plan a trip from your location to a destination:
 // Plan trip from coordinates to a station
 const trip = await client.routes.planTrip({
   fromCoordinates: [13.09784, 77.59167],
-  toStationId: 20922, // Kempegowda Bus Station
+  toStopId: 20922, // Kempegowda Bus Station
 });
 
 // Find the fastest route with no transfers
@@ -123,8 +123,8 @@ Get trip stops and path as GeoJSON for map visualization:
 ```typescript
 // 1. Plan the trip
 const tripPlan = await client.routes.planTrip({
-  fromStationId: 22357,
-  toStationId: 21447
+  fromStopId: 22357,
+  toStopId: 21447
 });
 
 // 2. Get all stops along the trip (GeoJSON Points)
@@ -132,8 +132,8 @@ const tripLegs = tripPlan.routes[0].legs
   .filter(leg => !leg.routeNo.startsWith('walk'))
   .map(leg => ({
     tripId: leg.tripId,
-    fromStationId: leg.fromStationId,
-    toStationId: leg.toStationId
+    fromStopId: leg.fromStopId,
+    toStopId: leg.toStopId
   }));
 
 const stops = await client.routes.getTripStops({ trips: tripLegs });
@@ -199,7 +199,7 @@ details.vehicles.features.forEach(vehicle => {
 - `searchRoutes(query)` - Search routes by name/number
 - `getRoutePoints(routeId)` - Get route path as GeoJSON
 - `getFares(params)` - Get fare information
-- `getRoutesBetweenStations(fromStationId, toStationId)` - Find routes between two stations
+- `getRoutesBetweenStops(fromStopId, toStopId)` - Find routes between two stops
 
 ### Stops API
 - `findNearbyStops(lat, lon, radius)` - Find stops within radius (GeoJSON)

@@ -161,21 +161,23 @@ export interface RouteListItem {
 	 */
 	routeName: string;
 	/**
-	 * From station ID (always string for consistency)
+	 * From stop ID (always string for consistency)
+	 * Note: "stop" refers to any bus stop. Use "station" only for major bus stations with facilities.
 	 */
-	fromStationId: string;
+	fromStopId: string;
 	/**
-	 * From station name
+	 * From stop name
 	 */
-	fromStation: string;
+	fromStop: string;
 	/**
-	 * To station ID (always string for consistency)
+	 * To stop ID (always string for consistency)
+	 * Note: "stop" refers to any bus stop. Use "station" only for major bus stations with facilities.
 	 */
-	toStationId: string;
+	toStopId: string;
 	/**
-	 * To station name
+	 * To stop name
 	 */
-	toStation: string;
+	toStop: string;
 }
 
 /**
@@ -234,21 +236,21 @@ export interface TripDetailItem {
  */
 export interface TimetableItem {
 	/**
-	 * From station name
+	 * From stop name
 	 */
-	fromStationName: string;
+	fromStopName: string;
 	/**
-	 * To station name
+	 * To stop name
 	 */
-	toStationName: string;
+	toStopName: string;
 	/**
-	 * From station ID (string as returned by API)
+	 * From stop ID (string as returned by API)
 	 */
-	fromStationId: string;
+	fromStopId: string;
 	/**
-	 * To station ID (string as returned by API)
+	 * To stop ID (string as returned by API)
 	 */
-	toStationId: string;
+	toStopId: string;
 	/**
 	 * Approximate travel time in format "HH:mm:ss"
 	 */
@@ -303,42 +305,42 @@ interface TimetableByRouteBaseParams {
 }
 
 /**
- * Parameters for getting timetable with specific stations
+ * Parameters for getting timetable with specific stops
  */
-export interface TimetableByRouteParamsWithStations
+export interface TimetableByRouteParamsWithStops
 	extends TimetableByRouteBaseParams {
 	/**
-	 * From station ID (required with toStationId, string as returned by API)
+	 * From stop ID (required with toStopId, string as returned by API)
 	 */
-	fromStationId: string;
+	fromStopId: string;
 	/**
-	 * To station ID (required with fromStationId, string as returned by API)
+	 * To stop ID (required with fromStopId, string as returned by API)
 	 */
-	toStationId: string;
+	toStopId: string;
 }
 
 /**
- * Parameters for getting timetable without specific stations (uses route start/end)
+ * Parameters for getting timetable without specific stops (uses route start/end)
  */
-export interface TimetableByRouteParamsWithoutStations
+export interface TimetableByRouteParamsWithoutStops
 	extends TimetableByRouteBaseParams {
 	/**
-	 * From station ID must not be provided
+	 * From stop ID must not be provided
 	 */
-	fromStationId?: never;
+	fromStopId?: never;
 	/**
-	 * To station ID must not be provided
+	 * To stop ID must not be provided
 	 */
-	toStationId?: never;
+	toStopId?: never;
 }
 
 /**
  * Parameters for getting timetable by route ID
- * Type-safe: either both fromStationId and toStationId are provided, or neither
+ * Type-safe: either both fromStopId and toStopId are provided, or neither
  */
 export type TimetableByRouteParams =
-	| TimetableByRouteParamsWithStations
-	| TimetableByRouteParamsWithoutStations;
+	| TimetableByRouteParamsWithStops
+	| TimetableByRouteParamsWithoutStops;
 
 /**
  * Raw vehicle detail item from SearchByRouteDetails_v4 API
@@ -542,14 +544,14 @@ export type RawRoutesBetweenStationsResponse = z.infer<
 >;
 
 /**
- * Clean, normalized route between stations item
+ * Clean, normalized route between stops item
  */
-export interface RouteBetweenStationsItem {
+export interface RouteBetweenStopsItem {
 	id: string;
-	fromStationId: string;
+	fromStopId: string;
 	sourceCode: string;
 	fromDisplayName: string;
-	toStationId: string;
+	toStopId: string;
 	destinationCode: string;
 	toDisplayName: string;
 	fromDistance: number;
@@ -567,29 +569,29 @@ export interface RouteBetweenStationsItem {
 	 * Indicates this is a directional subroute
 	 */
 	routeDirection: RouteDirection;
-	fromStationName: string;
-	toStationName: string;
+	fromStopName: string;
+	toStopName: string;
 }
 
 /**
- * Clean, normalized routes between stations response
+ * Clean, normalized routes between stops response
  */
-export interface RoutesBetweenStationsResponse {
-	items: RouteBetweenStationsItem[];
+export interface RoutesBetweenStopsResponse {
+	items: RouteBetweenStopsItem[];
 }
 
 /**
- * Parameters for getting routes between stations
+ * Parameters for getting routes between stops
  */
-export interface RoutesBetweenStationsParams {
+export interface RoutesBetweenStopsParams {
 	/**
-	 * From station ID (always string for consistency)
+	 * From stop ID (always string for consistency)
 	 */
-	fromStationId: string;
+	fromStopId: string;
 	/**
-	 * To station ID (always string for consistency)
+	 * To stop ID (always string for consistency)
 	 */
-	toStationId: string;
+	toStopId: string;
 }
 
 /**
@@ -697,67 +699,67 @@ type TripPlannerParamsBase = {
 };
 
 /**
- * Station to Station trip parameters
+ * Stop to Stop trip parameters
  */
-type TripPlannerStationToStation = TripPlannerParamsBase & {
+type TripPlannerStopToStop = TripPlannerParamsBase & {
 	/**
-	 * From station ID (always string for consistency)
+	 * From stop ID (always string for consistency)
 	 */
-	fromStationId: string;
+	fromStopId: string;
 	/**
-	 * To station ID (always string for consistency)
+	 * To stop ID (always string for consistency)
 	 */
-	toStationId: string;
+	toStopId: string;
 	/**
-	 * From coordinates are not used for station-to-station trips
+	 * From coordinates are not used for stop-to-stop trips
 	 */
 	fromCoordinates?: never;
 	/**
-	 * To coordinates are not used for station-to-station trips
+	 * To coordinates are not used for stop-to-stop trips
 	 */
 	toCoordinates?: never;
 };
 
 /**
- * Station to Location trip parameters
+ * Stop to Location trip parameters
  */
-type TripPlannerStationToLocation = TripPlannerParamsBase & {
+type TripPlannerStopToLocation = TripPlannerParamsBase & {
 	/**
-	 * From station ID (always string for consistency)
+	 * From stop ID (always string for consistency)
 	 */
-	fromStationId: string;
+	fromStopId: string;
 	/**
 	 * To coordinates [latitude, longitude]
 	 */
 	toCoordinates: Coordinate;
 	/**
-	 * To station ID is not used for station-to-location trips
+	 * To stop ID is not used for stop-to-location trips
 	 */
-	toStationId?: never;
+	toStopId?: never;
 	/**
-	 * From coordinates are not used for station-to-location trips
+	 * From coordinates are not used for stop-to-location trips
 	 */
 	fromCoordinates?: never;
 };
 
 /**
- * Location to Station trip parameters
+ * Location to Stop trip parameters
  */
-type TripPlannerLocationToStation = TripPlannerParamsBase & {
+type TripPlannerLocationToStop = TripPlannerParamsBase & {
 	/**
 	 * From coordinates [latitude, longitude]
 	 */
 	fromCoordinates: Coordinate;
 	/**
-	 * To station ID (always string for consistency)
+	 * To stop ID (always string for consistency)
 	 */
-	toStationId: string;
+	toStopId: string;
 	/**
-	 * From station ID is not used for location-to-station trips
+	 * From stop ID is not used for location-to-stop trips
 	 */
-	fromStationId?: never;
+	fromStopId?: never;
 	/**
-	 * To coordinates are not used for location-to-station trips
+	 * To coordinates are not used for location-to-stop trips
 	 */
 	toCoordinates?: never;
 };
@@ -775,20 +777,20 @@ type TripPlannerLocationToLocation = TripPlannerParamsBase & {
 	 */
 	toCoordinates: Coordinate;
 	/**
-	 * Station IDs are not used for location-to-location trips
+	 * Stop IDs are not used for location-to-location trips
 	 */
-	fromStationId?: never;
-	toStationId?: never;
+	fromStopId?: never;
+	toStopId?: never;
 };
 
 /**
  * Parameters for trip planner
- * Supports 4 combinations: Station-Station, Station-Location, Location-Station, Location-Location
+ * Supports 4 combinations: Stop-Stop, Stop-Location, Location-Stop, Location-Location
  */
 export type TripPlannerParams =
-	| TripPlannerStationToStation
-	| TripPlannerStationToLocation
-	| TripPlannerLocationToStation
+	| TripPlannerStopToStop
+	| TripPlannerStopToLocation
+	| TripPlannerLocationToStop
 	| TripPlannerLocationToLocation;
 
 /**
@@ -889,29 +891,29 @@ export interface TripPlannerPathLeg {
 	 */
 	durationSeconds: number;
 	/**
-	 * From station ID (0 for "Your Location")
+	 * From stop ID (0 for "Your Location")
 	 */
-	fromStationId: string;
+	fromStopId: string;
 	/**
-	 * From station name
+	 * From stop name
 	 */
-	fromStationName: string;
+	fromStopName: string;
 	/**
-	 * To station ID (0 for "Your Location")
+	 * To stop ID (0 for "Your Location")
 	 */
-	toStationId: string;
+	toStopId: string;
 	/**
-	 * To station name
+	 * To stop name
 	 */
-	toStationName: string;
+	toStopName: string;
 	/**
-	 * ETA at from station (null for walking segments)
+	 * ETA at from stop (null for walking segments)
 	 */
-	etaFromStation: string | null;
+	etaFromStop: string | null;
 	/**
-	 * ETA at to station (null for walking segments)
+	 * ETA at to stop (null for walking segments)
 	 */
-	etaToStation: string | null;
+	etaToStop: string | null;
 	/**
 	 * Service type ID (0 for walking segments)
 	 */
@@ -1052,16 +1054,16 @@ export interface TripPlannerResponse {
 
 /**
  * Path detail request item - represents a trip leg segment
- * Used to get detailed station-by-station information for a specific trip segment
- * Typically derived from TripPlannerPathLeg (tripId, fromStationId, toStationId)
+ * Used to get detailed stop-by-stop information for a specific trip segment
+ * Typically derived from TripPlannerPathLeg (tripId, fromStopId, toStopId)
  */
 export interface PathDetailRequestItem {
 	/** Trip ID for the bus journey */
 	tripId: number;
-	/** Starting station ID */
-	fromStationId: number;
-	/** Ending station ID */
-	toStationId: number;
+	/** Starting stop ID */
+	fromStopId: number;
+	/** Ending stop ID */
+	toStopId: number;
 }
 
 /**
@@ -1186,25 +1188,25 @@ export interface TimetableByStationItem {
 	routeId: string;
 	/** Internal ID */
 	id: number;
-	/** From station ID */
-	fromStationId: string;
-	/** To station ID */
-	toStationId: string;
-	/** Distance from route start (first stop) to fromStation (km) - cumulative distance along route */
-	fromStationOffset: number;
-	/** Total distance from route start (first stop) to toStation (km) - cumulative distance along route */
-	toStationOffset: number;
+	/** From stop ID */
+	fromStopId: string;
+	/** To stop ID */
+	toStopId: string;
+	/** Distance from route start (first stop) to fromStop (km) - cumulative distance along route */
+	fromStopOffset: number;
+	/** Total distance from route start (first stop) to toStop (km) - cumulative distance along route */
+	toStopOffset: number;
 	/** Route number */
 	routeNo: string;
 	/** Route name */
 	routeName: string;
-	/** From station name */
-	fromStationName: string;
-	/** To station name */
-	toStationName: string;
-	/** Travel time in format "HH:mm:ss" - actual/scheduled travel time between stations */
+	/** From stop name */
+	fromStopName: string;
+	/** To stop name */
+	toStopName: string;
+	/** Travel time in format "HH:mm:ss" - actual/scheduled travel time between stops */
 	travelTime: string;
-	/** Distance from fromStation to toStation (km) - distance along the route path between stations (calculated as toStationOffset - fromStationOffset) */
+	/** Distance from fromStop to toStop (km) - distance along the route path between stops (calculated as toStopOffset - fromStopOffset) */
 	distance: number;
 	/** Approximate time in format "HH:mm:ss" - approximate travel time (always <= travelTime) */
 	approximateTime: string;
@@ -1221,22 +1223,22 @@ export interface TimetableByStationItem {
 }
 
 /**
- * Routes that pass through both stations (in sequence) with schedule information
+ * Routes that pass through both stops (in sequence) with schedule information
  * Note: This is NOT a full timetable - each route has one startTime, not multiple scheduled trips.
- * Routes may start before fromStation and/or continue after toStation.
+ * Routes may start before fromStop and/or continue after toStop.
  */
 export interface TimetableByStationResponse {
 	items: TimetableByStationItem[];
 }
 
 /**
- * Parameters for getting route options between stations
+ * Parameters for getting route options between stops
  */
 export interface TimetableByStationParams {
-	/** From station ID (always string for consistency) */
-	fromStationId: string;
-	/** To station ID (always string for consistency) */
-	toStationId: string;
+	/** From stop ID (always string for consistency) */
+	fromStopId: string;
+	/** To stop ID (always string for consistency) */
+	toStopId: string;
 	/** Optional: Filter by specific route ID */
 	routeId?: string;
 	/** Optional: Date for timetable (defaults to current date) */
