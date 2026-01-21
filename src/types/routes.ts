@@ -462,7 +462,6 @@ export interface RouteDetailStationProperties extends StopProperties {
 	to: string;
 	routeNo: string;
 	distanceOnStation: number;
-	responseCode: number;
 	isNotify: number;
 }
 
@@ -685,10 +684,10 @@ type TripPlannerParamsBase = {
 	serviceTypeId?: string;
 	/**
 	 * Start date/time for the trip (must be in the future)
-	 * Format: "YYYY-MM-DD HH:mm" (e.g., "2026-01-18 18:00")
+	 * The wrapper converts this to "YYYY-MM-DD HH:mm" format
 	 * Optional - if not provided, uses current time
 	 */
-	fromDateTime?: string;
+	fromDateTime?: Date;
 	/**
 	 * Filter option for route selection
 	 * - "minimum-transfers": Prioritize fewer transfers
@@ -1056,14 +1055,15 @@ export interface TripPlannerResponse {
  * Path detail request item - represents a trip leg segment
  * Used to get detailed stop-by-stop information for a specific trip segment
  * Typically derived from TripPlannerPathLeg (tripId, fromStopId, toStopId)
+ * All IDs are strings (converted to numbers internally for API call)
  */
 export interface PathDetailRequestItem {
-	/** Trip ID for the bus journey */
-	tripId: number;
-	/** Starting stop ID */
-	fromStopId: number;
-	/** Ending stop ID */
-	toStopId: number;
+	/** Trip ID for the bus journey (always string) */
+	tripId: string;
+	/** Starting stop ID (always string) */
+	fromStopId: string;
+	/** Ending stop ID (always string) */
+	toStopId: string;
 }
 
 /**
@@ -1085,10 +1085,10 @@ export interface PathDetailItem {
 	subrouteId: string;
 	/** Route number (e.g., "285-M", "25-A") */
 	routeNo: string;
-	/** Station ID */
-	stationId: string;
-	/** Station name */
-	stationName: string;
+	/** Stop ID */
+	stopId: string;
+	/** Stop name */
+	stopName: string;
 	/** Station latitude */
 	latitude: number;
 	/** Station longitude */

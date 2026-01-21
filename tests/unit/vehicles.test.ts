@@ -225,7 +225,6 @@ describe("VehiclesAPI", () => {
 			expect(result.vehicleLocation.features[0].geometry.coordinates).toEqual([
 				77.636513, 12.916225,
 			]);
-			expect(result.vehicleLocation.features[0].properties.busId).toBe("21537");
 			expect(result.vehicleLocation.features[0].properties.vehicleId).toBe(
 				"21537"
 			);

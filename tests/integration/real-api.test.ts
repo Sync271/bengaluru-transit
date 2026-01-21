@@ -153,7 +153,6 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 				if (result.items.length > 0) {
 					expect(result.items[0]).toHaveProperty("vehicleId");
 					expect(result.items[0]).toHaveProperty("vehicleRegNo");
-					expect(result.items[0]).toHaveProperty("responseCode");
 				}
 
 				// Print formatted response
@@ -862,13 +861,29 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 		it.skipIf(!shouldRunTest("trip"))(
 			"should get trip stops from real API",
 			async () => {
-				// Use example trip leg from user's request (tripId, fromStopId, toStopId)
+				// First, plan a trip to get valid trip data
+				const tripResult = await client.routes.planTrip({
+					fromStopId: "35376", // Jakkur Aerodrum
+					toStopId: "38888", // Kempegowda Bus Station
+				});
+
+				// Find a non-walking leg (walking legs have routeNo "walk_source" or "walk_dest")
+				const busLeg = tripResult.routes[0]?.legs.find(
+					(leg) => !leg.routeNo.startsWith("walk_")
+				);
+
+				if (!busLeg) {
+					throw new Error("No bus leg found in trip result");
+				}
+
+				// Use trip leg from planTrip (tripId, fromStopId, toStopId)
+				// tripId comes as string from planTrip, but getTripStops accepts both
 				const result = await client.routes.getTripStops({
 					trips: [
 						{
-							tripId: 80079217,
-							fromStopId: 22357,
-							toStopId: 20922,
+							tripId: busLeg.tripId, // string from planTrip
+							fromStopId: busLeg.fromStopId, // string from planTrip
+							toStopId: busLeg.toStopId, // string from planTrip
 						},
 					],
 				});
@@ -886,8 +901,8 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 				expect(firstFeature.properties).toHaveProperty("tripId");
 				expect(firstFeature.properties).toHaveProperty("subrouteId");
 				expect(firstFeature.properties).toHaveProperty("routeNo");
-				expect(firstFeature.properties).toHaveProperty("stationId");
-				expect(firstFeature.properties).toHaveProperty("stationName");
+				expect(firstFeature.properties).toHaveProperty("stopId");
+				expect(firstFeature.properties).toHaveProperty("stopName");
 				expect(firstFeature.properties).toHaveProperty("scheduledArrivalTime");
 				expect(firstFeature.properties).toHaveProperty("scheduledDepartureTime");
 				expect(firstFeature.properties).toHaveProperty("isTransfer");
@@ -895,7 +910,7 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 				// Verify types
 				expect(typeof firstFeature.properties?.tripId).toBe("string");
 				expect(typeof firstFeature.properties?.subrouteId).toBe("string");
-				expect(typeof firstFeature.properties?.stationId).toBe("string");
+				expect(typeof firstFeature.properties?.stopId).toBe("string");
 				if (firstFeature.geometry.type === "Point") {
 					expect(typeof firstFeature.geometry.coordinates[0]).toBe("number"); // lng
 					expect(typeof firstFeature.geometry.coordinates[1]).toBe("number"); // lat

@@ -270,7 +270,6 @@ function transformDirectionData(
 			to: station.to,
 			routeNo: station.routeno,
 			distanceOnStation: station.distance_on_station,
-			responseCode: station.responsecode,
 			isNotify: station.isnotify,
 		};
 		return {
@@ -411,8 +410,8 @@ function transformPathDetailItem(raw: RawPathDetailsResponse["data"][0]): PathDe
 		tripId: raw.tripId.toString(),
 		subrouteId: raw.routeId.toString(),
 		routeNo: raw.routeNo,
-		stationId: raw.stationId.toString(),
-		stationName: raw.stationName,
+		stopId: raw.stationId.toString(),
+		stopName: raw.stationName,
 		latitude: raw.latitude,
 		longitude: raw.longitude,
 		eta: raw.eta || null,
@@ -442,8 +441,8 @@ function transformPathDetailsResponse(
 				tripId: item.tripId,
 				subrouteId: item.subrouteId,
 				routeNo: item.routeNo,
-				stationId: item.stationId,
-				stationName: item.stationName,
+				stopId: item.stopId,
+				stopName: item.stopName,
 				eta: item.eta,
 				scheduledArrivalTime: item.scheduledArrivalTime,
 				scheduledDepartureTime: item.scheduledDepartureTime,
@@ -1039,7 +1038,7 @@ export class RoutesAPI {
 	 * - Coordinates (latitude/longitude)
 	 * Optional parameters:
 	 * - serviceTypeId: Filter by service type (from getAllServiceTypes)
-	 * - fromDateTime: Future datetime in format "YYYY-MM-DD HH:mm" (e.g., "2026-01-18 18:00")
+	 * - fromDateTime: Future datetime (Date object, converted to "YYYY-MM-DD HH:mm" format)
 	 * - filterBy: "minimum-transfers" or "shortest-time"
 	 * 
 	 * All routes are returned in a single `routes` array. Filter by `transferCount === 0` to identify direct routes.
@@ -1081,7 +1080,13 @@ export class RoutesAPI {
 			apiPayload.serviceTypeId = parseInt(params.serviceTypeId, 10);
 		}
 		if (params.fromDateTime !== undefined) {
-			apiPayload.fromDateTime = params.fromDateTime;
+			// Validate that the date is in the future
+			const now = new Date();
+			if (params.fromDateTime <= now) {
+				throw new Error("fromDateTime must be in the future");
+			}
+			// Convert Date to "YYYY-MM-DD HH:mm" format
+			apiPayload.fromDateTime = this.formatDateTime(params.fromDateTime);
 		}
 		if (params.filterBy !== undefined) {
 			apiPayload.filterBy = tripPlannerFilterToNumber(params.filterBy);
@@ -1134,15 +1139,9 @@ export class RoutesAPI {
 		// Convert string IDs to numbers and map 'trips' to 'data' for API
 		const apiPayload = {
 			data: validatedUserParams.trips.map((item) => ({
-				tripId: typeof item.tripId === "string" ? parseInt(item.tripId, 10) : item.tripId,
-				fromStationId: // API uses "station" in field names
-					typeof item.fromStopId === "string"
-						? parseInt(item.fromStopId, 10)
-						: item.fromStopId,
-				toStationId: // API uses "station" in field names
-					typeof item.toStopId === "string"
-						? parseInt(item.toStopId, 10)
-						: item.toStopId,
+				tripId: parseInt(item.tripId, 10),
+				fromStationId: parseInt(item.fromStopId, 10), // API uses "station" in field names
+				toStationId: parseInt(item.toStopId, 10), // API uses "station" in field names
 			})),
 		};
 

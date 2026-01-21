@@ -38,7 +38,6 @@ function transformHelplineResponse(raw: RawHelplineResponse): HelplineResponse {
 				labelName: item.labelname,
 				busStopName: item.busstopname,
 				helplineNumber: item.helplinenumber,
-				responseCode: item.responsecode,
 			})
 		),
 	};
@@ -55,7 +54,6 @@ function transformServiceTypesResponse(
 			(item): ServiceTypeDataItem => ({
 				serviceType: item.servicetype,
 				serviceTypeId: item.servicetypeid.toString(),
-				responseCode: item.responsecode,
 			})
 		),
 	};
@@ -78,7 +76,6 @@ function transformAboutDataResponse(
 			airportLongitude: item.airportlongitude,
 			airportStationId: item.airportstationid.toString(),
 			airportStationName: item.airportstationname,
-			responseCode: item.responsecode,
 		},
 	};
 }

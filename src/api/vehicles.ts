@@ -32,7 +32,6 @@ function transformSearchVehiclesResponse(
 			(item): VehicleDataItem => ({
 				vehicleId: item.vehicleid.toString(),
 				vehicleRegNo: item.vehicleregno,
-				responseCode: item.responsecode,
 			})
 		),
 	};
@@ -51,7 +50,6 @@ function transformVehicleTripResponse(
 			{
 				stopId: item.stationid.toString(),
 				stopName: item.stationname,
-				stationId: item.stationid.toString(),
 				tripId: item.tripid.toString(),
 				routeNo: item.routeno,
 				routeName: item.routename,
@@ -81,7 +79,6 @@ function transformVehicleTripResponse(
 				tripEndTime: item.tripendtime,
 				routeId: item.routeid.toString(),
 				vehicleId: item.vehicleid.toString(),
-				responseCode: item.responsecode,
 				lastReceivedDateTimeFlag: item.lastreceiveddatetimeflag,
 				serialNo: item.srno,
 				tripPosition: item.tripposition,
@@ -98,8 +95,6 @@ function transformVehicleTripResponse(
 		createLocationFeature(
 			[item.longitude, item.latitude], // GeoJSON: [lng, lat]
 			{
-				busId: item.vehicleid.toString(),
-				routeId: item.routeno,
 				vehicleId: item.vehicleid.toString(),
 				vehicleNumber: item.vehiclenumber,
 				routeNo: item.routeno,
@@ -111,7 +106,6 @@ function transformVehicleTripResponse(
 				nextStop: item.nextstop,
 				previousStop: item.previousstop,
 				tripStatus: item.trip_status,
-				responseCode: item.responsecode,
 				lastReceivedDateTimeFlag: item.lastreceiveddatetimeflag,
 			}
 		)

@@ -31,7 +31,6 @@ export interface HelplineDataItem {
 	labelName: string;
 	busStopName: string | null;
 	helplineNumber: string;
-	responseCode: number;
 }
 
 /**
@@ -56,7 +55,6 @@ export interface RawServiceTypeDataItem {
 export interface ServiceTypeDataItem {
 	serviceType: string;
 	serviceTypeId: string;
-	responseCode: number;
 }
 
 /**
@@ -91,7 +89,6 @@ export interface AboutDataItem {
 	airportLongitude: number;
 	airportStationId: string;
 	airportStationName: string;
-	responseCode: number;
 }
 
 /**

@@ -155,10 +155,6 @@ export interface NearbyBusStopItem {
 	 */
 	longitude: number;
 	/**
-	 * Response code
-	 */
-	responseCode: number;
-	/**
 	 * Route type ID (as string for consistency)
 	 */
 	routeTypeId: string;
@@ -275,10 +271,6 @@ export interface NearbyStationItem {
 	 * Estimated travel time in minutes
 	 */
 	travelTimeMinutes: number;
-	/**
-	 * Response code
-	 */
-	responseCode: number;
 	/**
 	 * Search radius used in kilometers (from the API response)
 	 */

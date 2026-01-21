@@ -88,7 +88,6 @@ function transformNearbyBusStopsResponse(
 		stationId: item.routeid.toString(),
 		latitude: item.center_lat,
 		longitude: item.center_lon,
-		responseCode: item.responsecode,
 		routeTypeId: item.routetypeid,
 		stationName: item.routename,
 		route: item.route,
@@ -114,7 +113,6 @@ function transformNearbyStationsResponse(
 		towards: item.towards,
 		distance: item.distance,
 		travelTimeMinutes: item.totalminute,
-		responseCode: item.responsecode,
 		radius: item.radiuskm,
 	}));
 

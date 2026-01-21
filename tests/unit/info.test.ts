@@ -173,7 +173,6 @@ describe("InfoAPI", () => {
 
 			expect(result.items).toHaveLength(1);
 			expect(result.items[0].serviceType).toBe("AC");
-			expect(result.items[0].responseCode).toBe(200);
 		});
 
 		it("should validate response schema and throw on invalid data", async () => {

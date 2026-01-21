@@ -442,11 +442,21 @@ export const tripPlannerParamsSchema = z
 
 /**
  * Schema for path detail request item
+ * All IDs are strings (converted to numbers internally for API call)
  */
 export const pathDetailRequestItemSchema = z.object({
-	tripId: z.number().int().positive("Trip ID must be a positive integer"),
-	fromStopId: z.number().int().positive("From stop ID must be a positive integer"),
-	toStopId: z.number().int().positive("To stop ID must be a positive integer"),
+	tripId: z
+		.string()
+		.regex(/^\d+$/, "Trip ID must be a numeric string")
+		.refine((val) => parseInt(val, 10) > 0, "Trip ID must be a positive integer"),
+	fromStopId: z
+		.string()
+		.regex(/^\d+$/, "From stop ID must be a numeric string")
+		.refine((val) => parseInt(val, 10) > 0, "From stop ID must be a positive integer"),
+	toStopId: z
+		.string()
+		.regex(/^\d+$/, "To stop ID must be a numeric string")
+		.refine((val) => parseInt(val, 10) > 0, "To stop ID must be a positive integer"),
 });
 
 /**

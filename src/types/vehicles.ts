@@ -35,7 +35,6 @@ export type RawSearchVehiclesResponse = z.infer<
 export interface VehicleDataItem {
 	vehicleId: string;
 	vehicleRegNo: string;
-	responseCode: number;
 }
 
 /**

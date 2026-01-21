@@ -83,7 +83,7 @@ describe("RoutesAPI", () => {
 			} as Response);
 
 			const result = await client.routes.getRoutePoints({
-				routeId: 99999,
+				routeId: "99999",
 			});
 
 			expect(result.routePath.features).toHaveLength(0);
@@ -113,7 +113,7 @@ describe("RoutesAPI", () => {
 			} as Response);
 
 			await expect(
-				client.routes.getRoutePoints({ routeId: 11797 })
+				client.routes.getRoutePoints({ routeId: "11797" })
 			).rejects.toThrow("Invalid route points response");
 		});
 
@@ -127,7 +127,7 @@ describe("RoutesAPI", () => {
 			mockPost.mockRejectedValue(error);
 
 			await expect(
-				client.routes.getRoutePoints({ routeId: 11797 })
+				client.routes.getRoutePoints({ routeId: "11797" })
 			).rejects.toThrow();
 		});
 	});
@@ -579,7 +579,7 @@ describe("RoutesAPI", () => {
 			} as Response);
 
 			await expect(
-				client.routes.getTimetableByRoute({ routeId: 2981 })
+				client.routes.getTimetableByRoute({ routeId: "2981" })
 			).rejects.toThrow("Invalid timetable response");
 		});
 
@@ -593,7 +593,7 @@ describe("RoutesAPI", () => {
 			mockPost.mockRejectedValue(error);
 
 			await expect(
-				client.routes.getTimetableByRoute({ routeId: 2981 })
+				client.routes.getTimetableByRoute({ routeId: "2981" })
 			).rejects.toThrow();
 		});
 	});
@@ -884,7 +884,7 @@ describe("RoutesAPI", () => {
 		it("should validate input parameters and throw on invalid routeId", async () => {
 			await expect(
 				client.routes.searchByRouteDetails({
-					routeId: "0", // Invalid: must be positive
+					parentRouteId: "0", // Invalid: must be positive
 				})
 			).rejects.toThrow();
 		});
@@ -1230,7 +1230,7 @@ describe("RoutesAPI", () => {
 			const result = await client.routes.getFares({
 				routeNo: "V-500CA",
 				subrouteId: "2981",
-				routeDirection: "UP",
+				routeDirection: "up",
 				sourceCode: "BSK5",
 				destinationCode: "ITL",
 			});
@@ -1265,7 +1265,7 @@ describe("RoutesAPI", () => {
 			await client.routes.getFares({
 				routeNo: "V-500CA",
 				subrouteId: "2981",
-				routeDirection: "UP",
+				routeDirection: "up",
 				sourceCode: "BSK5",
 				destinationCode: "ITL",
 			});
@@ -1303,7 +1303,7 @@ describe("RoutesAPI", () => {
 			const result = await client.routes.getFares({
 				routeNo: "V-500CA",
 				subrouteId: "2981",
-				routeDirection: "UP",
+				routeDirection: "up",
 				sourceCode: "BSK5",
 				destinationCode: "ITL",
 			});
@@ -1317,7 +1317,7 @@ describe("RoutesAPI", () => {
 				client.routes.getFares({
 					routeNo: "",
 					subrouteId: "2981",
-					routeDirection: "UP",
+					routeDirection: "up",
 					sourceCode: "BSK5",
 					destinationCode: "ITL",
 				})
@@ -1327,7 +1327,7 @@ describe("RoutesAPI", () => {
 				client.routes.getFares({
 					routeNo: "V-500CA",
 					subrouteId: "0",
-					routeDirection: "UP",
+					routeDirection: "up",
 					sourceCode: "BSK5",
 					destinationCode: "ITL",
 				})
@@ -1352,7 +1352,7 @@ describe("RoutesAPI", () => {
 				client.routes.getFares({
 					routeNo: "V-500CA",
 					subrouteId: "2981",
-					routeDirection: "UP",
+					routeDirection: "up",
 					sourceCode: "BSK5",
 					destinationCode: "ITL",
 				})
@@ -1372,7 +1372,7 @@ describe("RoutesAPI", () => {
 				client.routes.getFares({
 					routeNo: "V-500CA",
 					subrouteId: "2981",
-					routeDirection: "UP",
+					routeDirection: "up",
 					sourceCode: "BSK5",
 					destinationCode: "ITL",
 				})
@@ -1606,7 +1606,8 @@ describe("RoutesAPI", () => {
 
 			const futureDate = new Date();
 			futureDate.setHours(futureDate.getHours() + 1);
-			const fromDateTime = `${futureDate.getFullYear()}-${String(
+			// Format expected in API call (YYYY-MM-DD HH:mm)
+			const expectedFromDateTime = `${futureDate.getFullYear()}-${String(
 				futureDate.getMonth() + 1
 			).padStart(2, "0")}-${String(futureDate.getDate()).padStart(2, "0")} ${String(
 				futureDate.getHours()
@@ -1616,7 +1617,7 @@ describe("RoutesAPI", () => {
 				fromCoordinates: [13.079349339853941, 77.58814089936395],
 				toStopId: "38888",
 				serviceTypeId: "72",
-				fromDateTime,
+				fromDateTime: futureDate,
 				filterBy: "minimum-transfers",
 			});
 
@@ -1629,7 +1630,7 @@ describe("RoutesAPI", () => {
 						fromLongitude: 77.58814089936395,
 						toStationId: 38888,
 						serviceTypeId: 72,
-						fromDateTime,
+						fromDateTime: expectedFromDateTime,
 						filterBy: 1,
 					}),
 				})
@@ -1716,25 +1717,15 @@ describe("RoutesAPI", () => {
 		});
 
 		it("should validate fromDateTime is in future", async () => {
-			const pastDate = "2020-01-01 12:00";
+			const pastDate = new Date("2020-01-01T12:00:00");
 
 			await expect(
 				client.routes.planTrip({
-					fromStationId: "35376",
-					toStationId: "38888",
+					fromStopId: "35376",
+					toStopId: "38888",
 					fromDateTime: pastDate,
 				})
-			).rejects.toThrow("DateTime must be in the future");
-		});
-
-		it("should validate fromDateTime format", async () => {
-			await expect(
-				client.routes.planTrip({
-					fromStationId: "35376",
-					toStationId: "38888",
-					fromDateTime: "invalid-date",
-				})
-			).rejects.toThrow("DateTime must be in format");
+			).rejects.toThrow("fromDateTime must be in the future");
 		});
 
 		it("should handle API errors", async () => {
@@ -1748,8 +1739,8 @@ describe("RoutesAPI", () => {
 
 			await expect(
 				client.routes.planTrip({
-					fromStationId: "35376",
-					toStationId: "38888",
+					fromStopId: "35376",
+					toStopId: "38888",
 				})
 			).rejects.toThrow();
 		});
@@ -2052,9 +2043,9 @@ describe("RoutesAPI", () => {
 			const result = await client.routes.getTripStops({
 				trips: [
 					{
-						tripId: 80079217,
-						fromStopId: 22357,
-						toStopId: 20922,
+						tripId: "80079217",
+						fromStopId: "22357",
+						toStopId: "20922",
 					},
 				],
 			});
@@ -2068,19 +2059,19 @@ describe("RoutesAPI", () => {
 			const firstFeature = result.features[0];
 			expect(firstFeature.type).toBe("Feature");
 			expect(firstFeature.geometry.type).toBe("Point");
-			expect(firstFeature.geometry.coordinates).toEqual([77.59167, 13.09784]); // [lng, lat]
+			expect((firstFeature.geometry as any).coordinates).toEqual([77.59167, 13.09784]); // [lng, lat]
 			expect(firstFeature.properties?.tripId).toBe("80079217");
 			expect(firstFeature.properties?.subrouteId).toBe("1995");
 			expect(firstFeature.properties?.routeNo).toBe("285-M");
-			expect(firstFeature.properties?.stationId).toBe("22357");
-			expect(firstFeature.properties?.stationName).toBe("NES Office (Towards Hebbala)");
+			expect(firstFeature.properties?.stopId).toBe("22357");
+			expect(firstFeature.properties?.stopName).toBe("NES Office (Towards Hebbala)");
 			expect(firstFeature.properties?.scheduledArrivalTime).toBe("01/18/2026 20:58:00");
 			expect(firstFeature.properties?.scheduledDepartureTime).toBe("01/18/2026 20:58:00");
 			expect(firstFeature.properties?.isTransfer).toBe(false);
 
 			// Verify second station (transfer point)
 			const secondFeature = result.features[1];
-			expect(secondFeature.properties?.stationId).toBe("20922");
+			expect(secondFeature.properties?.stopId).toBe("20922");
 			expect(secondFeature.properties?.isTransfer).toBe(true);
 
 			// Verify API was called correctly
@@ -2135,14 +2126,14 @@ describe("RoutesAPI", () => {
 			const result = await client.routes.getTripStops({
 				trips: [
 					{
-						tripId: 80079217,
-						fromStopId: 22357,
-						toStopId: 20922,
+						tripId: "80079217",
+						fromStopId: "22357",
+						toStopId: "20922",
 					},
 					{
-						tripId: 80211270,
-						fromStopId: 20921,
-						toStopId: 21447,
+						tripId: "80211270",
+						fromStopId: "20921",
+						toStopId: "21447",
 					},
 				],
 			});
@@ -2182,9 +2173,9 @@ describe("RoutesAPI", () => {
 				client.routes.getTripStops({
 					trips: [
 						{
-							tripId: 0, // Invalid: must be positive
-							fromStationId: 22357,
-							toStationId: 20922,
+							tripId: "0", // Invalid: must be positive
+							fromStopId: "22357",
+							toStopId: "20922",
 						} as any,
 					],
 				})
@@ -2204,8 +2195,8 @@ describe("RoutesAPI", () => {
 					trips: [
 						{
 							tripId: 80079217,
-							fromStationId: 22357,
-							toStationId: 20922,
+							fromStopId: 22357,
+							toStopId: 20922,
 						},
 					],
 				})
@@ -2242,8 +2233,8 @@ describe("RoutesAPI", () => {
 			for (const feature of result.features) {
 				expect(feature.type).toBe("Feature");
 				expect(feature.geometry.type).toBe("LineString");
-				expect(feature.geometry.coordinates).toBeInstanceOf(Array);
-				expect(feature.geometry.coordinates.length).toBeGreaterThan(0);
+				expect((feature.geometry as any).coordinates).toBeInstanceOf(Array);
+				expect((feature.geometry as any).coordinates.length).toBeGreaterThan(0);
 			}
 		});
 

@@ -8,12 +8,6 @@ export interface BMTCApiError {
   statusCode?: number;
 }
 
-export interface BMTCApiResponse<T> {
-  data: T;
-  success: boolean;
-  message?: string;
-}
-
 /**
  * Common API request parameters
  */

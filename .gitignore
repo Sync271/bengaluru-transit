@@ -35,3 +35,8 @@ pnpm-debug.log*
 # Misc
 .cache/
 .temp/
+
+# Temporary test scripts
+*-plan.ts
+test-*.ts
+test-*.js
