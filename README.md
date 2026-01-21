@@ -473,6 +473,10 @@ Integration tests print formatted JSON responses to the console, making it easy 
 
 The integration tests include a 2-second delay between each test to prevent rate limiting. Tests are configured to run sequentially (single fork) to ensure proper rate limiting behavior.
 
+## Acknowledgments
+
+Thanks to [open-bmtc](https://github.com/Vonter/open-bmtc) for helping understand the BMTC API structure.
+
 ## License
 
 MIT
