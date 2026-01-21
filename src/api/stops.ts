@@ -1,4 +1,4 @@
-import { validate } from "../utils/validation";
+import { validate, stringifyId } from "../utils/validation";
 import {
 	rawAroundBusStopsResponseSchema,
 	aroundBusStopsParamsSchema,
@@ -27,7 +27,7 @@ import type {
 	NearbyStationsParams,
 	NearbyStationItem,
 } from "../types/stops";
-import { stationTypeToNumber, bmtcCategoryToNumber } from "../types/stops";
+import { stationTypeToNumber, transitCategoryToNumber } from "../types/stops";
 import type { FacilityFeature } from "../types/geojson";
 
 /**
@@ -85,7 +85,7 @@ function transformNearbyBusStopsResponse(
 	const items: NearbyBusStopItem[] = raw.data.map((item) => ({
 		serialNumber: item.srno,
 		routeNo: item.routeno,
-		stationId: item.routeid.toString(),
+		stationId: stringifyId(item.routeid),
 		latitude: item.center_lat,
 		longitude: item.center_lon,
 		routeTypeId: item.routetypeid,
@@ -106,7 +106,7 @@ function transformNearbyStationsResponse(
 ): NearbyStationsResponse {
 	const items: NearbyStationItem[] = raw.data.map((item) => ({
 		rowNumber: item.rowno,
-		stationId: item.geofenceid.toString(),
+		stationId: stringifyId(item.geofenceid),
 		stationName: item.geofencename,
 		latitude: item.center_lat,
 		longitude: item.center_lon,
@@ -130,7 +130,20 @@ export class StopsAPI {
 	/**
 	 * Find nearby bus stations with facilities around a location
 	 * @param params - Parameters including coordinates [latitude, longitude]
+	 * @param params.coordinates - [latitude, longitude] coordinates
 	 * @returns List of nearby stations with facilities as GeoJSON Point features
+	 * @throws {TransitValidationError} If coordinates are invalid or validation fails
+	 * @throws {HTTPError} If the API request fails (network error, 4xx, 5xx)
+	 * @example
+	 * ```typescript
+	 * const stations = await client.stops.findNearbyStations({
+	 *   coordinates: [13.09784, 77.59167]
+	 * });
+	 * 
+	 * stations.features.forEach(station => {
+	 *   console.log(`${station.properties.stationName} - ${station.properties.facilities.length} facilities`);
+	 * });
+	 * ```
 	 */
 	async findNearbyStations(
 		params: AroundBusStopsParams
@@ -166,18 +179,35 @@ export class StopsAPI {
 	/**
 	 * Search bus stops by station name
 	 * @param params - Parameters including station name query and optional station type
+	 * @param params.stationName - Station name to search for
+	 * @param params.stationType - Optional: Type of stops to search ("bmtc", "chartered", "metro", "ksrtc")
 	 * @returns List of bus stops matching the query
 	 * @remarks
 	 * The stationType parameter determines the type of stops to search (defaults to "bmtc"):
-	 * - "bmtc": BMTC Bus Stops (default)
+	 * - "bmtc": Transit Bus Stops (default)
 	 * - "chartered": Chartered Stops
 	 * - "metro": Metro Stops
 	 * - "ksrtc": KSRTC bus stops
+	 * @throws {TransitValidationError} If stationName is invalid or validation fails
+	 * @throws {HTTPError} If the API request fails (network error, 4xx, 5xx)
+	 * @example
+	 * ```typescript
+	 * // Search transit stops
+	 * const stops = await client.stops.searchBusStops({
+	 *   stationName: "MG Road"
+	 * });
+	 * 
+	 * // Search metro stops only
+	 * const metroStops = await client.stops.searchBusStops({
+	 *   stationName: "MG Road",
+	 *   stationType: "metro"
+	 * });
+	 * ```
 	 */
 	async searchBusStops(
 		params: NearbyBusStopsParams
 	): Promise<NearbyBusStopsResponse> {
-		// Convert human-readable stationType to API numeric value (default to "bmtc")
+		// Convert human-readable stationType to API numeric value (default to "bmtc" for transit stops)
 		const stationTypeValue = params.stationType || "bmtc";
 		const stationTypeNumber = stationTypeToNumber(stationTypeValue);
 
@@ -214,6 +244,10 @@ export class StopsAPI {
 	/**
 	 * Find nearby stops by location within a radius
 	 * @param params - Parameters including coordinates [latitude, longitude], radius, and optional filters
+	 * @param params.coordinates - [latitude, longitude] coordinates
+	 * @param params.radius - Search radius in kilometers
+	 * @param params.stationType - Optional: Type of stops to search ("bmtc", "chartered", "metro", "ksrtc")
+	 * @param params.bmtcCategory - Optional: BMTC category filter ("airport", "all") - only when stationType is "bmtc"
 	 * @returns List of nearby stops with distance and travel time information
 	 * @remarks
 	 * This endpoint returns up to 10 results. Pagination is not supported.
@@ -221,6 +255,24 @@ export class StopsAPI {
 	 * - "airport": Airport bus stops only
 	 * - "all": All BMTC stops
 	 * Note: bmtcCategory can only be used when stationType is "bmtc"
+	 * @throws {TransitValidationError} If coordinates, radius, or filters are invalid or validation fails
+	 * @throws {HTTPError} If the API request fails (network error, 4xx, 5xx)
+	 * @example
+	 * ```typescript
+	 * // Find all nearby stops within 1km
+	 * const stops = await client.stops.findNearbyStops({
+	 *   coordinates: [13.09784, 77.59167],
+	 *   radius: 1
+	 * });
+	 * 
+	 * // Find airport stops only
+	 * const airportStops = await client.stops.findNearbyStops({
+	 *   coordinates: [13.09784, 77.59167],
+	 *   radius: 2,
+	 *   stationType: "bmtc",
+	 *   bmtcCategory: "airport"
+	 * });
+	 * ```
 	 */
 	async findNearbyStops(
 		params: NearbyStationsParams
@@ -235,7 +287,7 @@ export class StopsAPI {
 		// TypeScript ensures this is only possible when stationType is "bmtc"
 		let bmtcCategoryNumber: number | undefined;
 		if ("bmtcCategory" in params && params.bmtcCategory) {
-			bmtcCategoryNumber = bmtcCategoryToNumber(params.bmtcCategory);
+			bmtcCategoryNumber = transitCategoryToNumber(params.bmtcCategory);
 		}
 
 		// Build request payload

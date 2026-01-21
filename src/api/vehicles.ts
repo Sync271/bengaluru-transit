@@ -1,4 +1,4 @@
-import { validate } from "../utils/validation";
+import { validate, parseId, stringifyId } from "../utils/validation";
 import {
 	rawSearchVehiclesResponseSchema,
 	searchVehiclesParamsSchema,
@@ -30,7 +30,7 @@ function transformSearchVehiclesResponse(
 	return {
 		items: raw.data.map(
 			(item): VehicleDataItem => ({
-				vehicleId: item.vehicleid.toString(),
+				vehicleId: stringifyId(item.vehicleid),
 				vehicleRegNo: item.vehicleregno,
 			})
 		),
@@ -48,9 +48,9 @@ function transformVehicleTripResponse(
 		createStopFeature(
 			[item.longitude, item.latitude], // GeoJSON: [lng, lat]
 			{
-				stopId: item.stationid.toString(),
+				stopId: stringifyId(item.stationid),
 				stopName: item.stationname,
-				tripId: item.tripid.toString(),
+				tripId: stringifyId(item.tripid),
 				routeNo: item.routeno,
 				routeName: item.routename,
 				busNo: item.busno,
@@ -59,7 +59,7 @@ function transformVehicleTripResponse(
 				sourceStation: item.sourcestation,
 				destinationStation: item.destinationstation,
 				serviceType: item.servicetype,
-				serviceTypeId: item.servicetypeid.toString(),
+				serviceTypeId: stringifyId(item.servicetypeid),
 				lastUpdatedAt: item.lastupdatedat,
 				actualArrivalTime: item.actual_arrivaltime,
 				etaStatus: item.etastatus,
@@ -77,8 +77,8 @@ function transformVehicleTripResponse(
 				actualDepartureTime: item.actual_departudetime,
 				tripStartTime: item.tripstarttime,
 				tripEndTime: item.tripendtime,
-				routeId: item.routeid.toString(),
-				vehicleId: item.vehicleid.toString(),
+				routeId: stringifyId(item.routeid),
+				vehicleId: stringifyId(item.vehicleid),
 				lastReceivedDateTimeFlag: item.lastreceiveddatetimeflag,
 				serialNo: item.srno,
 				tripPosition: item.tripposition,
@@ -95,11 +95,11 @@ function transformVehicleTripResponse(
 		createLocationFeature(
 			[item.longitude, item.latitude], // GeoJSON: [lng, lat]
 			{
-				vehicleId: item.vehicleid.toString(),
+				vehicleId: stringifyId(item.vehicleid),
 				vehicleNumber: item.vehiclenumber,
 				routeNo: item.routeno,
 				serviceType: item.servicetype,
-				serviceTypeId: item.servicetypeid.toString(),
+				serviceTypeId: stringifyId(item.servicetypeid),
 				heading: item.heading,
 				location: item.location,
 				lastRefreshedOn: item.lastrefreshon,
@@ -126,7 +126,18 @@ export class VehiclesAPI {
 	/**
 	 * Search vehicles by query (partial match)
 	 * @param params - Search parameters including search query
+	 * @param params.query - Vehicle registration number (partial match supported)
 	 * @returns List of matching vehicles in normalized format
+	 * @throws {TransitValidationError} If query is invalid or validation fails
+	 * @throws {HTTPError} If the API request fails (network error, 4xx, 5xx)
+	 * @example
+	 * ```typescript
+	 * const vehicles = await client.vehicles.searchVehicles({ query: "KA57F2403" });
+	 * if (vehicles.items.length > 0) {
+	 *   const vehicle = vehicles.items[0];
+	 *   const trip = await client.vehicles.getVehicleTrip({ vehicleId: vehicle.vehicleId });
+	 * }
+	 * ```
 	 */
 	async searchVehicles(
 		params: SearchVehiclesParams
@@ -158,7 +169,23 @@ export class VehiclesAPI {
 	/**
 	 * Get vehicle trip information including route stops and live location
 	 * @param params - Parameters including vehicle ID
+	 * @param params.vehicleId - Vehicle ID (always string for consistency)
 	 * @returns Vehicle trip with route information and live location in normalized GeoJSON format
+	 * @example
+	 * ```typescript
+	 * const trip = await client.vehicles.getVehicleTrip({ vehicleId: "12345" });
+	 * 
+	 * // Access route stops
+	 * trip.routeStops.features.forEach(stop => {
+	 *   console.log(`${stop.properties.stopName} - ${stop.properties.eta}`);
+	 * });
+	 * 
+	 * // Access live vehicle location
+	 * const location = trip.vehicleLocation.features[0];
+	 * console.log(`Vehicle at: [${location.geometry.coordinates}]`);
+	 * ```
+	 * @throws {TransitValidationError} If vehicleId is invalid or validation fails
+	 * @throws {HTTPError} If the API request fails (network error, 4xx, 5xx)
 	 */
 	async getVehicleTrip(
 		params: VehicleTripParams
@@ -166,7 +193,7 @@ export class VehiclesAPI {
 		// Validate input parameters - API expects number, convert from string
 		const validatedParams = validate(
 			vehicleTripParamsSchema,
-			{ vehicleId: parseInt(params.vehicleId, 10) },
+			{ vehicleId: parseId(params.vehicleId) },
 			"Invalid vehicle trip parameters"
 		);
 

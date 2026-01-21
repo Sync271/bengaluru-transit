@@ -1,6 +1,18 @@
-# BMTC TypeScript Wrapper
+# Bengaluru Transit SDK
 
-A type-safe TypeScript wrapper for BMTC (Bangalore Metropolitan Transport Corporation) APIs with Zod validation and GeoJSON support.
+A type-safe TypeScript SDK for Bengaluru public transit APIs with Zod validation and GeoJSON support.
+
+> **⚠️ Disclaimer**: This is an **unofficial** SDK. It is not affiliated with, endorsed by, or connected to any official transit authority. This project is developed independently to provide better API design and consumption patterns for transit data that deserves better tooling.
+
+## Intent
+
+The underlying transit API contains valuable real-time and schedule data, but the API design and consumption patterns could be significantly improved. This SDK aims to:
+
+- **Improve API Design**: Provide a clean, type-safe interface that makes the data more accessible
+- **Better Consumption**: Normalize responses, validate inputs, and provide consistent data structures
+- **Reduce Waste**: Make valuable transit data easier to use in applications, reducing the barrier to building transit-focused tools
+
+This project is built with the intent of making public transit data more accessible to developers and ultimately improving the transit experience for commuters.
 
 ## Features
 
@@ -13,15 +25,15 @@ A type-safe TypeScript wrapper for BMTC (Bangalore Metropolitan Transport Corpor
 ## Installation
 
 ```bash
-npm install bmtc-wrapper
+npm install bengaluru-transit
 ```
 
 ## Quick Start
 
 ```typescript
-import { BMTCClient } from "bmtc-wrapper";
+import { BengaluruTransitClient } from "bengaluru-transit";
 
-const client = new BMTCClient({ language: "en" });
+const client = new BengaluruTransitClient({ language: "en" });
 
 // Example: Search for nearby bus stops
 const stops = await client.stops.findNearbyStops({
@@ -190,7 +202,7 @@ details.vehicles.features.forEach(vehicle => {
 });
 ```
 
-## API Endpoints
+## API Reference
 
 ### Routes API
 - `planTrip(params)` - Complete trip planning with transfers
@@ -200,6 +212,7 @@ details.vehicles.features.forEach(vehicle => {
 - `getRoutePoints(routeId)` - Get route path as GeoJSON
 - `getFares(params)` - Get fare information
 - `getRoutesBetweenStops(fromStopId, toStopId)` - Find routes between two stops
+- `getRoutesThroughStations(fromStopId, toStopId, routeId?, date?)` - Routes passing through both stops
 
 ### Stops API
 - `findNearbyStops(lat, lon, radius)` - Find stops within radius (GeoJSON)
@@ -213,7 +226,160 @@ details.vehicles.features.forEach(vehicle => {
 ### Locations API
 - `searchPlaces(query)` - Search locations/places by name (GeoJSON)
 
-For complete API documentation, see [AGENTIC_CAPABILITIES.md](./AGENTIC_CAPABILITIES.md)
+### Info API
+- `getHelpline()` - Get transit helpline contact information
+- `getServiceTypes()` - Get available service types (AC, Non-AC, etc.)
+- `getAbout()` - Get general transit information
+- `getEmergencyMessages()` - Get emergency alerts and messages
+- `getFareScrollMessages()` - Get fare-related announcements
+
+## More Examples
+
+### Find Routes Between Two Stops
+
+```typescript
+// Find all routes connecting two stops
+const routes = await client.routes.getRoutesBetweenStops({
+  fromStopId: "22357",
+  toStopId: "21447"
+});
+
+routes.items.forEach(route => {
+  console.log(`Route ${route.routeNo}: ${route.fromStop} → ${route.toStop}`);
+});
+```
+
+### Get Routes Through Stops
+
+```typescript
+// Find routes that pass through both stops (with schedule info)
+const routes = await client.routes.getRoutesThroughStations({
+  fromStopId: "30475",
+  toStopId: "35376",
+  date: new Date() // Optional: defaults to current date
+});
+
+routes.items.forEach(route => {
+  console.log(`Route ${route.routeNo} starts at ${route.startTime}`);
+  console.log(`Travel time: ${route.travelTime}, Distance: ${route.distance} km`);
+});
+```
+
+### Get Fare Information
+
+```typescript
+// Get fare for a specific route between stops
+const fare = await client.routes.getFares({
+  fromStopId: "22357",
+  toStopId: "21447",
+  routeId: "11797"
+});
+
+fare.items.forEach(item => {
+  console.log(`Fare: ₹${item.fare}`);
+});
+```
+
+### Search and Track Vehicle
+
+```typescript
+// Complete workflow: search → track
+const vehicles = await client.vehicles.searchVehicles({ query: "KA57" });
+
+if (vehicles.items.length > 0) {
+  const vehicle = vehicles.items[0];
+  const trip = await client.vehicles.getVehicleTrip({ vehicleId: vehicle.vehicleId });
+  
+  console.log(`Vehicle ${vehicle.vehicleRegNo} is on route ${trip.routeStops.features[0].properties.routeNo}`);
+  console.log(`Current location:`, trip.vehicleLocation.features[0].geometry.coordinates);
+}
+```
+
+### Get Service Types and Filter Trip
+
+```typescript
+// Get service types and use to filter trip planning
+const serviceTypes = await client.info.getServiceTypes();
+const acService = serviceTypes.items.find(s => s.serviceTypeName.includes("AC"));
+
+if (acService) {
+  const trip = await client.routes.planTrip({
+    fromCoordinates: [13.09784, 77.59167],
+    toStopId: "20922",
+    serviceTypeId: acService.serviceTypeId
+  });
+  
+  console.log(`Found ${trip.routes.length} AC bus routes`);
+}
+```
+
+### Check Emergency Messages
+
+```typescript
+// Get current emergency messages and alerts
+const messages = await client.info.getEmergencyMessages();
+const activeMessages = messages.items.filter(m => m.isDisplay);
+
+if (activeMessages.length > 0) {
+  console.log("Active alerts:");
+  activeMessages.forEach(msg => {
+    console.log(`${msg.displayKey}: ${msg.messageEn}`);
+  });
+}
+```
+
+For complete API documentation and agentic workflows, see [AGENTIC_CAPABILITIES.md](./AGENTIC_CAPABILITIES.md)
+
+## Agent Integration
+
+This wrapper is designed to work seamlessly with AI agents and function calling frameworks. All methods are fully typed, validated, and include comprehensive JSDoc documentation.
+
+### Key Features for Agents
+
+✅ **Type-Safe Parameters** - All inputs are validated with Zod schemas  
+✅ **Structured Responses** - Consistent, normalized data formats  
+✅ **Proper Error Types** - `TransitValidationError` for validation errors, `HTTPError` (from ky) for network/API errors  
+✅ **GeoJSON Support** - Standard format for spatial data (compatible with mapping libraries)  
+✅ **String IDs** - All IDs are strings (agent-friendly, no type confusion)  
+✅ **Date Objects** - Consistent Date object handling (no string parsing needed)  
+✅ **JSDoc Documentation** - Complete `@param`, `@returns`, `@throws`, and `@example` tags  
+
+### Error Handling
+
+```typescript
+import { BengaluruTransitClient, TransitError, TransitValidationError } from "bengaluru-transit";
+import type { HTTPError } from "ky";
+
+const client = new BengaluruTransitClient({ language: "en" });
+
+try {
+  const trip = await client.routes.planTrip({ 
+    fromStopId: "22357", 
+    toStopId: "21447" 
+  });
+} catch (error) {
+  if (error instanceof TransitValidationError) {
+    // Validation error with detailed field information
+    console.error("Validation failed:", error.message);
+    console.error("Details:", error.details);
+  } else if (error instanceof TransitError) {
+    // Other transit errors
+    console.error("Transit error:", error.message);
+    console.error("Code:", error.code);
+  } else if ((error as HTTPError).response) {
+    // HTTP error from network/API
+    const httpError = error as HTTPError;
+    console.error("HTTP error:", httpError.message);
+    console.error("Status:", httpError.response.status);
+  }
+}
+```
+
+### Function Calling Example
+
+See [examples/function-calling.ts](./examples/function-calling.ts) for a complete example of how to use the wrapper with AI agents that support structured function calling (OpenAI, Anthropic, etc.).
+
+For detailed agent workflows and capabilities, see [AGENTIC_CAPABILITIES.md](./AGENTIC_CAPABILITIES.md)
 
 ## Development
 
@@ -233,7 +399,7 @@ npm test
 # Watch tests
 npm run test:watch
 
-# Run integration tests against real BMTC API
+# Run integration tests against real transit API
 npm run test:integration
 
 # Run specific endpoint integration test
@@ -268,7 +434,7 @@ npm run test:ui
 
 #### Integration Tests
 
-Integration tests make actual HTTP requests to the real BMTC API. They verify that the wrapper works correctly with the actual API endpoints.
+Integration tests make actual HTTP requests to the real transit API. They verify that the SDK works correctly with the actual API endpoints.
 
 **⚠️ Important Notes:**
 

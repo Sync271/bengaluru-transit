@@ -1,4 +1,7 @@
-import { validate } from "../utils/validation";
+import { validate, parseId, stringifyId } from "../utils/validation";
+import { TransitError } from "../utils/errors";
+import { formatDateTime, formatDate, formatISODate } from "../utils/date";
+import { DEFAULT_DEVICE_TYPE } from "../constants/api";
 import {
 	rawRoutePointsResponseSchema,
 	routePointsParamsSchema,
@@ -132,7 +135,7 @@ function transformRouteSearchResponse(
 		unionRowNo: item.union_rowno,
 		row: item.row,
 		routeNo: item.routeno,
-		parentRouteId: item.routeparentid.toString(),
+		parentRouteId: stringifyId(item.routeparentid),
 	}));
 
 	return {
@@ -147,12 +150,12 @@ function transformAllRoutesResponse(
 	raw: RawAllRoutesResponse
 ): AllRoutesResponse {
 	const items: RouteListItem[] = raw.data.map((item) => ({
-		subrouteId: item.routeid.toString(),
+		subrouteId: stringifyId(item.routeid),
 		routeNo: item.routeno,
 		routeName: item.routename,
-		fromStopId: item.fromstationid.toString(),
+		fromStopId: stringifyId(item.fromstationid),
 		fromStop: item.fromstation,
-		toStopId: item.tostationid.toString(),
+		toStopId: stringifyId(item.tostationid),
 		toStop: item.tostation,
 	}));
 
@@ -195,10 +198,10 @@ function transformTimetableByStationResponse(
 	raw: RawTimetableByStationResponse
 ): TimetableByStationResponse {
 	const items: TimetableByStationItem[] = raw.data.map((item) => ({
-		routeId: item.routeid.toString(),
+		routeId: stringifyId(item.routeid),
 		id: item.id,
-		fromStopId: item.fromstationid.toString(),
-		toStopId: item.tostationid.toString(),
+		fromStopId: stringifyId(item.fromstationid),
+		toStopId: stringifyId(item.tostationid),
 		fromStopOffset: item.f,
 		toStopOffset: item.t,
 		routeNo: item.routeno,
@@ -208,7 +211,7 @@ function transformTimetableByStationResponse(
 		travelTime: item.traveltime,
 		distance: item.distance,
 		approximateTime: item.apptime,
-		approximateTimeSeconds: parseInt(item.apptimesecs, 10),
+		approximateTimeSeconds: parseId(item.apptimesecs),
 		startTime: item.starttime,
 		platformName: item.platformname,
 		platformNumber: item.platformnumber,
@@ -227,9 +230,9 @@ function transformVehicleDetailItem(
 	raw: RawRouteDetailVehicleItem
 ): RouteDetailVehicleItem {
 	return {
-		vehicleId: raw.vehicleid.toString(),
+		vehicleId: stringifyId(raw.vehicleid),
 		vehicleNumber: raw.vehiclenumber,
-		serviceTypeId: raw.servicetypeid.toString(),
+		serviceTypeId: stringifyId(raw.servicetypeid),
 		serviceType: raw.servicetype,
 		centerLat: raw.centerlat,
 		centerLong: raw.centerlong,
@@ -240,9 +243,9 @@ function transformVehicleDetailItem(
 		actualDepartureTime: raw.actual_departuretime,
 		scheduledTripStartTime: raw.sch_tripstarttime,
 		scheduledTripEndTime: raw.sch_tripendtime,
-		lastLocationId: raw.lastlocationid.toString(),
-		currentLocationId: raw.currentlocationid.toString(),
-		nextLocationId: raw.nextlocationid.toString(),
+		lastLocationId: stringifyId(raw.lastlocationid),
+		currentLocationId: stringifyId(raw.currentlocationid),
+		nextLocationId: stringifyId(raw.nextlocationid),
 		currentStop: raw.currentstop,
 		nextStop: raw.nextstop,
 		lastStop: raw.laststop,
@@ -263,9 +266,9 @@ function transformDirectionData(
 	// Convert stations to GeoJSON Point features (without vehicleDetails in properties)
 	const stationFeatures = raw.data.map((station) => {
 		const properties: RouteDetailStationProperties = {
-			stopId: station.stationid.toString(),
+			stopId: stringifyId(station.stationid),
 			stopName: station.stationname,
-			subrouteId: station.routeid.toString(), // This is the subroute ID for the specific direction
+			subrouteId: stringifyId(station.routeid), // This is the subroute ID for the specific direction
 			from: station.from,
 			to: station.to,
 			routeNo: station.routeno,
@@ -294,7 +297,7 @@ function transformDirectionData(
 				},
 				properties: {
 					...properties,
-					stationId: station.stationid.toString(), // Link vehicle to station
+					stationId: stringifyId(station.stationid), // Link vehicle to station
 				},
 			};
 		})
@@ -305,9 +308,9 @@ function transformDirectionData(
 		createLocationFeature(
 			[vehicle.centerlong, vehicle.centerlat], // GeoJSON: [lng, lat]
 			{
-				vehicleId: vehicle.vehicleid.toString(),
+				vehicleId: stringifyId(vehicle.vehicleid),
 				vehicleNumber: vehicle.vehiclenumber,
-				serviceTypeId: vehicle.servicetypeid.toString(),
+				serviceTypeId: stringifyId(vehicle.servicetypeid),
 				serviceType: vehicle.servicetype,
 				eta: vehicle.eta,
 				scheduledArrivalTime: vehicle.sch_arrivaltime,
@@ -316,9 +319,9 @@ function transformDirectionData(
 				actualDepartureTime: vehicle.actual_departuretime,
 				scheduledTripStartTime: vehicle.sch_tripstarttime,
 				scheduledTripEndTime: vehicle.sch_tripendtime,
-				lastLocationId: vehicle.lastlocationid.toString(),
-				currentLocationId: vehicle.currentlocationid.toString(),
-				nextLocationId: vehicle.nextlocationid.toString(),
+				lastLocationId: stringifyId(vehicle.lastlocationid),
+				currentLocationId: stringifyId(vehicle.currentlocationid),
+				nextLocationId: stringifyId(vehicle.nextlocationid),
 				currentStop: vehicle.currentstop,
 				nextStop: vehicle.nextstop,
 				lastStop: vehicle.laststop,
@@ -357,16 +360,16 @@ function transformRouteBetweenStopsItem(
 	raw: RawRouteBetweenStationsItem
 ): RouteBetweenStopsItem {
 	return {
-		id: raw.id.toString(),
-		fromStopId: raw.fromstationid.toString(),
+		id: stringifyId(raw.id),
+		fromStopId: stringifyId(raw.fromstationid),
 		sourceCode: raw.source_code,
 		fromDisplayName: raw.from_displayname,
-		toStopId: raw.tostationid.toString(),
+		toStopId: stringifyId(raw.tostationid),
 		destinationCode: raw.destination_code,
 		toDisplayName: raw.to_displayname,
 		fromDistance: raw.fromdistance,
 		toDistance: raw.todistance,
-		subrouteId: raw.routeid.toString(),
+		subrouteId: stringifyId(raw.routeid),
 		routeNo: raw.routeno,
 		routeName: raw.routename,
 		routeDirection: raw.route_direction.toLowerCase() as "up" | "down",
@@ -407,10 +410,10 @@ function transformFareDataResponse(
  */
 function transformPathDetailItem(raw: RawPathDetailsResponse["data"][0]): PathDetailItem {
 	return {
-		tripId: raw.tripId.toString(),
-		subrouteId: raw.routeId.toString(),
+		tripId: stringifyId(raw.tripId),
+		subrouteId: stringifyId(raw.routeId),
 		routeNo: raw.routeNo,
-		stopId: raw.stationId.toString(),
+		stopId: stringifyId(raw.stationId),
 		stopName: raw.stationName,
 		latitude: raw.latitude,
 		longitude: raw.longitude,
@@ -470,27 +473,27 @@ function transformTripPlannerPathLeg(
 	return {
 		pathSrNo: raw.pathSrno,
 		transferSrNo: raw.transferSrNo,
-		tripId: raw.tripId.toString(),
-		subrouteId: raw.routeid.toString(),
+		tripId: stringifyId(raw.tripId),
+		subrouteId: stringifyId(raw.routeid),
 		routeNo: raw.routeno,
 		scheduleNo: raw.schNo,
-		vehicleId: raw.vehicleId.toString(),
+		vehicleId: stringifyId(raw.vehicleId),
 		busNo: raw.busNo,
 		distance: raw.distance,
 		duration: raw.duration,
 		durationSeconds,
-		fromStopId: raw.fromStationId.toString(),
+		fromStopId: stringifyId(raw.fromStationId),
 		fromStopName: raw.fromStationName,
-		toStopId: raw.toStationId.toString(),
+		toStopId: stringifyId(raw.toStationId),
 		toStopName: raw.toStationName,
 		etaFromStop: raw.etaFromStation,
 		etaToStop: raw.etaToStation,
-		serviceTypeId: raw.serviceTypeId.toString(),
+		serviceTypeId: stringifyId(raw.serviceTypeId),
 		fromLatitude: raw.fromLatitude,
 		fromLongitude: raw.fromLongitude,
 		toLatitude: raw.toLatitude,
 		toLongitude: raw.toLongitude,
-		routeParentId: raw.routeParentId.toString(),
+		routeParentId: stringifyId(raw.routeParentId),
 		totalDuration: raw.totalDuration,
 		totalDurationSeconds,
 		waitingDuration: raw.waitingDuration,
@@ -715,7 +718,17 @@ export class RoutesAPI {
 	/**
 	 * Get route points (path) for a given route ID
 	 * @param params - Parameters including route ID
+	 * @param params.routeId - Route ID (always string for consistency)
 	 * @returns Route path as GeoJSON LineString FeatureCollection
+	 * @throws {TransitValidationError} If routeId is invalid or validation fails
+	 * @throws {HTTPError} If the API request fails (network error, 4xx, 5xx)
+	 * @example
+	 * ```typescript
+	 * const routePath = await client.routes.getRoutePoints({
+	 *   routeId: "11797"
+	 * });
+	 * // Use routePath.routePath.features[0].geometry.coordinates to draw on map
+	 * ```
 	 */
 	async getRoutePoints(
 		params: RoutePointsParams
@@ -723,7 +736,7 @@ export class RoutesAPI {
 		// Validate input parameters - API expects number, convert from string
 		const validatedParams = validate(
 			routePointsParamsSchema,
-			{ routeid: parseInt(params.routeId, 10) },
+			{ routeid: parseId(params.routeId) },
 			"Invalid route points parameters"
 		);
 
@@ -747,7 +760,17 @@ export class RoutesAPI {
 	/**
 	 * Search for routes by query text (partial match)
 	 * @param params - Parameters including search query
+	 * @param params.query - Search query for routes (partial match supported)
 	 * @returns List of matching routes in normalized format
+	 * @throws {TransitValidationError} If query is invalid or validation fails
+	 * @throws {HTTPError} If the API request fails (network error, 4xx, 5xx)
+	 * @example
+	 * ```typescript
+	 * const routes = await client.routes.searchRoutes({ query: "285-M" });
+	 * routes.items.forEach(route => {
+	 *   console.log(`${route.routeNo} - ${route.parentRouteId}`);
+	 * });
+	 * ```
 	 */
 	async searchRoutes(params: RouteSearchParams): Promise<RouteSearchResponse> {
 		// Validate input parameters
@@ -777,6 +800,17 @@ export class RoutesAPI {
 	/**
 	 * Get all routes list
 	 * @returns List of all routes in normalized format
+	 * @throws {HTTPError} If the API request fails (network error, 4xx, 5xx)
+	 * @example
+	 * ```typescript
+	 * const allRoutes = await client.routes.getAllRoutes();
+	 * console.log(`Total routes: ${allRoutes.items.length}`);
+	 * 
+	 * // Find routes by name
+	 * const matchingRoutes = allRoutes.items.filter(r => 
+	 *   r.routeName.includes("KBS")
+	 * );
+	 * ```
 	 */
 	async getAllRoutes(): Promise<AllRoutesResponse> {
 		const response = await this.client.getClient().post("GetAllRouteList", {
@@ -796,40 +830,51 @@ export class RoutesAPI {
 		return transformAllRoutesResponse(rawResponse);
 	}
 
-	/**
-	 * Convert Date to "YYYY-MM-DD HH:mm" format string
-	 */
-	private formatDateTime(date: Date): string {
-		const year = date.getFullYear();
-		const month = String(date.getMonth() + 1).padStart(2, "0");
-		const day = String(date.getDate()).padStart(2, "0");
-		const hours = String(date.getHours()).padStart(2, "0");
-		const minutes = String(date.getMinutes()).padStart(2, "0");
-		return `${year}-${month}-${day} ${hours}:${minutes}`;
-	}
 
 	/**
 	 * Get timetable by route ID
 	 * @param params - Parameters including route ID and optional filters
+	 * @param params.routeId - Route ID (always string for consistency)
+	 * @param params.startTime - Optional: Start time for timetable (Date object, defaults to current time)
+	 * @param params.endTime - Optional: End time for timetable (Date object, defaults to 23:59 of startTime date)
+	 * @param params.fromStopId - Optional: Filter by from stop ID (requires toStopId)
+	 * @param params.toStopId - Optional: Filter by to stop ID (requires fromStopId)
 	 * @returns Timetable data in normalized format
+	 * @throws {TransitValidationError} If routeId is invalid, validation fails, or stop IDs are provided incorrectly
+	 * @throws {HTTPError} If the API request fails (network error, 4xx, 5xx)
+	 * @example
+	 * ```typescript
+	 * // Get timetable for entire route
+	 * const timetable = await client.routes.getTimetableByRoute({
+	 *   routeId: "11797"
+	 * });
+	 * 
+	 * // Get timetable between specific stops
+	 * const timetable = await client.routes.getTimetableByRoute({
+	 *   routeId: "11797",
+	 *   fromStopId: "22357",
+	 *   toStopId: "21447",
+	 *   startTime: new Date("2026-01-20T09:00:00")
+	 * });
+	 * ```
 	 */
 	async getTimetableByRoute(
 		params: TimetableByRouteParams
 	): Promise<TimetableResponse> {
 		// Generate current date in ISO 8601 format
-		const currentDate = new Date().toISOString();
+		const currentDate = formatISODate(new Date());
 
 		// Determine start time - use current time if not provided
 		const startTimeDate = params.startTime ?? new Date();
-		const startTime = this.formatDateTime(startTimeDate);
+		const startTime = formatDateTime(startTimeDate);
 
 		// Determine end time - use 23:59 of startTime date if not provided
 		let endTime: string;
 		if (params.endTime) {
-			endTime = this.formatDateTime(params.endTime);
+			endTime = formatDateTime(params.endTime);
 		} else {
 			// Extract date from startTime (format: "YYYY-MM-DD HH:mm")
-			const startTimeDateStr = startTime.split(" ")[0];
+			const startTimeDateStr = formatDate(startTimeDate);
 			endTime = `${startTimeDateStr} 23:59`;
 		}
 
@@ -843,7 +888,7 @@ export class RoutesAPI {
 			endtime: string;
 		} = {
 			current_date: currentDate,
-			routeid: parseInt(params.routeId, 10),
+			routeid: parseId(params.routeId),
 			starttime: startTime,
 			endtime: endTime,
 		};
@@ -883,10 +928,28 @@ export class RoutesAPI {
 	/**
 	 * Search route details by parent route ID
 	 * @param params - Parameters including parent route ID and optional service type ID
+	 * @param params.parentRouteId - Parent route ID (always string for consistency, obtained from searchRoutes)
+	 * @param params.serviceTypeId - Optional: Filter by service type ID
 	 * @returns Route details with live vehicle information for both directions (up and down)
+	 * @throws {Error} If parentRouteId is invalid or validation fails
+	 * @throws {HTTPError} If the API request fails (network error, 4xx, 5xx)
 	 * @remarks
 	 * The parentRouteId should be obtained from searchRoutes().parentRouteId.
 	 * The response contains subroute IDs in up.stops and down.stops (subrouteId property).
+	 * @example
+	 * ```typescript
+	 * // First search for route
+	 * const routes = await client.routes.searchRoutes({ query: "500-CA" });
+	 * const parentRouteId = routes.items[0].parentRouteId;
+	 * 
+	 * // Get route details with live vehicles
+	 * const details = await client.routes.searchByRouteDetails({ parentRouteId });
+	 * 
+	 * // Access live vehicles for up direction
+	 * details.up.vehicles.features.forEach(vehicle => {
+	 *   console.log(`Vehicle ${vehicle.properties.vehicleRegNo} at ${vehicle.geometry.coordinates}`);
+	 * });
+	 * ```
 	 */
 	async searchByRouteDetails(
 		params: RouteDetailsParams
@@ -896,12 +959,12 @@ export class RoutesAPI {
 			routeid: number;
 			servicetypeid?: number;
 		} = {
-			routeid: parseInt(params.parentRouteId, 10),
+			routeid: parseId(params.parentRouteId),
 		};
 
 		// Add service type ID if provided
 		if (params.serviceTypeId) {
-			requestPayload.servicetypeid = parseInt(params.serviceTypeId, 10);
+			requestPayload.servicetypeid = parseId(params.serviceTypeId);
 		}
 
 		// Validate request payload
@@ -933,11 +996,26 @@ export class RoutesAPI {
 	/**
 	 * Get routes between two stops
 	 * @param params - Parameters including from and to stop IDs
+	 * @param params.fromStopId - From stop ID (always string for consistency)
+	 * @param params.toStopId - To stop ID (always string for consistency)
 	 * @returns List of routes connecting the two stops in normalized format
+	 * @throws {TransitValidationError} If stop IDs are invalid or validation fails
+	 * @throws {HTTPError} If the API request fails (network error, 4xx, 5xx)
 	 * @remarks
 	 * The routeId in the response is likely a subroute ID (specific to direction/variant).
 	 * It can be used with searchByRouteDetails() endpoint.
 	 * Note: This differs from parentRouteId returned by searchRoutes().
+	 * @example
+	 * ```typescript
+	 * const routes = await client.routes.getRoutesBetweenStops({
+	 *   fromStopId: "22357",
+	 *   toStopId: "21447"
+	 * });
+	 * 
+	 * routes.items.forEach(route => {
+	 *   console.log(`Route ${route.routeNo}: ${route.fromStop} → ${route.toStop}`);
+	 * });
+	 * ```
 	 */
 	async getRoutesBetweenStops(
 		params: RoutesBetweenStopsParams
@@ -946,8 +1024,8 @@ export class RoutesAPI {
 		const validatedParams = validate(
 			routesBetweenStopsParamsSchema,
 			{
-				fromStationId: parseInt(params.fromStopId, 10), // API uses "station" in field names
-				toStationId: parseInt(params.toStopId, 10), // API uses "station" in field names
+				fromStationId: parseId(params.fromStopId), // API uses "station" in field names
+				toStationId: parseId(params.toStopId), // API uses "station" in field names
 			},
 			"Invalid routes between stops parameters"
 		);
@@ -980,11 +1058,38 @@ export class RoutesAPI {
 	/**
 	 * Get fares for a route between stops
 	 * @param params - Parameters from getRoutesBetweenStops() response
+	 * @param params.routeId - Subroute ID (always string for consistency, from RouteBetweenStopsItem)
+	 * @param params.routeDirection - Route direction: "up" or "down"
+	 * @param params.sourceCode - Source code (from RouteBetweenStopsItem)
+	 * @param params.destinationCode - Destination code (from RouteBetweenStopsItem)
 	 * @returns Fares with service types and their fare amounts
+	 * @throws {Error} If parameters are invalid or validation fails
+	 * @throws {HTTPError} If the API request fails (network error, 4xx, 5xx)
 	 * @remarks
-	 * The parameters should come from a RouteBetweenStationsItem returned by getRoutesBetweenStations().
+	 * The parameters should come from a RouteBetweenStopsItem returned by getRoutesBetweenStops().
 	 * This endpoint requires the subroute ID (not parent route ID) along with route direction,
 	 * source and destination codes to determine the exact fare for that route variant.
+	 * @example
+	 * ```typescript
+	 * // First get routes between stops
+	 * const routes = await client.routes.getRoutesBetweenStops({
+	 *   fromStopId: "22357",
+	 *   toStopId: "21447"
+	 * });
+	 * 
+	 * // Get fare for first route
+	 * const route = routes.items[0];
+	 * const fare = await client.routes.getFares({
+	 *   routeId: route.subrouteId,
+	 *   routeDirection: route.routeDirection,
+	 *   sourceCode: route.sourceCode,
+	 *   destinationCode: route.destinationCode
+	 * });
+	 * 
+	 * fare.items.forEach(item => {
+	 *   console.log(`Service: ${item.serviceType}, Fare: ₹${item.fare}`);
+	 * });
+	 * ```
 	 */
 	async getFares(params: FareDataParams): Promise<FareDataResponse> {
 		// Validate input parameters - API expects numbers for routeid, convert from string
@@ -993,7 +1098,7 @@ export class RoutesAPI {
 			fareDataParamsSchema,
 			{
 				routeno: params.routeNo,
-				routeid: parseInt(params.subrouteId, 10),
+				routeid: parseId(params.subrouteId),
 				route_direction: params.routeDirection, // Already lowercase "up" | "down"
 				source_code: params.sourceCode,
 				destination_code: params.destinationCode,
@@ -1042,6 +1147,32 @@ export class RoutesAPI {
 	 * - filterBy: "minimum-transfers" or "shortest-time"
 	 * 
 	 * All routes are returned in a single `routes` array. Filter by `transferCount === 0` to identify direct routes.
+	 * @throws {TransitError} If fromDateTime is not in the future
+	 * @throws {TransitValidationError} If parameters are invalid or validation fails
+	 * @throws {HTTPError} If the API request fails (network error, 4xx, 5xx)
+	 * @example
+	 * ```typescript
+	 * // Location to Stop
+	 * const trip = await client.routes.planTrip({
+	 *   fromCoordinates: [13.09784, 77.59167],
+	 *   toStopId: "20922"
+	 * });
+	 * 
+	 * // Find fastest direct route
+	 * const fastest = trip.routes
+	 *   .filter(r => r.transferCount === 0)
+	 *   .sort((a, b) => a.totalDurationSeconds - b.totalDurationSeconds)[0];
+	 * ```
+	 * @example
+	 * ```typescript
+	 * // Stop to Stop with filters
+	 * const trip = await client.routes.planTrip({
+	 *   fromStopId: "22357",
+	 *   toStopId: "21447",
+	 *   filterBy: "shortest-time",
+	 *   fromDateTime: new Date("2026-01-20T09:00:00")
+	 * });
+	 * ```
 	 */
 	async planTrip(params: TripPlannerParams): Promise<TripPlannerResponse> {
 		// Convert discriminated union params to API payload format
@@ -1059,7 +1190,7 @@ export class RoutesAPI {
 
 		// Set "from" type (either stop ID or coordinates)
 		if ("fromStopId" in params && params.fromStopId) {
-			apiPayload.fromStationId = parseInt(params.fromStopId, 10);
+			apiPayload.fromStationId = parseId(params.fromStopId);
 		} else if ("fromCoordinates" in params && params.fromCoordinates) {
 			const [lat, lng] = params.fromCoordinates;
 			apiPayload.fromLatitude = lat;
@@ -1068,7 +1199,7 @@ export class RoutesAPI {
 
 		// Set "to" type (either stop ID or coordinates)
 		if ("toStopId" in params && params.toStopId) {
-			apiPayload.toStationId = parseInt(params.toStopId, 10);
+			apiPayload.toStationId = parseId(params.toStopId);
 		} else if ("toCoordinates" in params && params.toCoordinates) {
 			const [lat, lng] = params.toCoordinates;
 			apiPayload.toLatitude = lat;
@@ -1077,16 +1208,16 @@ export class RoutesAPI {
 
 		// Add optional parameters
 		if (params.serviceTypeId !== undefined) {
-			apiPayload.serviceTypeId = parseInt(params.serviceTypeId, 10);
+			apiPayload.serviceTypeId = parseId(params.serviceTypeId);
 		}
 		if (params.fromDateTime !== undefined) {
 			// Validate that the date is in the future
 			const now = new Date();
 			if (params.fromDateTime <= now) {
-				throw new Error("fromDateTime must be in the future");
+				throw new TransitError("fromDateTime must be in the future", "VALIDATION_ERROR");
 			}
 			// Convert Date to "YYYY-MM-DD HH:mm" format
-			apiPayload.fromDateTime = this.formatDateTime(params.fromDateTime);
+			apiPayload.fromDateTime = formatDateTime(params.fromDateTime);
 		}
 		if (params.filterBy !== undefined) {
 			apiPayload.filterBy = tripPlannerFilterToNumber(params.filterBy);
@@ -1119,14 +1250,38 @@ export class RoutesAPI {
 	/**
 	 * Get all stops/stations along trip legs
 	 * @param params - Path details parameters with array of trip leg segments
-	 * @returns All stops along the trip legs with station details, scheduled times, and coordinates
+	 * @param params.trips - Array of trip leg segments, each with tripId, fromStopId, and toStopId
+	 * @returns All stops along the trip legs with station details, scheduled times, and coordinates as GeoJSON FeatureCollection
 	 * @remarks
 	 * This endpoint is typically used after planning a trip to get detailed
 	 * station-by-station information for each leg of the journey.
-	 * Each item in the request should have tripId, fromStationId, and toStationId
+	 * Each item in the request should have tripId, fromStopId, and toStopId
 	 * (typically from TripPlannerPathLeg).
 	 * 
-	 * Note: This returns stops/stations, not a geographic path (for route paths, use getRoutePoints).
+	 * Note: This returns stops/stations, not a geographic path (for route paths, use getTripPath).
+	 * @throws {TransitValidationError} If trip parameters are invalid or validation fails
+	 * @throws {HTTPError} If the API request fails (network error, 4xx, 5xx)
+	 * @example
+	 * ```typescript
+	 * // After planning a trip, get all stops along the route
+	 * const trip = await client.routes.planTrip({
+	 *   fromStopId: "22357",
+	 *   toStopId: "21447"
+	 * });
+	 * 
+	 * // Extract trip legs (excluding walking segments)
+	 * const tripLegs = trip.routes[0].legs
+	 *   .filter(leg => !leg.routeNo.startsWith('walk'))
+	 *   .map(leg => ({
+	 *     tripId: leg.tripId,
+	 *     fromStopId: leg.fromStopId,
+	 *     toStopId: leg.toStopId
+	 *   }));
+	 * 
+	 * // Get all stops as GeoJSON
+	 * const stops = await client.routes.getTripStops({ trips: tripLegs });
+	 * // Use stops.features to display on map
+	 * ```
 	 */
 	async getTripStops(params: PathDetailsParams): Promise<PathDetailsResponse> {
 		// Validate user-facing params first
@@ -1139,9 +1294,9 @@ export class RoutesAPI {
 		// Convert string IDs to numbers and map 'trips' to 'data' for API
 		const apiPayload = {
 			data: validatedUserParams.trips.map((item) => ({
-				tripId: parseInt(item.tripId, 10),
-				fromStationId: parseInt(item.fromStopId, 10), // API uses "station" in field names
-				toStationId: parseInt(item.toStopId, 10), // API uses "station" in field names
+				tripId: parseId(item.tripId),
+				fromStationId: parseId(item.fromStopId), // API uses "station" in field names
+				toStationId: parseId(item.toStopId), // API uses "station" in field names
 			})),
 		};
 
@@ -1172,6 +1327,7 @@ export class RoutesAPI {
 	/**
 	 * Get trip path as GeoJSON FeatureCollection with LineString features
 	 * @param params - Trip path parameters with via points (bus stops)
+	 * @param params.viaPoints - Array of [latitude, longitude] coordinates or GeoJSON FeatureCollection from getTripStops()
 	 * @returns GeoJSON FeatureCollection with LineString features representing the route path
 	 * @remarks
 	 * This endpoint returns encoded polyline strings representing path segments between origin, via points, and destination.
@@ -1182,6 +1338,28 @@ export class RoutesAPI {
 	 * All intermediate points are treated as via points (bus stops along the route).
 	 * 
 	 * You can pass GeoJSON FeatureCollection from `getTripStops()` - coordinates will be extracted, properties ignored.
+	 * @throws {TransitValidationError} If viaPoints are invalid or validation fails
+	 * @throws {HTTPError} If the API request fails (network error, 4xx, 5xx)
+	 * @example
+	 * ```typescript
+	 * // Get stops first
+	 * const stops = await client.routes.getTripStops({ trips: tripLegs });
+	 * 
+	 * // Get path using stops (coordinates extracted automatically)
+	 * const path = await client.routes.getTripPath({ viaPoints: stops });
+	 * // Use path.features to draw route lines on map
+	 * ```
+	 * @example
+	 * ```typescript
+	 * // Or use coordinates directly
+	 * const path = await client.routes.getTripPath({
+	 *   viaPoints: [
+	 *     [13.09784, 77.59167], // Origin
+	 *     [13.09884, 77.59267], // Via point
+	 *     [13.09984, 77.59367]  // Destination
+	 *   ]
+	 * });
+	 * ```
 	 */
 	async getTripPath(params: WaypointsParams): Promise<TripPathResponse> {
 		let viaPoints: Array<[number, number]>;
@@ -1226,7 +1404,7 @@ export class RoutesAPI {
 			ToLong: destLng,
 			centerPoints,
 			AppName: "BMTC",
-			DeviceType: "WEB",
+			DeviceType: DEFAULT_DEVICE_TYPE,
 		};
 
 		const response = await this.client.getClient().post("getWaypoints_v1", {
@@ -1249,7 +1427,39 @@ export class RoutesAPI {
 	/**
 	 * Get routes that pass through both stations (in sequence)
 	 * @param params - Parameters including from station ID, to station ID, and optional filters
+	 * @param params.fromStopId - From stop ID (always string for consistency)
+	 * @param params.toStopId - To stop ID (always string for consistency)
+	 * @param params.routeId - Optional: Filter by specific route ID
+	 * @param params.date - Optional: Date for timetable (Date object, defaults to current date)
 	 * @returns Routes that go through both stations with schedule information
+	 * @remarks
+	 * This is NOT a full timetable - each route has one startTime, not multiple scheduled trips.
+	 * Routes may start before fromStop and/or continue after toStop.
+	 * @throws {TransitValidationError} If stop IDs are invalid or validation fails
+	 * @throws {HTTPError} If the API request fails (network error, 4xx, 5xx)
+	 * @example
+	 * ```typescript
+	 * // Find routes passing through both stops
+	 * const routes = await client.routes.getRoutesThroughStations({
+	 *   fromStopId: "30475",
+	 *   toStopId: "35376"
+	 * });
+	 * 
+	 * routes.items.forEach(route => {
+	 *   console.log(`Route ${route.routeNo} starts at ${route.startTime}`);
+	 *   console.log(`Travel time: ${route.travelTime}, Distance: ${route.distance} km`);
+	 * });
+	 * ```
+	 * @example
+	 * ```typescript
+	 * // Filter by specific route
+	 * const routes = await client.routes.getRoutesThroughStations({
+	 *   fromStopId: "30475",
+	 *   toStopId: "35376",
+	 *   routeId: "2292",
+	 *   date: new Date("2026-01-20")
+	 * });
+	 * ```
 	 * @remarks
 	 * This endpoint returns all routes that pass through both the fromStation and toStation in sequence.
 	 * The routes may start before fromStation and/or continue after toStation - they just need to pass through both.
@@ -1263,7 +1473,7 @@ export class RoutesAPI {
 	): Promise<TimetableByStationResponse> {
 		// Use provided date or default to current date
 		const date = params.date ?? new Date();
-		const dateStr = date.toISOString().split("T")[0]; // Format: "YYYY-MM-DD"
+		const dateStr = formatDate(date);
 
 		// Build request payload - API expects numbers for IDs, convert from strings
 		const requestPayload: {
@@ -1275,8 +1485,8 @@ export class RoutesAPI {
 			p_routeid: string;
 			p_date: string;
 		} = {
-			fromStationId: parseInt(params.fromStopId, 10),
-			toStationId: parseInt(params.toStopId, 10),
+			fromStationId: parseId(params.fromStopId),
+			toStationId: parseId(params.toStopId),
 			p_startdate: `${dateStr} 00:00`,
 			p_enddate: `${dateStr} 23:59`,
 			p_routeid: params.routeId ?? "",
