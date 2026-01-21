@@ -1,4 +1,5 @@
-import { validate } from "../utils/validation";
+import { z } from "zod";
+import { validate, stringifyId } from "../utils/validation";
 import {
 	rawHelplineResponseSchema,
 	rawServiceTypesResponseSchema,
@@ -20,8 +21,6 @@ import type {
 	RawFareScrollMessagesResponse,
 	FareScrollMessageDataItem,
 } from "../types/info";
-import type { z } from "zod";
-
 type RawServiceTypesResponse = z.infer<typeof rawServiceTypesResponseSchema>;
 type RawAboutDataResponse = z.infer<typeof rawAboutDataResponseSchema>;
 type RawEmergencyMessagesResponse = z.infer<
@@ -29,7 +28,7 @@ type RawEmergencyMessagesResponse = z.infer<
 >;
 
 /**
- * Transform raw BMTC API response to clean, normalized format
+ * Transform raw transit API response to clean, normalized format
  */
 function transformHelplineResponse(raw: RawHelplineResponse): HelplineResponse {
 	return {
@@ -53,7 +52,7 @@ function transformServiceTypesResponse(
 		items: raw.data.map(
 			(item): ServiceTypeDataItem => ({
 				serviceType: item.servicetype,
-				serviceTypeId: item.servicetypeid.toString(),
+				serviceTypeId: stringifyId(item.servicetypeid),
 			})
 		),
 	};
@@ -74,7 +73,7 @@ function transformAboutDataResponse(
 			aboutDeveloperUrl: item.aboutdeveloperurl,
 			airportLatitude: item.airportlattitude,
 			airportLongitude: item.airportlongitude,
-			airportStationId: item.airportstationid.toString(),
+			airportStationId: stringifyId(item.airportstationid),
 			airportStationName: item.airportstationname,
 		},
 	};
@@ -89,7 +88,7 @@ function transformEmergencyMessagesResponse(
 	return {
 		items: raw.data.map(
 			(item): EmergencyMessageDataItem => ({
-				id: item.id.toString(),
+				id: stringifyId(item.id),
 				messageEnglish: item.message_english,
 				messageKannada: item.message_kannada,
 				isDisplay: item.isdisplay === 1,
@@ -108,7 +107,7 @@ function transformFareScrollMessagesResponse(
 	return {
 		items: raw.data.map(
 			(item): FareScrollMessageDataItem => ({
-				id: item.id.toString(),
+				id: stringifyId(item.id),
 				messageEnglish: item.message_english,
 				messageKannada: item.message_kannada,
 				isDisplay: item.isdisplay === 1,
@@ -125,8 +124,16 @@ export class InfoAPI {
 	constructor(private client: BaseClient) {}
 
 	/**
-	 * Get BMTC helpline information
+	 * Get transit helpline information
 	 * @returns Helpline information including contact numbers in normalized format
+	 * @throws {HTTPError} If the API request fails (network error, 4xx, 5xx)
+	 * @example
+	 * ```typescript
+	 * const helpline = await client.info.getHelpline();
+	 * helpline.items.forEach(item => {
+	 *   console.log(`${item.title}: ${item.contactNumber}`);
+	 * });
+	 * ```
 	 */
 	async getHelpline(): Promise<HelplineResponse> {
 		const response = await this.client.getClient().post("GetHelplineData", {
@@ -149,6 +156,13 @@ export class InfoAPI {
 	/**
 	 * Get service types (e.g., AC, Non AC/Ordinary)
 	 * @returns List of available service types in normalized format
+	 * @throws {HTTPError} If the API request fails (network error, 4xx, 5xx)
+	 * @example
+	 * ```typescript
+	 * const serviceTypes = await client.info.getServiceTypes();
+	 * const acService = serviceTypes.items.find(s => s.serviceTypeName.includes("AC"));
+	 * // Use acService.serviceTypeId in planTrip({ serviceTypeId })
+	 * ```
 	 */
 	async getServiceTypes(): Promise<ServiceTypesResponse> {
 		const response = await this.client.getClient().post("GetAllServiceTypes", {
@@ -171,6 +185,13 @@ export class InfoAPI {
 	/**
 	 * Get about information including URLs and airport information
 	 * @returns About data with terms, URLs, and airport coordinates in normalized format
+	 * @throws {HTTPError} If the API request fails (network error, 4xx, 5xx)
+	 * @example
+	 * ```typescript
+	 * const about = await client.info.getAbout();
+	 * console.log(`Airport coordinates: [${about.airportLatitude}, ${about.airportLongitude}]`);
+	 * console.log(`Terms URL: ${about.termsUrl}`);
+	 * ```
 	 */
 	async getAbout(): Promise<AboutDataResponse> {
 		const response = await this.client.getClient().post("GetAboutData", {
@@ -193,6 +214,16 @@ export class InfoAPI {
 	/**
 	 * Get emergency messages (English and Kannada)
 	 * @returns List of emergency messages with display settings in normalized format
+	 * @throws {HTTPError} If the API request fails (network error, 4xx, 5xx)
+	 * @example
+	 * ```typescript
+	 * const messages = await client.info.getEmergencyMessages();
+	 * const activeMessages = messages.items.filter(m => m.isDisplay);
+	 * 
+	 * activeMessages.forEach(msg => {
+	 *   console.log(`${msg.displayKey}: ${msg.messageEn}`);
+	 * });
+	 * ```
 	 */
 	async getEmergencyMessages(): Promise<EmergencyMessagesResponse> {
 		const response = await this.client
@@ -217,6 +248,16 @@ export class InfoAPI {
 	/**
 	 * Get fare scroll messages (English and Kannada)
 	 * @returns List of fare scroll messages with display settings in normalized format
+	 * @throws {HTTPError} If the API request fails (network error, 4xx, 5xx)
+	 * @example
+	 * ```typescript
+	 * const messages = await client.info.getFareScrollMessages();
+	 * messages.items.forEach(msg => {
+	 *   if (msg.isDisplay) {
+	 *     console.log(`Fare update: ${msg.messageEn}`);
+	 *   }
+	 * });
+	 * ```
 	 */
 	async getFareScrollMessages(): Promise<FareScrollMessagesResponse> {
 		const response = await this.client

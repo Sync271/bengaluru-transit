@@ -5,6 +5,12 @@ node_modules/
 dist/
 *.tsbuildinfo
 
+# Examples (optional - uncomment if you don't want examples in repo)
+# examples/
+
+# Documentation
+AGENTIC_CAPABILITIES.md
+
 # Testing
 coverage/
 .nyc_output/
