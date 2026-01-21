@@ -1,7 +1,7 @@
 /**
- * Integration tests against the real BMTC API
+ * Integration tests against the real transit API
  *
- * These tests make actual HTTP requests to the BMTC API.
+ * These tests make actual HTTP requests to the transit API.
  * Use with caution - they require network access and may be rate-limited.
  *
  * To run these tests:
@@ -12,7 +12,7 @@
  */
 
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import { BMTCClient } from "../../src/client/bmtc-client";
+import { BengaluruTransitClient } from "../../src/client/transit-client";
 
 // Only run these tests if explicitly enabled
 // Set RUN_REAL_API_TESTS=true environment variable to run
@@ -40,11 +40,11 @@ function delay(ms: number): Promise<void> {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
-	let client: BMTCClient;
+describe.skipIf(!RUN_REAL_API_TESTS)("Bengaluru Transit Real API Integration Tests", () => {
+	let client: BengaluruTransitClient;
 
 	beforeAll(() => {
-		client = new BMTCClient({
+		client = new BengaluruTransitClient({
 			language: "en",
 		});
 	});
@@ -770,7 +770,7 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 				expect(result.items).toBeInstanceOf(Array);
 
 				// Print formatted response
-				console.log("\n✈️  Airport BMTC Stops Response:");
+				console.log("\n✈️  Airport Transit Stops Response:");
 				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 				console.log(JSON.stringify(result, null, 2));
 				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
@@ -784,7 +784,7 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 			"should plan trip from location to station from real API",
 			async () => {
 				// Create a client with longer timeout for TripPlannerMSMD (can be slow)
-				const tripClient = new BMTCClient({
+				const tripClient = new BengaluruTransitClient({
 					language: "en",
 					timeout: 60000, // 60 seconds for slow trip planner endpoint
 				});
@@ -943,7 +943,7 @@ describe.skipIf(!RUN_REAL_API_TESTS)("BMTC Real API Integration Tests", () => {
 		it.skipIf(!shouldRunTest("kannada"))(
 			"should work with Kannada language",
 			async () => {
-				const kannadaClient = new BMTCClient({
+				const kannadaClient = new BengaluruTransitClient({
 					language: "kn",
 				});
 

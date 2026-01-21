@@ -1,17 +1,9 @@
 /**
- * Base types for BMTC API requests and responses
+ * Base types for transit API requests and responses
  */
 
-export interface BMTCApiError {
+export interface TransitApiError {
   message: string;
   code?: string;
   statusCode?: number;
-}
-
-/**
- * Common API request parameters
- */
-export interface SortParams {
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
 }

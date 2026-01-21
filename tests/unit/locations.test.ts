@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { BMTCClient } from "../../src/client/bmtc-client";
+import { BengaluruTransitClient } from "../../src/client/transit-client";
 import type { KyInstance } from "ky";
 
 describe("LocationsAPI", () => {
-	let client: BMTCClient;
+	let client: BengaluruTransitClient;
 	let mockPost: ReturnType<typeof vi.fn>;
 
 	beforeEach(() => {
-		client = new BMTCClient();
+		client = new BengaluruTransitClient();
 		// Mock the ky client's post method
 		mockPost = vi.fn();
 		const kyClient = client.getClient() as unknown as KyInstance;

@@ -1,10 +1,10 @@
-# BMTC API Endpoints Implementation Status
+# Transit API Endpoints Implementation Status
 
-This file tracks the progress of implementing wrappers for BMTC API endpoints.
+This file tracks the progress of implementing wrappers for Bengaluru transit API endpoints.
 
 ## Completed Endpoints ✅
 
-- [x] `/GetHelplineData` - Get BMTC helpline information
+- [x] `/GetHelplineData` - Get transit helpline information
 - [x] `/GetAllServiceTypes` - Get all service types (AC, Non AC, etc.)
 - [x] `/GetAboutData` - Get about data including URLs and airport information
 - [x] `/GetEmergencyMessage_v1` - Get emergency messages (English and Kannada)

@@ -1,9 +1,9 @@
 /**
- * BMTC TypeScript Wrapper
+ * Bengaluru Transit TypeScript SDK
  * Main entry point for the package
  */
 
-export { BMTCClient } from './client/bmtc-client';
+export { BengaluruTransitClient } from './client/transit-client';
 export type { BaseClientConfig } from './client/base-client';
 
 // Export types
@@ -20,3 +20,4 @@ export {
 } from './utils/geojson';
 
 export { validate, safeValidate } from './utils/validation';
+export { TransitError, TransitValidationError } from './utils/errors';

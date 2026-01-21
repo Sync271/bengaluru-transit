@@ -1,13 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { BMTCClient } from "../../src/client/bmtc-client";
+import { TransitValidationError } from "../../src/utils/errors";
+import { BengaluruTransitClient } from "../../src/client/transit-client";
 import type { KyInstance } from "ky";
 
 describe("RoutesAPI", () => {
-	let client: BMTCClient;
+	let client: BengaluruTransitClient;
 	let mockPost: ReturnType<typeof vi.fn>;
 
 	beforeEach(() => {
-		client = new BMTCClient();
+		client = new BengaluruTransitClient();
 		// Mock the ky client's post method
 		mockPost = vi.fn();
 		const kyClient = client.getClient() as unknown as KyInstance;
@@ -1098,7 +1099,7 @@ describe("RoutesAPI", () => {
 			} as Response);
 
 			// Test with English
-			const englishClient = new BMTCClient({ language: "en" });
+			const englishClient = new BengaluruTransitClient({ language: "en" });
 			const mockPostEn = vi.fn();
 			const kyClientEn = englishClient.getClient() as unknown as KyInstance;
 			vi.spyOn(kyClientEn, "post").mockImplementation(mockPostEn);
@@ -1118,7 +1119,7 @@ describe("RoutesAPI", () => {
 			});
 
 			// Test with Kannada
-			const kannadaClient = new BMTCClient({ language: "kn" });
+			const kannadaClient = new BengaluruTransitClient({ language: "kn" });
 			const mockPostKn = vi.fn();
 			const kyClientKn = kannadaClient.getClient() as unknown as KyInstance;
 			vi.spyOn(kyClientKn, "post").mockImplementation(mockPostKn);
@@ -2165,7 +2166,7 @@ describe("RoutesAPI", () => {
 				client.routes.getTripStops({
 					trips: [],
 				})
-			).rejects.toThrow("At least one trip leg is required");
+			).rejects.toThrow(TransitValidationError);
 		});
 
 		it("should validate required fields in path detail items", async () => {
@@ -2179,7 +2180,7 @@ describe("RoutesAPI", () => {
 						} as any,
 					],
 				})
-			).rejects.toThrow("Trip ID must be a positive integer");
+			).rejects.toThrow(TransitValidationError);
 		});
 
 		it("should handle API errors", async () => {

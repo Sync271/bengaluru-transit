@@ -38,7 +38,17 @@ export class LocationsAPI {
 	/**
 	 * Search for places by name
 	 * @param params - Parameters including search query
+	 * @param params.query - Place name to search for
 	 * @returns List of matching places in normalized format
+	 * @throws {TransitValidationError} If query is invalid or validation fails
+	 * @throws {HTTPError} If the API request fails (network error, 4xx, 5xx)
+	 * @example
+	 * ```typescript
+	 * const places = await client.locations.searchPlaces({ query: "Kempegowda Bus Station" });
+	 * places.items.forEach(place => {
+	 *   console.log(`${place.title} - [${place.latitude}, ${place.longitude}]`);
+	 * });
+	 * ```
 	 */
 	async searchPlaces(
 		params: SearchPlacesParams

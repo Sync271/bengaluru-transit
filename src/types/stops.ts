@@ -41,7 +41,7 @@ export interface RawStationDataItem {
 }
 
 /**
- * Raw around bus stops API response from BMTC API (for validation)
+ * Raw around bus stops API response from transit API (for validation)
  * Uses Zod inferred type to match schema exactly
  */
 export type RawAroundBusStopsResponse = z.infer<
@@ -89,7 +89,7 @@ export interface AroundBusStopsParams {
  * Human-readable values that map to API numeric codes
  */
 export type StationType =
-	| "bmtc" // 1: BMTC Bus Stops (default)
+	| "bmtc" // 1: Transit Bus Stops (default)
 	| "chartered" // 2: Chartered Stops
 	| "metro" // 163: Metro Stops
 	| "ksrtc"; // 164: KSRTC bus stops
@@ -185,7 +185,7 @@ export interface NearbyBusStopsParams {
 	stationName: string;
 	/**
 	 * Station type (optional, defaults to "bmtc")
-	 * - "bmtc": BMTC Bus Stops (default)
+	 * - "bmtc": Transit Bus Stops (default)
 	 * - "chartered": Chartered Stops
 	 * - "metro": Metro Stops
 	 * - "ksrtc": KSRTC bus stops
@@ -194,19 +194,19 @@ export interface NearbyBusStopsParams {
 }
 
 /**
- * BMTC category type for NearbyStations_v2
- * Used to filter specific subsets of BMTC stops
+ * Transit category type for NearbyStations_v2
+ * Used to filter specific subsets of transit stops
  * Only valid when stationType is "bmtc"
  */
-export type BMTCCategory = "airport" | "all";
+export type TransitCategory = "airport" | "all";
 
 /**
- * Map human-readable BMTC category to API numeric value
+ * Map human-readable transit category to API numeric value
  */
-export function bmtcCategoryToNumber(category: BMTCCategory): number {
-	const map: Record<BMTCCategory, number> = {
+export function transitCategoryToNumber(category: TransitCategory): number {
+	const map: Record<TransitCategory, number> = {
 		airport: 1, // Airport bus stops
-		all: 3, // All BMTC stops
+		all: 3, // All transit stops
 	};
 	return map[category];
 }
@@ -307,11 +307,11 @@ type NearbyStationsParamsBMTC = NearbyStationsParamsBase & {
 	 */
 	stationType: "bmtc";
 	/**
-	 * BMTC category (optional) - filter specific subsets of BMTC stops
+	 * Transit category (optional) - filter specific subsets of transit stops
 	 * - "airport": Airport bus stops only (API value: 1)
-	 * - "all": All BMTC stops (API value: 3)
+	 * - "all": All transit stops (API value: 3)
 	 */
-	bmtcCategory?: BMTCCategory;
+	bmtcCategory?: TransitCategory;
 };
 
 /**
@@ -326,7 +326,7 @@ type NearbyStationsParamsOther = NearbyStationsParamsBase & {
 	 */
 	stationType?: "chartered" | "metro" | "ksrtc";
 	/**
-	 * BMTC category is not allowed when stationType is not "bmtc"
+	 * Transit category is not allowed when stationType is not "bmtc"
 	 */
 	bmtcCategory?: never;
 };

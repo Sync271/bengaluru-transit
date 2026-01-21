@@ -5,7 +5,7 @@ import { z } from "zod";
  */
 
 /**
- * Schema for raw helpline data item from BMTC API
+ * Schema for raw helpline data item from transit API
  */
 export const rawHelplineDataItemSchema = z.object({
 	labelname: z.string(),
@@ -15,7 +15,7 @@ export const rawHelplineDataItemSchema = z.object({
 });
 
 /**
- * Schema for raw helpline API response from BMTC API
+ * Schema for raw helpline API response from transit API
  */
 export const rawHelplineResponseSchema = z.object({
 	data: z.array(rawHelplineDataItemSchema),

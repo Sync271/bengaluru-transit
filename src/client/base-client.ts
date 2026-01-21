@@ -1,7 +1,12 @@
 import ky, { type KyInstance } from "ky";
+import {
+	DEFAULT_BASE_URL,
+	DEFAULT_DEVICE_TYPE,
+	DEFAULT_AUTH_TOKEN,
+} from "../constants/api";
 
 /**
- * Base HTTP client configuration for BMTC API
+ * Base HTTP client configuration for transit API
  */
 export interface BaseClientConfig {
 	baseURL?: string;
@@ -39,17 +44,16 @@ export class BaseClient {
 	protected language: "en" | "kn";
 
 	constructor(config: BaseClientConfig = {}) {
-		this.baseURL =
-			config.baseURL || "https://bmtcmobileapi.karnataka.gov.in/WebAPI";
+		this.baseURL = config.baseURL || DEFAULT_BASE_URL;
 		this.language = config.language || "en";
 
-		// Default BMTC API headers
+		// Default transit API headers
 		const defaultHeaders: Record<string, string> = {
 			"Content-Type": "application/json",
 			Accept: "application/json, text/plain, */*",
 			lan: this.language,
-			deviceType: config.deviceType || "WEB",
-			authToken: config.authToken || "N/A",
+			deviceType: config.deviceType || DEFAULT_DEVICE_TYPE,
+			authToken: config.authToken || DEFAULT_AUTH_TOKEN,
 			deviceId: config.deviceId || "",
 		};
 

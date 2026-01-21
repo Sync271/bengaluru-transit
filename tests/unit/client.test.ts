@@ -1,15 +1,15 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { BMTCClient } from "../../src/client/bmtc-client";
+import { BengaluruTransitClient } from "../../src/client/transit-client";
 
-describe("BMTCClient", () => {
-	let client: BMTCClient;
+describe("BengaluruTransitClient", () => {
+	let client: BengaluruTransitClient;
 
 	beforeEach(() => {
-		client = new BMTCClient();
+		client = new BengaluruTransitClient();
 	});
 
 	it("should create a client instance", () => {
-		expect(client).toBeInstanceOf(BMTCClient);
+		expect(client).toBeInstanceOf(BengaluruTransitClient);
 	});
 
 	it("should have default base URL", () => {
@@ -19,7 +19,7 @@ describe("BMTCClient", () => {
 	});
 
 	it("should allow custom base URL", () => {
-		const customClient = new BMTCClient({
+		const customClient = new BengaluruTransitClient({
 			baseURL: "https://custom-api.example.com",
 		});
 		expect(customClient.getBaseURL()).toBe("https://custom-api.example.com");
@@ -31,14 +31,14 @@ describe("BMTCClient", () => {
 	});
 
 	it("should allow custom language configuration", () => {
-		const kannadaClient = new BMTCClient({
+		const kannadaClient = new BengaluruTransitClient({
 			language: "kn",
 		});
 		expect(kannadaClient).toBeDefined();
 	});
 
 	it("should allow custom device configuration", () => {
-		const customClient = new BMTCClient({
+		const customClient = new BengaluruTransitClient({
 			deviceType: "mobile",
 			deviceId: "device123",
 			authToken: "custom-token",

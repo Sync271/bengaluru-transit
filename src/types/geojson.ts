@@ -1,7 +1,7 @@
 import type { Feature, FeatureCollection, LineString, Point } from 'geojson';
 
 /**
- * Extended GeoJSON types for BMTC-specific use cases
+ * Extended GeoJSON types for transit-specific use cases
  */
 
 /**
