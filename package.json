@@ -52,7 +52,7 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/Sync271/bengaluru-transit.git"
+		"url": "git+https://github.com/Sync271/bengaluru-transit.git"
 	},
 	"dependencies": {
 		"@googlemaps/polyline-codec": "^1.0.28",
