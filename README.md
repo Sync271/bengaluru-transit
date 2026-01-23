@@ -40,7 +40,7 @@ const stops = await client.stops.findNearbyStops({
   coordinates: [13.09784, 77.59167],
   radius: 1
 });
-console.log(stops.features.length, "stops found");
+console.log(stops.items.length, "stops found");
 ```
 
 ## Common Flows
@@ -53,7 +53,7 @@ Plan a trip from your location to a destination:
 // Plan trip from coordinates to a station
 const trip = await client.routes.planTrip({
   fromCoordinates: [13.09784, 77.59167],
-  toStopId: 20922, // Kempegowda Bus Station
+  toStopId: "20922", // Kempegowda Bus Station
 });
 
 // Find the fastest route with no transfers
@@ -85,12 +85,12 @@ const nearby = await client.stops.findNearbyStops({
   radius: 1 // radius in km
 });
 
-console.log(`Found ${nearby.features.length} stops nearby`);
+console.log(`Found ${nearby.items.length} stops nearby`);
 
-// Each stop is a GeoJSON Point feature
-nearby.features.forEach(stop => {
-  const [lng, lat] = stop.geometry.coordinates;
-  console.log(`${stop.properties.stopName} - ${stop.properties.address}`);
+// Each stop has location and distance information
+nearby.items.forEach(stop => {
+  console.log(`${stop.stationName} - Distance: ${stop.distance} km`);
+  console.log(`Location: [${stop.latitude}, ${stop.longitude}]`);
 });
 ```
 
@@ -99,11 +99,10 @@ nearby.features.forEach(stop => {
 Search for locations by name:
 
 ```typescript
-const places = await client.locations.searchPlaces("Kempegowda Bus Station");
+const places = await client.locations.searchPlaces({ query: "Kempegowda Bus Station" });
 
-places.features.forEach(place => {
-  const [lng, lat] = place.geometry.coordinates;
-  console.log(`${place.properties.placeName} - [${lat}, ${lng}]`);
+places.items.forEach(place => {
+  console.log(`${place.title} - [${place.latitude}, ${place.longitude}]`);
 });
 ```
 
@@ -113,18 +112,24 @@ Find and track a bus by registration number:
 
 ```typescript
 // Search for vehicle
-const vehicles = await client.vehicles.searchVehicles("KA57F2403");
+const vehicles = await client.vehicles.searchVehicles({ query: "KA57F2403" });
 
-if (vehicles.length > 0) {
-  const vehicle = vehicles[0];
+if (vehicles.items.length > 0) {
+  const vehicle = vehicles.items[0];
   
   // Get live trip details
-  const trip = await client.vehicles.getVehicleTrip(vehicle.vehicleId);
+  const trip = await client.vehicles.getVehicleTrip({ vehicleId: vehicle.vehicleId });
   
-  console.log(`Route: ${trip.routeNo}`);
-  console.log(`Current location: [${trip.latitude}, ${trip.longitude}]`);
-  console.log(`Next stop: ${trip.nextStopName}`);
-  console.log(`ETA: ${trip.etaToNextStop}`);
+  // Access route information from route stops
+  const firstStop = trip.routeStops.features[0];
+  console.log(`Route: ${firstStop.properties.routeNo}`);
+  
+  // Access live vehicle location
+  const location = trip.vehicleLocation.features[0];
+  const [lng, lat] = location.geometry.coordinates;
+  console.log(`Current location: [${lat}, ${lng}]`);
+  console.log(`Next stop: ${firstStop.properties.nextStop}`);
+  console.log(`ETA: ${firstStop.properties.eta}`);
 }
 ```
 
@@ -135,8 +140,8 @@ Get trip stops and path as GeoJSON for map visualization:
 ```typescript
 // 1. Plan the trip
 const tripPlan = await client.routes.planTrip({
-  fromStopId: 22357,
-  toStopId: 21447
+  fromStopId: "22357",
+  toStopId: "21447"
 });
 
 // 2. Get all stops along the trip (GeoJSON Points)
@@ -172,12 +177,12 @@ Search for routes by name or number:
 
 ```typescript
 // Search routes
-const routes = await client.routes.searchRoutes("285-M");
+const routes = await client.routes.searchRoutes({ query: "285-M" });
 
-routes.forEach(route => {
+routes.items.forEach(route => {
   console.log(`${route.routeNo} - ${route.routeName}`);
-  console.log(`From: ${route.fromStationName}`);
-  console.log(`To: ${route.toStationName}`);
+  console.log(`From: ${route.fromStop}`);
+  console.log(`To: ${route.toStop}`);
 });
 ```
 
@@ -187,46 +192,57 @@ Get live vehicles and stops for a specific route:
 
 ```typescript
 // Search for route
-const routes = await client.routes.searchRoutes("500-CA");
-const routeId = routes[0].parentRouteId;
+const routes = await client.routes.searchRoutes({ query: "500-CA" });
+const routeId = routes.items[0].parentRouteId;
 
 // Get route details (live vehicles + stops)
-const details = await client.routes.searchByRouteDetails(routeId);
+const details = await client.routes.searchByRouteDetails({ parentRouteId: routeId });
 
-console.log(`Live vehicles: ${details.vehicles.features.length}`);
-console.log(`Stops: ${details.stops.features.length}`);
+console.log(`Live vehicles (up): ${details.up.liveVehicles.features.length}`);
+console.log(`Stops (up): ${details.up.stops.features.length}`);
+console.log(`Live vehicles (down): ${details.down.liveVehicles.features.length}`);
+console.log(`Stops (down): ${details.down.stops.features.length}`);
 
 // Live vehicles are GeoJSON Points
-details.vehicles.features.forEach(vehicle => {
-  console.log(`Vehicle ${vehicle.properties.vehicleRegNo} at [${vehicle.geometry.coordinates}]`);
+details.up.liveVehicles.features.forEach(vehicle => {
+  const [lng, lat] = vehicle.geometry.coordinates;
+  console.log(`Vehicle ${vehicle.properties.vehicleNumber} at [${lat}, ${lng}]`);
 });
 ```
 
 ## API Reference
 
 ### Routes API
-- `planTrip(params)` - Complete trip planning with transfers
-- `getTripStops(params)` - Get all stops along trip legs (GeoJSON Points)
-- `getTripPath(params)` - Get route path segments (GeoJSON LineStrings)
-- `searchRoutes(query)` - Search routes by name/number
-- `getRoutePoints(routeId)` - Get route path as GeoJSON
-- `getFares(params)` - Get fare information
-- `getRoutesBetweenStops(fromStopId, toStopId)` - Find routes between two stops
-- `getRoutesThroughStations(fromStopId, toStopId, routeId?, date?)` - Routes passing through both stops
+
+- `planTrip({ fromStopId|fromCoordinates, toStopId|toCoordinates, serviceTypeId?, fromDateTime?, filterBy? })` - Complete trip planning with transfers
+- `getTripStops({ trips })` - Get all stops along trip legs (GeoJSON Points)
+- `getTripPath({ viaPoints })` - Get route path segments (GeoJSON LineStrings)
+- `searchRoutes({ query })` - Search routes by name/number
+- `getAllRoutes()` - Get complete list of all routes
+- `getRoutePoints({ routeId })` - Get route path as GeoJSON
+- `getTimetableByRoute({ routeId, startTime?, endTime?, fromStopId?, toStopId? })` - Get timetable for a route
+- `searchByRouteDetails({ parentRouteId, serviceTypeId? })` - Get live vehicles and stops for a route
+- `getFares({ routeNo, subrouteId, routeDirection, sourceCode, destinationCode })` - Get fare information
+- `getRoutesBetweenStops({ fromStopId, toStopId })` - Find routes between two stops
+- `getRoutesThroughStations({ fromStopId, toStopId, routeId?, date? })` - Routes passing through both stops
 
 ### Stops API
-- `findNearbyStops(lat, lon, radius)` - Find stops within radius (GeoJSON)
-- `findNearbyStations(lat, lon)` - Find nearby stations with facilities (GeoJSON)
-- `searchBusStops(stationName)` - Search stops by name
+
+- `findNearbyStops({ coordinates, radius, stationType?, bmtcCategory? })` - Find stops within radius (GeoJSON)
+- `findNearbyStations({ coordinates })` - Find nearby stations with facilities (GeoJSON)
+- `searchBusStops({ stationName, stationType? })` - Search stops by name
 
 ### Vehicles API
-- `searchVehicles(query)` - Search vehicles by registration number
-- `getVehicleTrip(vehicleId)` - Get live vehicle location and trip details
+
+- `searchVehicles({ query })` - Search vehicles by registration number
+- `getVehicleTrip({ vehicleId })` - Get live vehicle location and trip details
 
 ### Locations API
-- `searchPlaces(query)` - Search locations/places by name (GeoJSON)
+
+- `searchPlaces({ query })` - Search locations/places by name (GeoJSON)
 
 ### Info API
+
 - `getHelpline()` - Get transit helpline contact information
 - `getServiceTypes()` - Get available service types (AC, Non-AC, etc.)
 - `getAbout()` - Get general transit information
@@ -245,7 +261,7 @@ const routes = await client.routes.getRoutesBetweenStops({
 });
 
 routes.items.forEach(route => {
-  console.log(`Route ${route.routeNo}: ${route.fromStop} → ${route.toStop}`);
+  console.log(`Route ${route.routeNo}: ${route.fromDisplayName} → ${route.toDisplayName}`);
 });
 ```
 
@@ -268,15 +284,24 @@ routes.items.forEach(route => {
 ### Get Fare Information
 
 ```typescript
-// Get fare for a specific route between stops
-const fare = await client.routes.getFares({
+// First, get routes between stops
+const routes = await client.routes.getRoutesBetweenStops({
   fromStopId: "22357",
-  toStopId: "21447",
-  routeId: "11797"
+  toStopId: "21447"
+});
+
+// Then get fare for a specific route
+const route = routes.items[0];
+const fare = await client.routes.getFares({
+  routeNo: route.routeNo,
+  subrouteId: route.subrouteId,
+  routeDirection: route.routeDirection,
+  sourceCode: route.sourceCode,
+  destinationCode: route.destinationCode
 });
 
 fare.items.forEach(item => {
-  console.log(`Fare: ₹${item.fare}`);
+  console.log(`Service: ${item.serviceType}, Fare: ₹${item.fare}`);
 });
 ```
 
