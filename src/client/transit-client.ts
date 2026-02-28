@@ -72,7 +72,7 @@ export class BengaluruTransitClient extends BaseClient {
 	 * 
 	 * @param config - Client configuration options
 	 * @param config.language - Language preference: 'en' for English, 'kn' for Kannada (default: 'en')
-	 * @param config.baseURL - Base URL for transit API (default: official API URL)
+	 * @param config.baseURL - Base URL for transit API. Use your proxy URL to work around CORS in browsers (default: official API URL)
 	 * @param config.timeout - Request timeout in milliseconds
 	 * @param config.retry - Retry configuration for failed requests
 	 * @param config.headers - Additional headers to include in requests

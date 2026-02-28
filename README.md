@@ -29,6 +29,28 @@ This project is built with the intent of making public transit data more accessi
 npm install bengaluru-transit
 ```
 
+## Browser / CORS
+
+> **CORS**: The underlying transit API does not allow cross-origin requests from browsers. Direct calls from frontend apps (React, Vue, etc.) will be blocked by CORS.
+>
+> For web applications, use your own backend as a proxy and pass its URL to the client:
+
+```typescript
+// Point the client at your proxy instead of the official API
+const client = new BengaluruTransitClient({
+  baseURL: "https://your-app.com/api/transit",  // Your proxy URL
+  language: "en"
+});
+
+// All requests go to your proxy, which forwards to the BMTC API
+const stops = await client.stops.findNearbyStops({
+  coordinates: [13.09784, 77.59167],
+  radius: 1
+});
+```
+
+Your proxy should forward `POST` requests to `https://bmtcmobileapi.karnataka.gov.in/WebAPI/{endpoint}` with the same path, headers, and body. The SDK works in Node.js without a proxy.
+
 ## Quick Start
 
 ```typescript

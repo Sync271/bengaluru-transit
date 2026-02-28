@@ -9,6 +9,12 @@ import {
  * Base HTTP client configuration for transit API
  */
 export interface BaseClientConfig {
+	/**
+	 * Base URL for API requests. Use your own backend proxy URL to work around CORS
+	 * (the official API blocks browser requests). Your proxy should forward requests
+	 * to https://bmtcmobileapi.karnataka.gov.in/WebAPI and return responses as-is.
+	 * @default 'https://bmtcmobileapi.karnataka.gov.in/WebAPI'
+	 */
 	baseURL?: string;
 	timeout?: number;
 	retry?: number;
