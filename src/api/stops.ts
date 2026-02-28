@@ -12,6 +12,7 @@ import {
 	createFeatureCollection,
 } from "../utils/geojson";
 import type { BaseClient } from "../client/base-client";
+import type { RequestOptions } from "../types/api";
 import type {
 	AroundBusStopsResponse,
 	RawAroundBusStopsResponse,
@@ -146,10 +147,11 @@ export class StopsAPI {
 	 * ```
 	 */
 	async findNearbyStations(
-		params: AroundBusStopsParams
+		params: AroundBusStopsParams & RequestOptions
 	): Promise<AroundBusStopsResponse> {
+		const { signal, ...rest } = params;
 		// Validate input parameters
-		const [latitude, longitude] = params.coordinates;
+		const [latitude, longitude] = rest.coordinates;
 		const validatedParams = validate(
 			aroundBusStopsParamsSchema,
 			{
@@ -161,6 +163,7 @@ export class StopsAPI {
 
 		const response = await this.client.getClient().post("AroundBusStops_v2", {
 			json: validatedParams,
+			signal,
 		});
 
 		const data = await response.json<unknown>();
@@ -205,17 +208,18 @@ export class StopsAPI {
 	 * ```
 	 */
 	async searchBusStops(
-		params: NearbyBusStopsParams
+		params: NearbyBusStopsParams & RequestOptions
 	): Promise<NearbyBusStopsResponse> {
+		const { signal, ...rest } = params;
 		// Convert human-readable stationType to API numeric value (default to "bmtc" for transit stops)
-		const stationTypeValue = params.stationType || "bmtc";
+		const stationTypeValue = rest.stationType || "bmtc";
 		const stationTypeNumber = stationTypeToNumber(stationTypeValue);
 
 		// Validate input parameters
 		const validatedParams = validate(
 			nearbyBusStopsParamsSchema,
 			{
-				stationname: params.stationName,
+				stationname: rest.stationName,
 				stationflag: stationTypeNumber,
 			},
 			"Invalid nearby bus stops parameters"
@@ -226,6 +230,7 @@ export class StopsAPI {
 				stationname: validatedParams.stationname,
 				stationflag: validatedParams.stationflag,
 			},
+			signal,
 		});
 
 		const data = await response.json<unknown>();
@@ -275,23 +280,24 @@ export class StopsAPI {
 	 * ```
 	 */
 	async findNearbyStops(
-		params: NearbyStationsParams
+		params: NearbyStationsParams & RequestOptions
 	): Promise<NearbyStationsResponse> {
+		const { signal, ...rest } = params;
 		// Convert human-readable stationType to API numeric value (default to "bmtc")
 		let stationTypeNumber: number | undefined;
-		if (params.stationType) {
-			stationTypeNumber = stationTypeToNumber(params.stationType);
+		if (rest.stationType) {
+			stationTypeNumber = stationTypeToNumber(rest.stationType);
 		}
 
 		// Convert human-readable bmtcCategory to API numeric value if provided
 		// TypeScript ensures this is only possible when stationType is "bmtc"
 		let bmtcCategoryNumber: number | undefined;
-		if ("bmtcCategory" in params && params.bmtcCategory) {
-			bmtcCategoryNumber = transitCategoryToNumber(params.bmtcCategory);
+		if ("bmtcCategory" in rest && rest.bmtcCategory) {
+			bmtcCategoryNumber = transitCategoryToNumber(rest.bmtcCategory);
 		}
 
 		// Build request payload
-		const [latitude, longitude] = params.coordinates;
+		const [latitude, longitude] = rest.coordinates;
 		const requestPayload: {
 			latitude: number;
 			longitude: number;
@@ -301,7 +307,7 @@ export class StopsAPI {
 		} = {
 			latitude,
 			longitude,
-			radiuskm: params.radius,
+			radiuskm: rest.radius,
 		};
 
 		// Add optional parameters if provided
@@ -321,6 +327,7 @@ export class StopsAPI {
 
 		const response = await this.client.getClient().post("NearbyStations_v2", {
 			json: validatedParams,
+			signal,
 		});
 
 		const data = await response.json<unknown>();

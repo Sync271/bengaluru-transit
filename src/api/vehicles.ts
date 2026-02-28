@@ -11,6 +11,7 @@ import {
 	createFeatureCollection,
 } from "../utils/geojson";
 import type { BaseClient } from "../client/base-client";
+import type { RequestOptions } from "../types/api";
 import type {
 	SearchVehiclesResponse,
 	VehicleDataItem,
@@ -140,17 +141,19 @@ export class VehiclesAPI {
 	 * ```
 	 */
 	async searchVehicles(
-		params: SearchVehiclesParams
+		params: SearchVehiclesParams & RequestOptions
 	): Promise<SearchVehiclesResponse> {
+		const { signal, ...rest } = params;
 		// Validate input parameters
 		const validatedParams = validate(
 			searchVehiclesParamsSchema,
-			{ vehicleregno: params.query },
+			{ vehicleregno: rest.query },
 			"Invalid search vehicles parameters"
 		);
 
 		const response = await this.client.getClient().post("ListVehicles", {
 			json: validatedParams,
+			signal,
 		});
 
 		const data = await response.json<unknown>();
@@ -188,12 +191,13 @@ export class VehiclesAPI {
 	 * @throws {HTTPError} If the API request fails (network error, 4xx, 5xx)
 	 */
 	async getVehicleTrip(
-		params: VehicleTripParams
+		params: VehicleTripParams & RequestOptions
 	): Promise<VehicleTripResponse> {
+		const { signal, ...rest } = params;
 		// Validate input parameters - API expects number, convert from string
 		const validatedParams = validate(
 			vehicleTripParamsSchema,
-			{ vehicleId: parseId(params.vehicleId) },
+			{ vehicleId: parseId(rest.vehicleId) },
 			"Invalid vehicle trip parameters"
 		);
 
@@ -201,6 +205,7 @@ export class VehiclesAPI {
 			.getClient()
 			.post("VehicleTripDetails_v2", {
 				json: validatedParams,
+				signal,
 			});
 
 		const data = await response.json<unknown>();

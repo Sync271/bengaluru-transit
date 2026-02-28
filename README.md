@@ -21,6 +21,7 @@ This project is built with the intent of making public transit data more accessi
 - 🗺️ **GeoJSON**: Standard GeoJSON format for all spatial data (routes, stops, locations)
 - 🚀 **Modern**: Built with modern TypeScript and ES modules
 - 📦 **Lightweight**: Minimal dependencies
+- 🔄 **Request Cancellation**: Optional AbortSignal support for canceling in-flight requests
 
 ## Installation
 
@@ -368,6 +369,42 @@ This wrapper is designed to work seamlessly with AI agents and function calling 
 ✅ **String IDs** - All IDs are strings (agent-friendly, no type confusion)  
 ✅ **Date Objects** - Consistent Date object handling (no string parsing needed)  
 ✅ **JSDoc Documentation** - Complete `@param`, `@returns`, `@throws`, and `@example` tags  
+✅ **Request Cancellation** - Pass `signal` from AbortController to cancel requests  
+
+### Request Cancellation
+
+All API methods accept an optional `signal` (from `AbortController`) for request cancellation. Useful when components unmount, search queries change, or the user navigates away.
+
+```typescript
+const controller = new AbortController();
+
+// Pass signal to methods with params (as part of the params object)
+const trip = await client.routes.planTrip({
+  fromStopId: "22357",
+  toStopId: "21447",
+  signal: controller.signal,
+});
+
+// Pass options object to methods without params
+const helpline = await client.info.getHelpline({ signal: controller.signal });
+
+// Cancel the request
+controller.abort(); // Throws DOMException with name "AbortError"
+```
+
+**React example** – cancel when component unmounts:
+
+```typescript
+useEffect(() => {
+  const controller = new AbortController();
+  client.stops.findNearbyStops({
+    coordinates: [lat, lng],
+    radius: 1,
+    signal: controller.signal,
+  }).then(setStops).catch(console.error);
+  return () => controller.abort(); // Cleanup on unmount
+}, [lat, lng]);
+```
 
 ### Error Handling
 

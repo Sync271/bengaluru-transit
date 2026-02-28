@@ -34,6 +34,7 @@ import {
 } from "../utils/geojson";
 import { decode as hereDecode } from "@here/flexpolyline";
 import type { BaseClient } from "../client/base-client";
+import type { RequestOptions } from "../types/api";
 import type {
 	RoutePointsResponse,
 	RawRoutePointsResponse,
@@ -731,17 +732,19 @@ export class RoutesAPI {
 	 * ```
 	 */
 	async getRoutePoints(
-		params: RoutePointsParams
+		params: RoutePointsParams & RequestOptions
 	): Promise<RoutePointsResponse> {
+		const { signal, ...rest } = params;
 		// Validate input parameters - API expects number, convert from string
 		const validatedParams = validate(
 			routePointsParamsSchema,
-			{ routeid: parseId(params.routeId) },
+			{ routeid: parseId(rest.routeId) },
 			"Invalid route points parameters"
 		);
 
 		const response = await this.client.getClient().post("RoutePoints", {
 			json: validatedParams,
+			signal,
 		});
 
 		const data = await response.json<unknown>();
@@ -754,7 +757,7 @@ export class RoutesAPI {
 		);
 
 		// Transform to clean, normalized format
-		return transformRoutePointsResponse(rawResponse, params.routeId);
+		return transformRoutePointsResponse(rawResponse, rest.routeId);
 	}
 
 	/**
@@ -772,16 +775,20 @@ export class RoutesAPI {
 	 * });
 	 * ```
 	 */
-	async searchRoutes(params: RouteSearchParams): Promise<RouteSearchResponse> {
+	async searchRoutes(
+		params: RouteSearchParams & RequestOptions
+	): Promise<RouteSearchResponse> {
+		const { signal, ...rest } = params;
 		// Validate input parameters
 		const validatedParams = validate(
 			routeSearchParamsSchema,
-			{ routetext: params.query },
+			{ routetext: rest.query },
 			"Invalid route search parameters"
 		);
 
 		const response = await this.client.getClient().post("SearchRoute_v2", {
 			json: validatedParams,
+			signal,
 		});
 
 		const data = await response.json<unknown>();
@@ -812,9 +819,10 @@ export class RoutesAPI {
 	 * );
 	 * ```
 	 */
-	async getAllRoutes(): Promise<AllRoutesResponse> {
+	async getAllRoutes(options?: RequestOptions): Promise<AllRoutesResponse> {
 		const response = await this.client.getClient().post("GetAllRouteList", {
 			json: {},
+			signal: options?.signal,
 		});
 
 		const data = await response.json<unknown>();
@@ -859,19 +867,20 @@ export class RoutesAPI {
 	 * ```
 	 */
 	async getTimetableByRoute(
-		params: TimetableByRouteParams
+		params: TimetableByRouteParams & RequestOptions
 	): Promise<TimetableResponse> {
+		const { signal, ...rest } = params;
 		// Generate current date in ISO 8601 format
 		const currentDate = formatISODate(new Date());
 
 		// Determine start time - use current time if not provided
-		const startTimeDate = params.startTime ?? new Date();
+		const startTimeDate = rest.startTime ?? new Date();
 		const startTime = formatDateTime(startTimeDate);
 
 		// Determine end time - use 23:59 of startTime date if not provided
 		let endTime: string;
-		if (params.endTime) {
-			endTime = formatDateTime(params.endTime);
+		if (rest.endTime) {
+			endTime = formatDateTime(rest.endTime);
 		} else {
 			// Extract date from startTime (format: "YYYY-MM-DD HH:mm")
 			const startTimeDateStr = formatDate(startTimeDate);
@@ -888,15 +897,15 @@ export class RoutesAPI {
 			endtime: string;
 		} = {
 			current_date: currentDate,
-			routeid: parseId(params.routeId),
+			routeid: parseId(rest.routeId),
 			starttime: startTime,
 			endtime: endTime,
 		};
 
 		// Add stop IDs if provided (type-safe: both are required together)
-		if ("fromStopId" in params && "toStopId" in params) {
-			requestPayload.fromStationId = params.fromStopId;
-			requestPayload.toStationId = params.toStopId;
+		if ("fromStopId" in rest && "toStopId" in rest) {
+			requestPayload.fromStationId = rest.fromStopId;
+			requestPayload.toStationId = rest.toStopId;
 		}
 
 		// Validate request payload
@@ -910,6 +919,7 @@ export class RoutesAPI {
 			.getClient()
 			.post("GetTimetableByRouteid_v3", {
 				json: validatedParams,
+				signal,
 			});
 
 		const data = await response.json<unknown>();
@@ -952,19 +962,20 @@ export class RoutesAPI {
 	 * ```
 	 */
 	async searchByRouteDetails(
-		params: RouteDetailsParams
+		params: RouteDetailsParams & RequestOptions
 	): Promise<RouteDetailsResponse> {
+		const { signal, ...rest } = params;
 		// Build request payload - API expects numbers for IDs, convert from strings
 		const requestPayload: {
 			routeid: number;
 			servicetypeid?: number;
 		} = {
-			routeid: parseId(params.parentRouteId),
+			routeid: parseId(rest.parentRouteId),
 		};
 
 		// Add service type ID if provided
-		if (params.serviceTypeId) {
-			requestPayload.servicetypeid = parseId(params.serviceTypeId);
+		if (rest.serviceTypeId) {
+			requestPayload.servicetypeid = parseId(rest.serviceTypeId);
 		}
 
 		// Validate request payload
@@ -978,6 +989,7 @@ export class RoutesAPI {
 			.getClient()
 			.post("SearchByRouteDetails_v4", {
 				json: validatedParams,
+				signal,
 			});
 
 		const data = await response.json<unknown>();
@@ -1018,14 +1030,15 @@ export class RoutesAPI {
 	 * ```
 	 */
 	async getRoutesBetweenStops(
-		params: RoutesBetweenStopsParams
+		params: RoutesBetweenStopsParams & RequestOptions
 	): Promise<RoutesBetweenStopsResponse> {
+		const { signal, ...rest } = params;
 		// Validate input parameters - API expects numbers, convert from strings
 		const validatedParams = validate(
 			routesBetweenStopsParamsSchema,
 			{
-				fromStationId: parseId(params.fromStopId), // API uses "station" in field names
-				toStationId: parseId(params.toStopId), // API uses "station" in field names
+				fromStationId: parseId(rest.fromStopId), // API uses "station" in field names
+				toStationId: parseId(rest.toStopId), // API uses "station" in field names
 			},
 			"Invalid routes between stops parameters"
 		);
@@ -1040,6 +1053,7 @@ export class RoutesAPI {
 				toStationId: validatedParams.toStationId,
 				lan,
 			},
+			signal,
 		});
 
 		const data = await response.json<unknown>();
@@ -1091,17 +1105,20 @@ export class RoutesAPI {
 	 * });
 	 * ```
 	 */
-	async getFares(params: FareDataParams): Promise<FareDataResponse> {
+	async getFares(
+		params: FareDataParams & RequestOptions
+	): Promise<FareDataResponse> {
+		const { signal, ...rest } = params;
 		// Validate input parameters - API expects numbers for routeid, convert from string
 		// Normalize routeDirection to lowercase for validation, then convert to uppercase for API
 		const validatedParams = validate(
 			fareDataParamsSchema,
 			{
-				routeno: params.routeNo,
-				routeid: parseId(params.subrouteId),
-				route_direction: params.routeDirection, // Already lowercase "up" | "down"
-				source_code: params.sourceCode,
-				destination_code: params.destinationCode,
+				routeno: rest.routeNo,
+				routeid: parseId(rest.subrouteId),
+				route_direction: rest.routeDirection, // Already lowercase "up" | "down"
+				source_code: rest.sourceCode,
+				destination_code: rest.destinationCode,
 			},
 			"Invalid fare data parameters"
 		);
@@ -1114,6 +1131,7 @@ export class RoutesAPI {
 
 		const response = await this.client.getClient().post("GetMobileFareData_v2", {
 			json: apiParams,
+			signal,
 		});
 
 		const data = await response.json<unknown>();
@@ -1174,7 +1192,10 @@ export class RoutesAPI {
 	 * });
 	 * ```
 	 */
-	async planTrip(params: TripPlannerParams): Promise<TripPlannerResponse> {
+	async planTrip(
+		params: TripPlannerParams & RequestOptions
+	): Promise<TripPlannerResponse> {
+		const { signal, ...rest } = params;
 		// Convert discriminated union params to API payload format
 		const apiPayload: {
 			fromStationId?: number; // API uses "station" in field names
@@ -1189,38 +1210,38 @@ export class RoutesAPI {
 		} = {};
 
 		// Set "from" type (either stop ID or coordinates)
-		if ("fromStopId" in params && params.fromStopId) {
-			apiPayload.fromStationId = parseId(params.fromStopId);
-		} else if ("fromCoordinates" in params && params.fromCoordinates) {
-			const [lat, lng] = params.fromCoordinates;
+		if ("fromStopId" in rest && rest.fromStopId) {
+			apiPayload.fromStationId = parseId(rest.fromStopId);
+		} else if ("fromCoordinates" in rest && rest.fromCoordinates) {
+			const [lat, lng] = rest.fromCoordinates;
 			apiPayload.fromLatitude = lat;
 			apiPayload.fromLongitude = lng;
 		}
 
 		// Set "to" type (either stop ID or coordinates)
-		if ("toStopId" in params && params.toStopId) {
-			apiPayload.toStationId = parseId(params.toStopId);
-		} else if ("toCoordinates" in params && params.toCoordinates) {
-			const [lat, lng] = params.toCoordinates;
+		if ("toStopId" in rest && rest.toStopId) {
+			apiPayload.toStationId = parseId(rest.toStopId);
+		} else if ("toCoordinates" in rest && rest.toCoordinates) {
+			const [lat, lng] = rest.toCoordinates;
 			apiPayload.toLatitude = lat;
 			apiPayload.toLongitude = lng;
 		}
 
 		// Add optional parameters
-		if (params.serviceTypeId !== undefined) {
-			apiPayload.serviceTypeId = parseId(params.serviceTypeId);
+		if (rest.serviceTypeId !== undefined) {
+			apiPayload.serviceTypeId = parseId(rest.serviceTypeId);
 		}
-		if (params.fromDateTime !== undefined) {
+		if (rest.fromDateTime !== undefined) {
 			// Validate that the date is in the future
 			const now = new Date();
-			if (params.fromDateTime <= now) {
+			if (rest.fromDateTime <= now) {
 				throw new TransitError("fromDateTime must be in the future", "VALIDATION_ERROR");
 			}
 			// Convert Date to "YYYY-MM-DD HH:mm" format
-			apiPayload.fromDateTime = formatDateTime(params.fromDateTime);
+			apiPayload.fromDateTime = formatDateTime(rest.fromDateTime);
 		}
-		if (params.filterBy !== undefined) {
-			apiPayload.filterBy = tripPlannerFilterToNumber(params.filterBy);
+		if (rest.filterBy !== undefined) {
+			apiPayload.filterBy = tripPlannerFilterToNumber(rest.filterBy);
 		}
 
 		// Validate API payload format
@@ -1232,6 +1253,7 @@ export class RoutesAPI {
 
 		const response = await this.client.getClient().post("TripPlannerMSMD", {
 			json: validatedParams,
+			signal,
 		});
 
 		const data = await response.json<unknown>();
@@ -1283,11 +1305,14 @@ export class RoutesAPI {
 	 * // Use stops.features to display on map
 	 * ```
 	 */
-	async getTripStops(params: PathDetailsParams): Promise<PathDetailsResponse> {
+	async getTripStops(
+		params: PathDetailsParams & RequestOptions
+	): Promise<PathDetailsResponse> {
+		const { signal, ...rest } = params;
 		// Validate user-facing params first
 		const validatedUserParams = validate(
 			pathDetailsParamsSchema,
-			params,
+			rest,
 			"Invalid path details parameters"
 		);
 
@@ -1309,6 +1334,7 @@ export class RoutesAPI {
 
 		const response = await this.client.getClient().post("GetPathDetails", {
 			json: validatedParams,
+			signal,
 		});
 
 		const data = await response.json<unknown>();
@@ -1361,13 +1387,16 @@ export class RoutesAPI {
 	 * });
 	 * ```
 	 */
-	async getTripPath(params: WaypointsParams): Promise<TripPathResponse> {
+	async getTripPath(
+		params: WaypointsParams & RequestOptions
+	): Promise<TripPathResponse> {
+		const { signal, ...rest } = params;
 		let viaPoints: Array<[number, number]>;
 
 		// Check if viaPoints is a FeatureCollection (GeoJSON)
-		if ("type" in params.viaPoints && params.viaPoints.type === "FeatureCollection") {
+		if ("type" in rest.viaPoints && rest.viaPoints.type === "FeatureCollection") {
 			// Extract coordinates from GeoJSON FeatureCollection (ignore properties)
-			viaPoints = params.viaPoints.features
+			viaPoints = rest.viaPoints.features
 				.filter((feature) => feature.geometry.type === "Point")
 				.map((feature) => {
 					// TypeScript knows this is Point geometry after filter
@@ -1383,7 +1412,7 @@ export class RoutesAPI {
 			// Validate input parameters for array of coordinates
 			const validatedParams = validate(
 				waypointsParamsSchema,
-				params,
+				rest,
 				"Invalid waypoints parameters"
 			);
 			viaPoints = validatedParams.viaPoints as Array<[number, number]>;
@@ -1409,6 +1438,7 @@ export class RoutesAPI {
 
 		const response = await this.client.getClient().post("getWaypoints_v1", {
 			json: apiPayload,
+			signal,
 		});
 
 		const data = await response.json<unknown>();
@@ -1469,10 +1499,11 @@ export class RoutesAPI {
 	 * Use routeId to filter results to a specific route.
 	 */
 	async getRoutesThroughStations(
-		params: TimetableByStationParams
+		params: TimetableByStationParams & RequestOptions
 	): Promise<TimetableByStationResponse> {
+		const { signal, ...rest } = params;
 		// Use provided date or default to current date
-		const date = params.date ?? new Date();
+		const date = rest.date ?? new Date();
 		const dateStr = formatDate(date);
 
 		// Build request payload - API expects numbers for IDs, convert from strings
@@ -1485,11 +1516,11 @@ export class RoutesAPI {
 			p_routeid: string;
 			p_date: string;
 		} = {
-			fromStationId: parseId(params.fromStopId),
-			toStationId: parseId(params.toStopId),
+			fromStationId: parseId(rest.fromStopId),
+			toStationId: parseId(rest.toStopId),
 			p_startdate: `${dateStr} 00:00`,
 			p_enddate: `${dateStr} 23:59`,
-			p_routeid: params.routeId ?? "",
+			p_routeid: rest.routeId ?? "",
 			p_date: dateStr,
 		};
 
@@ -1504,6 +1535,7 @@ export class RoutesAPI {
 			.getClient()
 			.post("GetTimetableByStation_v4", {
 				json: validatedParams,
+				signal,
 			});
 
 		const data = await response.json<unknown>();

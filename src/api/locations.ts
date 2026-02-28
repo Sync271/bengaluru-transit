@@ -4,6 +4,7 @@ import {
 	searchPlacesParamsSchema,
 } from "../schemas/locations";
 import type { BaseClient } from "../client/base-client";
+import type { RequestOptions } from "../types/api";
 import type {
 	SearchPlacesResponse,
 	RawSearchPlacesResponse,
@@ -51,13 +52,14 @@ export class LocationsAPI {
 	 * ```
 	 */
 	async searchPlaces(
-		params: SearchPlacesParams
+		params: SearchPlacesParams & RequestOptions
 	): Promise<SearchPlacesResponse> {
+		const { signal, ...rest } = params;
 		// Validate input parameters - API expects "placename", map from "query"
 		const validatedParams = validate(
 			searchPlacesParamsSchema,
 			{
-				placename: params.query,
+				placename: rest.query,
 			},
 			"Invalid search places parameters"
 		);
@@ -66,6 +68,7 @@ export class LocationsAPI {
 			.getClient()
 			.post("GetSearchPlaceData", {
 				json: validatedParams,
+				signal,
 			});
 
 		const data = await response.json<unknown>();

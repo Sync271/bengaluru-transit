@@ -7,7 +7,7 @@
  */
 
 // Base types
-export type { TransitApiError } from "./api";
+export type { TransitApiError, RequestOptions } from "./api";
 
 // Coordinate types
 export * from "./coordinates";

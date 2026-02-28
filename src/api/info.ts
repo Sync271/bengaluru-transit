@@ -8,6 +8,7 @@ import {
 	rawFareScrollMessagesResponseSchema,
 } from "../schemas/info";
 import type { BaseClient } from "../client/base-client";
+import type { RequestOptions } from "../types/api";
 import type {
 	HelplineResponse,
 	HelplineDataItem,
@@ -135,9 +136,10 @@ export class InfoAPI {
 	 * });
 	 * ```
 	 */
-	async getHelpline(): Promise<HelplineResponse> {
+	async getHelpline(options?: RequestOptions): Promise<HelplineResponse> {
 		const response = await this.client.getClient().post("GetHelplineData", {
 			json: {},
+			signal: options?.signal,
 		});
 
 		const data = await response.json<unknown>();
@@ -164,9 +166,10 @@ export class InfoAPI {
 	 * // Use acService.serviceTypeId in planTrip({ serviceTypeId })
 	 * ```
 	 */
-	async getServiceTypes(): Promise<ServiceTypesResponse> {
+	async getServiceTypes(options?: RequestOptions): Promise<ServiceTypesResponse> {
 		const response = await this.client.getClient().post("GetAllServiceTypes", {
 			json: {},
+			signal: options?.signal,
 		});
 
 		const data = await response.json<unknown>();
@@ -193,9 +196,10 @@ export class InfoAPI {
 	 * console.log(`Terms URL: ${about.termsUrl}`);
 	 * ```
 	 */
-	async getAbout(): Promise<AboutDataResponse> {
+	async getAbout(options?: RequestOptions): Promise<AboutDataResponse> {
 		const response = await this.client.getClient().post("GetAboutData", {
 			json: {},
+			signal: options?.signal,
 		});
 
 		const data = await response.json<unknown>();
@@ -225,11 +229,14 @@ export class InfoAPI {
 	 * });
 	 * ```
 	 */
-	async getEmergencyMessages(): Promise<EmergencyMessagesResponse> {
+	async getEmergencyMessages(
+		options?: RequestOptions
+	): Promise<EmergencyMessagesResponse> {
 		const response = await this.client
 			.getClient()
 			.post("GetEmergencyMessage_v1", {
 				json: {},
+				signal: options?.signal,
 			});
 
 		const data = await response.json<unknown>();
@@ -259,11 +266,14 @@ export class InfoAPI {
 	 * });
 	 * ```
 	 */
-	async getFareScrollMessages(): Promise<FareScrollMessagesResponse> {
+	async getFareScrollMessages(
+		options?: RequestOptions
+	): Promise<FareScrollMessagesResponse> {
 		const response = await this.client
 			.getClient()
 			.post("GetFareScrollMessage", {
 				json: {},
+				signal: options?.signal,
 			});
 
 		const data = await response.json<unknown>();
