@@ -96,18 +96,21 @@ export const nearbyBusStopsParamsSchema = z.object({
 
 /**
  * Schema for raw nearby station item from NearbyStations_v2 API
+ * Uses z.coerce for numeric fields — chartered/metro/ksrtc may return strings
  */
 export const rawNearbyStationItemSchema = z.object({
-	rowno: z.number().int().positive(),
-	geofenceid: z.number().int().positive(),
+	rowno: z.coerce.number().int().nonnegative(),
+	geofenceid: z.coerce.number().int().nonnegative(),
 	geofencename: z.string(),
-	center_lat: z.number(),
-	center_lon: z.number(),
-	towards: z.string(),
-	distance: z.number().nonnegative(),
-	totalminute: z.number().nonnegative(),
-	responsecode: z.number().int(),
-	radiuskm: z.number().nonnegative(),
+	center_lat: z.coerce.number(),
+	center_lon: z.coerce.number(),
+	towards: z
+		.union([z.string(), z.null(), z.undefined()])
+		.transform((s): string => s ?? ""),
+	distance: z.coerce.number().nonnegative(),
+	totalminute: z.coerce.number().nonnegative(),
+	responsecode: z.coerce.number().int(),
+	radiuskm: z.coerce.number().nonnegative(),
 });
 
 /**
@@ -118,8 +121,8 @@ export const rawNearbyStationsResponseSchema = z.object({
 	Message: z.string(),
 	Issuccess: z.boolean(),
 	exception: z.unknown().nullish(),
-	RowCount: z.number().int().nonnegative(),
-	responsecode: z.number().int(),
+	RowCount: z.coerce.number().int().nonnegative(),
+	responsecode: z.coerce.number().int(),
 });
 
 /**

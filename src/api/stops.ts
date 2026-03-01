@@ -111,7 +111,7 @@ function transformNearbyStationsResponse(
 		stationName: item.geofencename,
 		latitude: item.center_lat,
 		longitude: item.center_lon,
-		towards: item.towards,
+		towards: item.towards ?? "",
 		distance: item.distance,
 		travelTimeMinutes: item.totalminute,
 		radius: item.radiuskm,
@@ -337,7 +337,7 @@ export class StopsAPI {
 			rawNearbyStationsResponseSchema,
 			data,
 			"Invalid nearby stations response"
-		);
+		) as RawNearbyStationsResponse;
 
 		// Transform to clean, normalized format
 		return transformNearbyStationsResponse(rawResponse);
