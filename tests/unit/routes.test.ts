@@ -404,6 +404,15 @@ describe("RoutesAPI", () => {
 
 			const startTime = new Date("2025-10-07T10:00:00");
 			const endTime = new Date("2025-10-07T23:59:00");
+			// current_date = midnight local of startTime day, as ISO UTC (matches production logic)
+			const expectedCurrentDate = new Date(
+				startTime.getFullYear(),
+				startTime.getMonth(),
+				startTime.getDate(),
+				0,
+				0,
+				0
+			).toISOString();
 
 			const result = await client.routes.getTimetableByRoute({
 				routeId: "2981",
@@ -440,7 +449,7 @@ describe("RoutesAPI", () => {
 				expect.objectContaining({
 					json: expect.objectContaining({
 						routeid: 2981,
-						current_date: "2025-10-07T00:00:00.000Z",
+						current_date: expectedCurrentDate,
 						fromStationId: "20623",
 						toStationId: "20866",
 						starttime: "2025-10-07 10:00",
@@ -553,6 +562,15 @@ describe("RoutesAPI", () => {
 			} as Response);
 
 			const startTime = new Date("2025-10-07T00:00:00");
+			// Matches production: midnight local of startTime day, as ISO UTC
+			const expectedCurrentDate = new Date(
+				startTime.getFullYear(),
+				startTime.getMonth(),
+				startTime.getDate(),
+				0,
+				0,
+				0
+			).toISOString();
 
 			await client.routes.getTimetableByRoute({
 				routeId: "2981",
@@ -565,7 +583,7 @@ describe("RoutesAPI", () => {
 				"GetTimetableByRouteid_v3",
 				expect.objectContaining({
 					json: expect.objectContaining({
-						current_date: "2025-10-07T00:00:00.000Z",
+						current_date: expectedCurrentDate,
 						starttime: "2025-10-07 00:00",
 						endtime: "2025-10-07 23:59",
 					}),

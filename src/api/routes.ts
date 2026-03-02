@@ -875,10 +875,10 @@ export class RoutesAPI {
 		const startTimeDate = rest.startTime ?? new Date();
 
 		// Generate current date in ISO 8601 format.
-		// When startTime is provided, use midnight of that day so the API returns the full day's schedule.
+		// When startTime is provided, use midnight of that day (local time, as ISO UTC) so the API returns the full day's schedule.
 		// Otherwise use "now" so the API returns trips from the current moment onward.
 		const currentDate = rest.startTime
-			? formatDate(startTimeDate) + "T00:00:00.000Z"
+			? formatISODate(new Date(startTimeDate.getFullYear(), startTimeDate.getMonth(), startTimeDate.getDate(), 0, 0, 0))
 			: formatISODate(new Date());
 		const startTime = formatDateTime(startTimeDate);
 
