@@ -434,13 +434,15 @@ describe("RoutesAPI", () => {
 			expect(item.tripDetails[1].endTime).toBe("11:50");
 
 			// Verify request was made with correct parameters
+			// When startTime is provided, current_date is midnight of that day for full-day schedule
 			expect(mockPost).toHaveBeenCalledWith(
 				"GetTimetableByRouteid_v3",
 				expect.objectContaining({
-					json: 					expect.objectContaining({
+					json: expect.objectContaining({
 						routeid: 2981,
-						fromStationId: "20623", // API uses "station" in field names
-						toStationId: "20866", // API uses "station" in field names
+						current_date: "2025-10-07T00:00:00.000Z",
+						fromStationId: "20623",
+						toStationId: "20866",
 						starttime: "2025-10-07 10:00",
 						endtime: "2025-10-07 23:59",
 					}),
@@ -534,6 +536,66 @@ describe("RoutesAPI", () => {
 					}),
 				})
 			);
+		});
+
+		it("should set current_date to midnight of startTime day when startTime is provided (full day schedule)", async () => {
+			const mockRawResponse = {
+				data: [],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 0,
+				responsecode: 200,
+			};
+
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const startTime = new Date("2025-10-07T00:00:00");
+
+			await client.routes.getTimetableByRoute({
+				routeId: "2981",
+				startTime,
+			});
+
+			// When startTime is provided, current_date should be midnight of that day (ISO format)
+			// so the API returns the full day's schedule instead of only trips from "now" onward
+			expect(mockPost).toHaveBeenCalledWith(
+				"GetTimetableByRouteid_v3",
+				expect.objectContaining({
+					json: expect.objectContaining({
+						current_date: "2025-10-07T00:00:00.000Z",
+						starttime: "2025-10-07 00:00",
+						endtime: "2025-10-07 23:59",
+					}),
+				})
+			);
+		});
+
+		it("should use current time for current_date when startTime is not provided", async () => {
+			const mockRawResponse = {
+				data: [],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 0,
+				responsecode: 200,
+			};
+
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			await client.routes.getTimetableByRoute({
+				routeId: "2981",
+			});
+
+			const callArgs = mockPost.mock.calls[0];
+			const requestJson = (callArgs[1] as { json: { current_date: string } }).json;
+
+			// current_date should be ISO format (contains 'T' and ends with 'Z' or timezone)
+			expect(requestJson.current_date).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
 		});
 
 		it("should validate input parameters and throw on invalid routeId", async () => {

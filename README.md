@@ -243,7 +243,7 @@ details.up.liveVehicles.features.forEach(vehicle => {
 - `searchRoutes({ query })` - Search routes by name/number
 - `getAllRoutes()` - Get complete list of all routes
 - `getRoutePoints({ routeId })` - Get route path as GeoJSON
-- `getTimetableByRoute({ routeId, startTime?, endTime?, fromStopId?, toStopId? })` - Get timetable for a route
+- `getTimetableByRoute({ routeId, startTime?, endTime?, fromStopId?, toStopId? })` - Get timetable for a route. When `startTime` is provided, the API returns the full day's schedule from midnight; otherwise trips from the current moment onward.
 - `searchByRouteDetails({ parentRouteId, serviceTypeId? })` - Get live vehicles and stops for a route
 - `getFares({ routeNo, subrouteId, routeDirection, sourceCode, destinationCode })` - Get fare information
 - `getRoutesBetweenStops({ fromStopId, toStopId })` - Find routes between two stops
@@ -327,6 +327,27 @@ fare.items.forEach(item => {
   console.log(`Service: ${item.serviceType}, Fare: ₹${item.fare}`);
 });
 ```
+
+### Get Timetable for a Route
+
+```typescript
+// Get full day's timetable (pass startTime at midnight to receive all trips for that day)
+const timetable = await client.routes.getTimetableByRoute({
+  routeId: "11797",
+  startTime: new Date("2026-01-20T00:00:00"),
+  fromStopId: "22357",
+  toStopId: "21447",
+});
+
+timetable.items.forEach(item => {
+  console.log(`${item.fromStopName} → ${item.toStopName}`);
+  item.tripDetails.forEach(trip => {
+    console.log(`  ${trip.startTime} - ${trip.endTime}`);
+  });
+});
+```
+
+When `startTime` is provided, the SDK sets `current_date` to midnight of that day so the BMTC API returns the full day's schedule. Without `startTime`, it uses the current time and returns only trips from "now" onward.
 
 ### Search and Track Vehicle
 

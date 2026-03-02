@@ -843,7 +843,8 @@ export class RoutesAPI {
 	 * Get timetable by route ID
 	 * @param params - Parameters including route ID and optional filters
 	 * @param params.routeId - Route ID (always string for consistency)
-	 * @param params.startTime - Optional: Start time for timetable (Date object, defaults to current time)
+	 * @param params.startTime - Optional: Start time for timetable (Date object, defaults to current time).
+	 * When provided, current_date is derived from it so the API returns the full day's schedule from midnight onward.
 	 * @param params.endTime - Optional: End time for timetable (Date object, defaults to 23:59 of startTime date)
 	 * @param params.fromStopId - Optional: Filter by from stop ID (requires toStopId)
 	 * @param params.toStopId - Optional: Filter by to stop ID (requires fromStopId)
@@ -870,11 +871,15 @@ export class RoutesAPI {
 		params: TimetableByRouteParams & RequestOptions
 	): Promise<TimetableResponse> {
 		const { signal, ...rest } = params;
-		// Generate current date in ISO 8601 format
-		const currentDate = formatISODate(new Date());
-
 		// Determine start time - use current time if not provided
 		const startTimeDate = rest.startTime ?? new Date();
+
+		// Generate current date in ISO 8601 format.
+		// When startTime is provided, use midnight of that day so the API returns the full day's schedule.
+		// Otherwise use "now" so the API returns trips from the current moment onward.
+		const currentDate = rest.startTime
+			? formatDate(startTimeDate) + "T00:00:00.000Z"
+			: formatISODate(new Date());
 		const startTime = formatDateTime(startTimeDate);
 
 		// Determine end time - use 23:59 of startTime date if not provided
