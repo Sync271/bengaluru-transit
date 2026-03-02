@@ -251,7 +251,7 @@ details.up.liveVehicles.features.forEach(vehicle => {
 
 ### Stops API
 
-- `findNearbyStops({ coordinates, radius, stationType?, bmtcCategory? })` - Find stops within radius (GeoJSON)
+- `findNearbyStops({ coordinates?, radius, stationId?, stationType?, bmtcCategory? })` - Find stops within radius. Use `stationId` to get stations near a specific stop. Coordinates default to Bangalore center when omitted.
 - `findNearbyStations({ coordinates })` - Find nearby stations with facilities (GeoJSON)
 - `searchBusStops({ stationName, stationType? })` - Search stops by name
 

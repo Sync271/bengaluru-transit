@@ -777,6 +777,93 @@ describe.skipIf(!RUN_REAL_API_TESTS)("Bengaluru Transit Real API Integration Tes
 			},
 			{ timeout: 30000 }
 		);
+
+		it.skipIf(!shouldRunTest("stop"))(
+			"should find nearby stations by stationId from real API",
+			async () => {
+				await delay(RATE_LIMIT_DELAY);
+
+				const result = await client.stops.findNearbyStops({
+					coordinates: [13.07861, 77.58333],
+					stationId: "20921",
+					radius: 0.5,
+				});
+
+				expect(result).toBeDefined();
+				expect(result.items).toBeInstanceOf(Array);
+				expect(result.items.length).toBeGreaterThan(0);
+
+				// When stationId is passed, API returns that station and nearby ones
+				const stationIds = result.items.map((item) => item.stationId);
+				expect(stationIds).toContain("20921");
+
+				if (result.items.length > 0) {
+					const item = result.items[0];
+					expect(item).toHaveProperty("stationId");
+					expect(item).toHaveProperty("stationName");
+					expect(item).toHaveProperty("latitude");
+					expect(item).toHaveProperty("longitude");
+					expect(typeof item.stationId).toBe("string");
+				}
+
+				// Print formatted response (first 5 items only)
+				console.log("\n🚏 Nearby Stations by stationId (20921 - KBS) Response (first 5 items):");
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+				console.log(
+					JSON.stringify(
+						{
+							...result,
+							items: result.items.slice(0, 5),
+						},
+						null,
+						2
+					)
+				);
+				if (result.items.length > 5) {
+					console.log(`... and ${result.items.length - 5} more items`);
+				}
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+			},
+			{ timeout: 30000 }
+		);
+
+		it.skipIf(!shouldRunTest("stop"))(
+			"should find nearby stations with default Bangalore center when coordinates omitted from real API",
+			async () => {
+				await delay(RATE_LIMIT_DELAY);
+
+				const result = await client.stops.findNearbyStops({
+					stationId: "20921",
+					radius: 1,
+				});
+
+				expect(result).toBeDefined();
+				expect(result.items).toBeInstanceOf(Array);
+				expect(result.items.length).toBeGreaterThan(0);
+
+				const stationIds = result.items.map((item) => item.stationId);
+				expect(stationIds).toContain("20921");
+
+				// Print formatted response (first 3 items only)
+				console.log("\n📍 Nearby Stations (default coords + stationId) Response (first 3 items):");
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+				console.log(
+					JSON.stringify(
+						{
+							...result,
+							items: result.items.slice(0, 3),
+						},
+						null,
+						2
+					)
+				);
+				if (result.items.length > 3) {
+					console.log(`... and ${result.items.length - 3} more items`);
+				}
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+			},
+			{ timeout: 30000 }
+		);
 	});
 
 	describe("Trip Planner - Real Endpoint", () => {

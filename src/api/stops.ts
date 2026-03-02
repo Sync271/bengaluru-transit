@@ -1,4 +1,4 @@
-import { validate, stringifyId } from "../utils/validation";
+import { validate, parseId, stringifyId } from "../utils/validation";
 import {
 	rawAroundBusStopsResponseSchema,
 	aroundBusStopsParamsSchema,
@@ -11,6 +11,7 @@ import {
 	createFacilityFeature,
 	createFeatureCollection,
 } from "../utils/geojson";
+import { BANGALORE_CENTER } from "../constants/api";
 import type { BaseClient } from "../client/base-client";
 import type { RequestOptions } from "../types/api";
 import type {
@@ -248,14 +249,17 @@ export class StopsAPI {
 
 	/**
 	 * Find nearby stops by location within a radius
-	 * @param params - Parameters including coordinates [latitude, longitude], radius, and optional filters
-	 * @param params.coordinates - [latitude, longitude] coordinates
+	 * @param params - Parameters including radius, optional coordinates, optional stationId, and optional filters
+	 * @param params.coordinates - [latitude, longitude] coordinates (defaults to Bangalore center when omitted)
 	 * @param params.radius - Search radius in kilometers
+	 * @param params.stationId - Optional: When provided, returns all stations near this station and itself (useful for fetching station info)
 	 * @param params.stationType - Optional: Type of stops to search ("bmtc", "chartered", "metro", "ksrtc")
 	 * @param params.bmtcCategory - Optional: BMTC category filter ("airport", "all") - only when stationType is "bmtc"
 	 * @returns List of nearby stops with distance and travel time information
 	 * @remarks
 	 * This endpoint returns up to 10 results. Pagination is not supported.
+	 * When stationId is passed, the API retrieves all stations near that station and the station itself.
+	 * Coordinates are required by the API but can be any valid values; they default to Bangalore center when omitted.
 	 * The bmtcCategory parameter filters specific subsets of BMTC stops:
 	 * - "airport": Airport bus stops only
 	 * - "all": All BMTC stops
@@ -269,7 +273,13 @@ export class StopsAPI {
 	 *   coordinates: [13.09784, 77.59167],
 	 *   radius: 1
 	 * });
-	 * 
+	 *
+	 * // Find stations near a specific station (coordinates default to Bangalore center)
+	 * const nearbyKbs = await client.stops.findNearbyStops({
+	 *   stationId: "20921",
+	 *   radius: 0.5,
+	 * });
+	 *
 	 * // Find airport stops only
 	 * const airportStops = await client.stops.findNearbyStops({
 	 *   coordinates: [13.09784, 77.59167],
@@ -296,12 +306,16 @@ export class StopsAPI {
 			bmtcCategoryNumber = transitCategoryToNumber(rest.bmtcCategory);
 		}
 
+		// Resolve coordinates (default to Bangalore center when omitted)
+		const [latitude, longitude] =
+			rest.coordinates ?? BANGALORE_CENTER;
+
 		// Build request payload
-		const [latitude, longitude] = rest.coordinates;
 		const requestPayload: {
 			latitude: number;
 			longitude: number;
 			radiuskm: number;
+			stationId?: number;
 			stationflag?: number;
 			flexiflag?: number;
 		} = {
@@ -311,6 +325,9 @@ export class StopsAPI {
 		};
 
 		// Add optional parameters if provided
+		if (rest.stationId !== undefined) {
+			requestPayload.stationId = parseId(rest.stationId);
+		}
 		if (stationTypeNumber !== undefined) {
 			requestPayload.stationflag = stationTypeNumber;
 		}

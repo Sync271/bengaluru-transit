@@ -138,6 +138,7 @@ export const nearbyStationsParamsSchema = z.object({
 		.min(-180, "Longitude must be between -180 and 180")
 		.max(180, "Longitude must be between -180 and 180"),
 	radiuskm: z.number().positive("Radius must be positive"), // API expects "radiuskm"
+	stationId: z.number().int().positive().optional(),
 	stationflag: z.number().int().positive().optional(),
 	flexiflag: z.number().int().positive().optional(),
 });

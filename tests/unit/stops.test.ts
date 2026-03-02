@@ -715,5 +715,104 @@ describe("StopsAPI", () => {
 				})
 			).rejects.toThrow("Network error");
 		});
+
+		it("should include stationId when provided", async () => {
+			const mockRawResponse = {
+				data: [
+					{
+						rowno: 1,
+						geofenceid: 20921,
+						geofencename: "Kempegowda Bus Station",
+						center_lat: 12.97751,
+						center_lon: 77.57141,
+						towards: "Departure",
+						distance: 0.0,
+						totalminute: 0.0,
+						responsecode: 200,
+						radiuskm: 0.5,
+					},
+				],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 1,
+				responsecode: 200,
+			};
+
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			});
+
+			await client.stops.findNearbyStops({
+				coordinates: [13.07861, 77.58333],
+				stationId: "20921",
+				radius: 0.5,
+			});
+
+			expect(mockPost).toHaveBeenCalledWith("NearbyStations_v2", {
+				json: {
+					latitude: 13.07861,
+					longitude: 77.58333,
+					radiuskm: 0.5,
+					stationId: 20921,
+				},
+			});
+		});
+
+		it("should default to Bangalore center when coordinates omitted", async () => {
+			const mockRawResponse = {
+				data: [],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 0,
+				responsecode: 200,
+			};
+
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			});
+
+			await client.stops.findNearbyStops({
+				radius: 1,
+			});
+
+			expect(mockPost).toHaveBeenCalledWith("NearbyStations_v2", {
+				json: {
+					latitude: 12.9716,
+					longitude: 77.5946,
+					radiuskm: 1,
+				},
+			});
+		});
+
+		it("should default to Bangalore center when only stationId and radius provided", async () => {
+			const mockRawResponse = {
+				data: [],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 0,
+				responsecode: 200,
+			};
+
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			});
+
+			await client.stops.findNearbyStops({
+				stationId: "20921",
+				radius: 0.5,
+			});
+
+			expect(mockPost).toHaveBeenCalledWith("NearbyStations_v2", {
+				json: {
+					latitude: 12.9716,
+					longitude: 77.5946,
+					radiuskm: 0.5,
+					stationId: 20921,
+				},
+			});
+		});
 	});
 });

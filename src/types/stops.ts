@@ -290,12 +290,19 @@ export interface NearbyStationsResponse {
 type NearbyStationsParamsBase = {
 	/**
 	 * Coordinates of the search location [latitude, longitude]
+	 * Defaults to Bangalore center when omitted
 	 */
-	coordinates: Coordinate;
+	coordinates?: Coordinate;
 	/**
 	 * Search radius in kilometers
 	 */
 	radius: number;
+	/**
+	 * Station ID - when provided, returns all stations near this station (and itself)
+	 * Useful for fetching station info. Coordinates still required by API;
+	 * defaults to Bangalore center when omitted
+	 */
+	stationId?: string;
 };
 
 /**

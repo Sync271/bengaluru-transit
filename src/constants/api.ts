@@ -17,3 +17,9 @@ export const DEFAULT_AUTH_TOKEN = "N/A";
  */
 export const DEFAULT_BASE_URL =
 	"https://bmtcmobileapi.karnataka.gov.in/WebAPI";
+
+/**
+ * Default coordinates for Bangalore city center
+ * Used when coordinates are not provided to findNearbyStops
+ */
+export const BANGALORE_CENTER: [number, number] = [12.9716, 77.5946];
