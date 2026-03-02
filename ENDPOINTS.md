@@ -25,6 +25,7 @@ This file tracks the progress of implementing wrappers for Bengaluru transit API
 - [x] `/TripPlannerMSMD` - Trip planner with multiple route options (direct and transfer routes)
 - [x] `/GetPathDetails` - Get detailed station-by-station path information for trip legs
 - [x] `/GetTimetableByStation_v4` - Get timetable by station (routes between two stations)
+- [x] `/getMobileTripsData` - Get trips at a station (running or scheduled)
 
 ## In Progress 🚧
 
@@ -38,11 +39,11 @@ None currently.
 
 ## Total Progress
 
-- **Completed:** 21 / 22 (95%)
-- **Remaining:** 1 endpoint (already implemented)
+- **Completed:** 22 / 22 (100%)
+- **Remaining:** 0 endpoints
 
 **Note:** `/AroundBusStops_v2_Webportal` is the same as `/AroundBusStops_v2` (already completed), so it's been removed from pending.
 
 ---
 
-Last updated: After implementing GetFareRoutes endpoint
+Last updated: After implementing getMobileTripsData endpoint

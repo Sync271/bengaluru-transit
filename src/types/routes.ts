@@ -19,6 +19,7 @@ import type {
 	rawTripPlannerResponseSchema,
 	rawPathDetailsResponseSchema,
 	rawTimetableByStationResponseSchema,
+	rawStationTripsResponseSchema,
 } from "../schemas/routes";
 import type {
 	RouteFeatureCollection,
@@ -674,6 +675,17 @@ export function tripPlannerFilterToNumber(filter: TripPlannerFilter): 1 | 2 {
 }
 
 /**
+ * Map station trip type to API numeric value
+ */
+export function stationTripTypeToNumber(tripType: StationTripType): 1 | 2 {
+	const map: Record<StationTripType, 1 | 2> = {
+		running: 1,
+		scheduled: 2,
+	};
+	return map[tripType];
+}
+
+/**
  * Base parameters for trip planner (common fields)
  */
 type TripPlannerParamsBase = {
@@ -1243,4 +1255,59 @@ export interface TimetableByStationParams {
 	routeId?: string;
 	/** Optional: Date for timetable (defaults to current date) */
 	date?: Date;
+}
+
+/**
+ * Trip type for getStationTrips
+ * - "running": Trips currently in progress (triptype=1)
+ * - "scheduled": Scheduled trips (triptype=2)
+ */
+export type StationTripType = "running" | "scheduled";
+
+/**
+ * Raw station trips API response from getMobileTripsData
+ */
+export type RawStationTripsResponse = z.infer<typeof rawStationTripsResponseSchema>;
+
+/**
+ * Station trip item - either running (with arrivalTime) or scheduled (with scheduleTime)
+ */
+export interface StationTripItem {
+	/** Route number */
+	routeNo: string;
+	/** Route name */
+	routeName: string;
+	/** From station name */
+	fromStationName: string;
+	/** To station name */
+	toStationName: string;
+	/** Vehicle ID */
+	vehicleId: string;
+	/** Bus registration number */
+	busNo: string;
+	/** Arrival time (format: "DD-MM-YYYY HH:mm:ss") - present when tripType is "running" */
+	arrivalTime?: string;
+	/** Schedule time (format: "DD-MM-YYYY HH:mm:ss") - present when tripType is "scheduled" */
+	scheduleTime?: string;
+	/** Device status flag (1 = tracking available) */
+	deviceStatusFlag: number;
+	/** Device status name */
+	deviceStatusName: string;
+}
+
+/**
+ * Station trips response from getStationTrips
+ */
+export interface StationTripsResponse {
+	items: StationTripItem[];
+}
+
+/**
+ * Parameters for getting trips at a station
+ */
+export interface StationTripsParams {
+	/** Station ID (always string for consistency) */
+	stationId: string;
+	/** Trip type: "running" for trips in progress, "scheduled" for upcoming trips */
+	tripType: StationTripType;
 }

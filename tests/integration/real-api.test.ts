@@ -535,6 +535,67 @@ describe.skipIf(!RUN_REAL_API_TESTS)("Bengaluru Transit Real API Integration Tes
 			{ timeout: 30000 }
 		);
 
+		it.skipIf(!shouldRunTest("route") && !shouldRunTest("stationtrips"))(
+			"should get station trips (running) from real API",
+			async () => {
+				const result = await client.routes.getStationTrips({
+					stationId: "37944",
+					tripType: "running",
+				});
+
+				expect(result).toBeDefined();
+				expect(result.items).toBeInstanceOf(Array);
+				if (result.items.length > 0) {
+					const item = result.items[0];
+					expect(item).toHaveProperty("routeNo");
+					expect(item).toHaveProperty("routeName");
+					expect(item).toHaveProperty("fromStationName");
+					expect(item).toHaveProperty("toStationName");
+					expect(item).toHaveProperty("vehicleId");
+					expect(item).toHaveProperty("busNo");
+					expect(item).toHaveProperty("arrivalTime");
+					expect(item).toHaveProperty("deviceStatusFlag");
+					expect(item).toHaveProperty("deviceStatusName");
+					expect(typeof item.vehicleId).toBe("string");
+				}
+
+				console.log("\n🚌 Station Trips (running) Response:");
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+				console.log(JSON.stringify(result, null, 2));
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+			},
+			{ timeout: 30000 }
+		);
+
+		it.skipIf(!shouldRunTest("route") && !shouldRunTest("stationtrips"))(
+			"should get station trips (scheduled) from real API",
+			async () => {
+				const result = await client.routes.getStationTrips({
+					stationId: "37944",
+					tripType: "scheduled",
+				});
+
+				expect(result).toBeDefined();
+				expect(result.items).toBeInstanceOf(Array);
+				if (result.items.length > 0) {
+					const item = result.items[0];
+					expect(item).toHaveProperty("routeNo");
+					expect(item).toHaveProperty("routeName");
+					expect(item).toHaveProperty("vehicleId");
+					expect(item).toHaveProperty("busNo");
+					expect(item).toHaveProperty("scheduleTime");
+					expect(item).toHaveProperty("deviceStatusFlag");
+					expect(typeof item.vehicleId).toBe("string");
+				}
+
+				console.log("\n📅 Station Trips (scheduled) Response:");
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+				console.log(JSON.stringify(result, null, 2));
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+			},
+			{ timeout: 30000 }
+		);
+
 		it.skipIf(!shouldRunTest("route") && !shouldRunTest("fare"))(
 			"should get routes between stations and fare data from real API",
 			async () => {

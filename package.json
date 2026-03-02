@@ -1,6 +1,6 @@
 {
 	"name": "bengaluru-transit",
-	"version": "0.2.2",
+	"version": "0.2.3",
 	"description": "Type-safe TypeScript SDK for Bangalore public transit APIs with Zod validation and GeoJSON support",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -32,6 +32,7 @@
 		"test:integration:fare": "cross-env RUN_REAL_API_TESTS=true TEST_ENDPOINT=fare vitest run tests/integration/real-api.test.ts --pool=forks --poolOptions.forks.singleFork=true",
 		"test:integration:stop": "cross-env RUN_REAL_API_TESTS=true TEST_ENDPOINT=stop vitest run tests/integration/real-api.test.ts --pool=forks --poolOptions.forks.singleFork=true",
 		"test:integration:place": "cross-env RUN_REAL_API_TESTS=true TEST_ENDPOINT=place vitest run tests/integration/real-api.test.ts --pool=forks --poolOptions.forks.singleFork=true",
+		"test:integration:stationtrips": "cross-env RUN_REAL_API_TESTS=true TEST_ENDPOINT=stationtrips vitest run tests/integration/real-api.test.ts --pool=forks --poolOptions.forks.singleFork=true",
 		"test:unit": "vitest run tests/unit",
 		"test:build": "vitest run tests/build",
 		"prepublishOnly": "npm run build && npm run test:unit && npm run test:build"

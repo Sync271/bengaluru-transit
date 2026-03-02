@@ -248,6 +248,7 @@ details.up.liveVehicles.features.forEach(vehicle => {
 - `getFares({ routeNo, subrouteId, routeDirection, sourceCode, destinationCode })` - Get fare information
 - `getRoutesBetweenStops({ fromStopId, toStopId })` - Find routes between two stops
 - `getRoutesThroughStations({ fromStopId, toStopId, routeId?, date? })` - Routes passing through both stops
+- `getStationTrips({ stationId, tripType })` - Get trips at a station: `tripType: "running"` for buses arriving now, `"scheduled"` for upcoming trips
 
 ### Stops API
 

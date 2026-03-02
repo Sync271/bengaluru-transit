@@ -586,3 +586,41 @@ export const timetableByStationRequestSchema = z.object({
 	p_routeid: z.string().optional(),
 	p_date: z.string(),
 });
+
+/**
+ * Schema for raw station trip item from getMobileTripsData API
+ * When triptype=1 (running): has arrivaltime
+ * When triptype=2 (scheduled): has scheduletime
+ */
+export const rawStationTripItemSchema = z.object({
+	routeno: z.string(),
+	routename: z.string(),
+	fromstationname: z.string(),
+	tostationname: z.string(),
+	vehicleid: z.number(),
+	busno: z.string(),
+	arrivaltime: z.string().optional(), // Present when triptype=1 (running)
+	scheduletime: z.string().optional(), // Present when triptype=2 (scheduled)
+	devicestatusflag: z.number(),
+	devicestatusnameflag: z.string(),
+});
+
+/**
+ * Schema for raw getMobileTripsData API response
+ */
+export const rawStationTripsResponseSchema = z.object({
+	data: z.array(rawStationTripItemSchema),
+	Message: z.string(),
+	Issuccess: z.boolean(),
+	exception: z.string().nullable(),
+	RowCount: z.number(),
+	responsecode: z.number(),
+});
+
+/**
+ * Schema for getMobileTripsData request parameters (API format)
+ */
+export const stationTripsParamsSchema = z.object({
+	stationid: z.number().int().positive("Station ID must be a positive integer"),
+	triptype: z.union([z.literal(1), z.literal(2)]),
+});

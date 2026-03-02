@@ -25,6 +25,8 @@ import {
 	rawWaypointsResponseSchema,
 	rawTimetableByStationResponseSchema,
 	timetableByStationRequestSchema,
+	rawStationTripsResponseSchema,
+	stationTripsParamsSchema,
 } from "../schemas/routes";
 import { WALK_ROUTE_PREFIX, WALK_PREFIX, EMPTY_SUBROUTE_ID } from "../constants/routes";
 import {
@@ -83,8 +85,12 @@ import type {
 	TimetableByStationResponse,
 	RawTimetableByStationResponse,
 	TimetableByStationItem,
+	StationTripsParams,
+	StationTripsResponse,
+	RawStationTripsResponse,
+	StationTripItem,
 } from "../types/routes";
-import { tripPlannerFilterToNumber } from "../types/routes";
+import { tripPlannerFilterToNumber, stationTripTypeToNumber } from "../types/routes";
 import type {
 	RouteFeature,
 	LocationFeature,
@@ -185,6 +191,30 @@ function transformTimetableResponse(
 			startTime: trip.starttime,
 			endTime: trip.endtime,
 		})),
+	}));
+
+	return {
+		items,
+	};
+}
+
+/**
+ * Transform raw station trips API response to clean, normalized format
+ */
+function transformStationTripsResponse(
+	raw: RawStationTripsResponse
+): StationTripsResponse {
+	const items: StationTripItem[] = raw.data.map((item) => ({
+		routeNo: item.routeno,
+		routeName: item.routename,
+		fromStationName: item.fromstationname,
+		toStationName: item.tostationname,
+		vehicleId: stringifyId(item.vehicleid),
+		busNo: item.busno,
+		...(item.arrivaltime !== undefined && { arrivalTime: item.arrivaltime }),
+		...(item.scheduletime !== undefined && { scheduleTime: item.scheduletime }),
+		deviceStatusFlag: item.devicestatusflag,
+		deviceStatusName: item.devicestatusnameflag,
 	}));
 
 	return {
@@ -1554,5 +1584,57 @@ export class RoutesAPI {
 
 		// Transform to clean, normalized format
 		return transformTimetableByStationResponse(rawResponse);
+	}
+
+	/**
+	 * Get trips at a station - either running now or scheduled
+	 * @param params - Parameters including station ID and trip type
+	 * @param params.stationId - Station ID (always string for consistency)
+	 * @param params.tripType - "running" for trips in progress (arrival times), "scheduled" for upcoming trips (schedule times)
+	 * @returns List of trips at the station with route and vehicle information
+	 * @throws {TransitValidationError} If station ID or trip type is invalid
+	 * @throws {HTTPError} If the API request fails (network error, 4xx, 5xx)
+	 * @example
+	 * ```typescript
+	 * // Get buses currently arriving at a station
+	 * const runningTrips = await client.routes.getStationTrips({
+	 *   stationId: "37944",
+	 *   tripType: "running"
+	 * });
+	 *
+	 * // Get scheduled trips at a station
+	 * const scheduledTrips = await client.routes.getStationTrips({
+	 *   stationId: "37944",
+	 *   tripType: "scheduled"
+	 * });
+	 * ```
+	 */
+	async getStationTrips(
+		params: StationTripsParams & RequestOptions
+	): Promise<StationTripsResponse> {
+		const { signal, ...rest } = params;
+		const validatedParams = validate(
+			stationTripsParamsSchema,
+			{
+				stationid: parseId(rest.stationId),
+				triptype: stationTripTypeToNumber(rest.tripType),
+			},
+			"Invalid station trips parameters"
+		);
+
+		const response = await this.client.getClient().post("getMobileTripsData", {
+			json: validatedParams,
+			signal,
+		});
+
+		const data = await response.json<unknown>();
+
+		const rawResponse = validate(
+			rawStationTripsResponseSchema,
+			data,
+			"Invalid station trips response"
+		);
+
+		return transformStationTripsResponse(rawResponse);
 	}
 }

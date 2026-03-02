@@ -59,6 +59,10 @@ export type {
 	TimetableByStationItem,
 	TimetableByStationResponse,
 	TimetableByStationParams,
+	StationTripType,
+	StationTripItem,
+	StationTripsResponse,
+	StationTripsParams,
 } from "./routes";
 
 // Vehicles

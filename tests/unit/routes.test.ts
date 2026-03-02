@@ -2444,4 +2444,111 @@ describe("RoutesAPI", () => {
 			// Coordinates should be extracted from GeoJSON, properties ignored
 		});
 	});
+
+	describe("getStationTrips", () => {
+		it("should get running trips at a station (tripType: running)", async () => {
+			const mockRawResponse = {
+				data: [
+					{
+						routeno: "KIA-9",
+						routename: "KIA-KBS",
+						fromstationname: "Kempegowda International Airport",
+						tostationname: "Kempegowda Bus Station",
+						vehicleid: 21550,
+						busno: "KA57F2228",
+						arrivaltime: "03-03-2026 01:59:00",
+						devicestatusflag: 1,
+						devicestatusnameflag: "Tracking available",
+					},
+				],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 1,
+				responsecode: 200,
+			};
+
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const result = await client.routes.getStationTrips({
+				stationId: "37944",
+				tripType: "running",
+			});
+
+			expect(result.items).toHaveLength(1);
+			expect(result.items[0].routeNo).toBe("KIA-9");
+			expect(result.items[0].routeName).toBe("KIA-KBS");
+			expect(result.items[0].vehicleId).toBe("21550");
+			expect(result.items[0].busNo).toBe("KA57F2228");
+			expect(result.items[0].arrivalTime).toBe("03-03-2026 01:59:00");
+			expect(result.items[0].deviceStatusName).toBe("Tracking available");
+			expect(mockPost).toHaveBeenCalledWith(
+				"getMobileTripsData",
+				expect.objectContaining({
+					json: { stationid: 37944, triptype: 1 },
+				})
+			);
+		});
+
+		it("should get scheduled trips at a station (tripType: scheduled)", async () => {
+			const mockRawResponse = {
+				data: [
+					{
+						routeno: "KIA-7",
+						routename: "KIA-HSRKEB",
+						fromstationname: "Kempegowda International Airport",
+						tostationname: "HSR Layout KEB",
+						vehicleid: 28621,
+						busno: "KA01AR4179",
+						scheduletime: "03-03-2026 02:35:00",
+						devicestatusflag: 1,
+						devicestatusnameflag: "Tracking available",
+					},
+				],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 1,
+				responsecode: 200,
+			};
+
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const result = await client.routes.getStationTrips({
+				stationId: "37944",
+				tripType: "scheduled",
+			});
+
+			expect(result.items).toHaveLength(1);
+			expect(result.items[0].routeNo).toBe("KIA-7");
+			expect(result.items[0].scheduleTime).toBe("03-03-2026 02:35:00");
+			expect(result.items[0].deviceStatusFlag).toBe(1);
+			expect(mockPost).toHaveBeenCalledWith(
+				"getMobileTripsData",
+				expect.objectContaining({
+					json: { stationid: 37944, triptype: 2 },
+				})
+			);
+		});
+
+		it("should validate input parameters and throw on invalid stationId", async () => {
+			await expect(
+				client.routes.getStationTrips({
+					stationId: "0",
+					tripType: "running",
+				})
+			).rejects.toThrow("Invalid station trips parameters");
+
+			await expect(
+				client.routes.getStationTrips({
+					stationId: "-1",
+					tripType: "scheduled",
+				})
+			).rejects.toThrow("Invalid station trips parameters");
+		});
+	});
 });
