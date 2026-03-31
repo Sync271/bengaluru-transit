@@ -208,6 +208,56 @@ describe.skipIf(!RUN_REAL_API_TESTS)("Bengaluru Transit Real API Integration Tes
 			},
 			{ timeout: 30000 }
 		);
+
+		it.skipIf(!shouldRunTest("vehicle"))(
+			"should get vehicle trip after search (tolerates missing route or live data)",
+			async () => {
+				const search = await client.vehicles.searchVehicles({
+					query: "KA57",
+				});
+
+				expect(search.items.length).toBeGreaterThan(0);
+				const vehicleId = search.items[0].vehicleId;
+
+				const result = await client.vehicles.getVehicleTrip({ vehicleId });
+
+				expect(result.routeStops.type).toBe("FeatureCollection");
+				expect(result.vehicleLocation.type).toBe("FeatureCollection");
+				expect(Array.isArray(result.routeStops.features)).toBe(true);
+				expect(Array.isArray(result.vehicleLocation.features)).toBe(true);
+
+				const { features: routeFeatures } = result.routeStops;
+				const { features: liveFeatures } = result.vehicleLocation;
+
+				if (routeFeatures.length > 0) {
+					expect(routeFeatures[0].geometry.type).toBe("Point");
+					expect(routeFeatures[0].properties).toHaveProperty("tripId");
+					expect(routeFeatures[0].properties).toHaveProperty("vehicleId");
+				}
+				if (liveFeatures.length > 0) {
+					expect(liveFeatures[0].geometry.type).toBe("Point");
+					expect(liveFeatures[0].properties).toHaveProperty("vehicleId");
+					expect(liveFeatures[0].geometry.coordinates).toHaveLength(2);
+					expect(typeof liveFeatures[0].properties.heading).toBe("number");
+				}
+
+				console.log("\n🚌 Vehicle Trip (search → trip) partial data check:");
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+				console.log(
+					JSON.stringify(
+						{
+							vehicleId,
+							routeStopCount: routeFeatures.length,
+							liveLocationCount: liveFeatures.length,
+						},
+						null,
+						2
+					)
+				);
+				console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+			},
+			{ timeout: 30000 }
+		);
 	});
 
 	describe("Stops API - Real Endpoints", () => {

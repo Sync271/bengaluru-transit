@@ -4,6 +4,7 @@
 
 import type { z } from "zod";
 import type {
+	rawLiveLocationItemSchema,
 	rawSearchVehiclesResponseSchema,
 	rawVehicleTripResponseSchema,
 } from "../schemas/vehicles";
@@ -105,25 +106,9 @@ export interface RawRouteDetailItem {
 }
 
 /**
- * Raw live location item from VehicleTripDetails API
+ * Parsed live location row (API may send string coordinates or null heading)
  */
-export interface RawLiveLocationItem {
-	latitude: number;
-	longitude: number;
-	location: string;
-	lastrefreshon: string;
-	nextstop: string;
-	previousstop: string;
-	vehicleid: number;
-	vehiclenumber: string;
-	routeno: string;
-	servicetypeid: number;
-	servicetype: string;
-	heading: number;
-	responsecode: number;
-	trip_status: number;
-	lastreceiveddatetimeflag: number;
-}
+export type RawLiveLocationItem = z.infer<typeof rawLiveLocationItemSchema>;
 
 /**
  * Raw vehicle trip API response from BMTC API

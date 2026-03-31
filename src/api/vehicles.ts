@@ -103,7 +103,7 @@ function transformVehicleTripResponse(
 				routeNo: emptyStr(item.routeno),
 				serviceType: emptyStr(item.servicetype),
 				serviceTypeId: stringifyId(item.servicetypeid),
-				heading: item.heading,
+				heading: item.heading ?? 0,
 				location: emptyStr(item.location),
 				lastRefreshedOn: item.lastrefreshon,
 				nextStop: emptyStr(item.nextstop),

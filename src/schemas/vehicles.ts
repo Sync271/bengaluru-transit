@@ -85,8 +85,8 @@ export const rawRouteDetailItemSchema = z.object({
  * Schema for raw live location item from VehicleTripDetails API
  */
 export const rawLiveLocationItemSchema = z.object({
-	latitude: z.number(),
-	longitude: z.number(),
+	latitude: z.coerce.number(),
+	longitude: z.coerce.number(),
 	location: z.string().nullable(),
 	lastrefreshon: z.string(),
 	nextstop: z.string().nullable(),
@@ -96,24 +96,49 @@ export const rawLiveLocationItemSchema = z.object({
 	routeno: z.string().nullable(),
 	servicetypeid: z.number(),
 	servicetype: z.string().nullable(),
-	heading: z.number(),
+	heading: z.number().nullish().transform((h) => h ?? 0),
 	responsecode: z.number(),
-	trip_status: z.number(),
+	trip_status: z.number().nullish().transform((v) => v ?? 0),
 	lastreceiveddatetimeflag: z.number(),
 });
 
 /**
+ * VehicleTripDetails_v2 sometimes returns JSON as a double-encoded string; unwrap before object parsing.
+ */
+function preprocessVehicleTripJson(val: unknown): unknown {
+	if (typeof val === "string") {
+		try {
+			return JSON.parse(val) as unknown;
+		} catch {
+			return val;
+		}
+	}
+	return val;
+}
+
+const rawVehicleTripResponseInner = z
+	.object({
+		RouteDetails: z.array(rawRouteDetailItemSchema).nullish(),
+		LiveLocation: z.array(rawLiveLocationItemSchema).nullish(),
+		Message: z.string(),
+		Issuccess: z.boolean(),
+		exception: z.unknown().nullish(),
+		RowCount: z.number(),
+		responsecode: z.number(),
+	})
+	.transform((data) => ({
+		...data,
+		RouteDetails: data.RouteDetails ?? [],
+		LiveLocation: data.LiveLocation ?? [],
+	}));
+
+/**
  * Schema for raw vehicle trip API response from BMTC API
  */
-export const rawVehicleTripResponseSchema = z.object({
-	RouteDetails: z.array(rawRouteDetailItemSchema),
-	LiveLocation: z.array(rawLiveLocationItemSchema),
-	Message: z.string(),
-	Issuccess: z.boolean(),
-	exception: z.unknown().nullish(),
-	RowCount: z.number(),
-	responsecode: z.number(),
-});
+export const rawVehicleTripResponseSchema = z.preprocess(
+	preprocessVehicleTripJson,
+	rawVehicleTripResponseInner
+);
 
 /**
  * Schema for vehicle trip request parameters

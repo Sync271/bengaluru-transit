@@ -28,11 +28,11 @@ export function stringifyId(id: number): string {
 /**
  * Validates data against a Zod schema and throws a formatted error if invalid
  */
-export function validate<T>(
-  schema: z.ZodSchema<T>,
+export function validate<T extends z.ZodTypeAny>(
+  schema: T,
   data: unknown,
   errorMessage?: string,
-): T {
+): z.infer<T> {
   const result = schema.safeParse(data);
 
   if (!result.success) {
@@ -54,10 +54,10 @@ export function validate<T>(
 /**
  * Safely validates data and returns a result object
  */
-export function safeValidate<T>(
-  schema: z.ZodSchema<T>,
+export function safeValidate<T extends z.ZodTypeAny>(
+  schema: T,
   data: unknown,
-): { success: true; data: T } | { success: false; error: { message: string; code: string; details?: Array<{ path: string; message: string }> } } {
+): { success: true; data: z.infer<T> } | { success: false; error: { message: string; code: string; details?: Array<{ path: string; message: string }> } } {
   const result = schema.safeParse(data);
 
   if (!result.success) {

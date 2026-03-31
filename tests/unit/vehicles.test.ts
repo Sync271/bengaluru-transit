@@ -261,6 +261,209 @@ describe("VehiclesAPI", () => {
 			expect(result.vehicleLocation.features).toHaveLength(0);
 		});
 
+		it("should parse double-encoded JSON vehicle trip response", async () => {
+			const mockRawResponse = {
+				RouteDetails: [],
+				LiveLocation: [
+					{
+						latitude: 12.95458,
+						longitude: 77.597679,
+						location: null,
+						lastrefreshon: "28-03-2026 18:12:58",
+						nextstop: null,
+						previousstop: null,
+						vehicleid: 21537,
+						vehiclenumber: "KA57F1837",
+						routeno: null,
+						servicetypeid: 73,
+						servicetype: "AC",
+						heading: 0,
+						responsecode: 200,
+						trip_status: null,
+						lastreceiveddatetimeflag: 0,
+					},
+				],
+				Message: "Success",
+				Issuccess: true,
+				exception: null,
+				RowCount: 1,
+				responsecode: 200,
+			};
+
+			// API returns double-encoded JSON: first parse yields a string (simulated here).
+			mockPost.mockResolvedValue({
+				json: async () => JSON.stringify(mockRawResponse),
+			} as Response);
+
+			const result = await client.vehicles.getVehicleTrip({
+				vehicleId: "21537",
+			});
+
+			expect(result.routeStops.features).toHaveLength(0);
+			expect(result.vehicleLocation.features).toHaveLength(1);
+			expect(result.vehicleLocation.features[0].properties.tripStatus).toBe(0);
+		});
+
+		it("should accept Message No Records Found with empty RouteDetails and live GPS", async () => {
+			const mockRawResponse = {
+				RouteDetails: [],
+				LiveLocation: [
+					{
+						latitude: 13.043501,
+						longitude: 77.593994,
+						location: "Depot-28 Hebbala (Towards N/A)",
+						lastrefreshon: "01-04-2026 00:23:20",
+						nextstop: null,
+						previousstop: null,
+						vehicleid: 19273,
+						vehiclenumber: "KA57F1279",
+						routeno: null,
+						servicetypeid: 73,
+						servicetype: "AC",
+						heading: 18,
+						responsecode: 200,
+						trip_status: null,
+						lastreceiveddatetimeflag: 0,
+					},
+				],
+				Message: "No Records Found",
+				Issuccess: true,
+				exception: null,
+				RowCount: 1,
+				responsecode: 200,
+			};
+
+			mockPost.mockResolvedValue({
+				json: async () => mockRawResponse,
+			} as Response);
+
+			const result = await client.vehicles.getVehicleTrip({
+				vehicleId: "19273",
+			});
+
+			expect(result.routeStops.features).toHaveLength(0);
+			expect(result.vehicleLocation.features).toHaveLength(1);
+			const loc = result.vehicleLocation.features[0];
+			expect(loc.geometry.coordinates).toEqual([77.593994, 13.043501]);
+			expect(loc.properties.heading).toBe(18);
+			expect(loc.properties.tripStatus).toBe(0);
+			expect(loc.properties.vehicleNumber).toBe("KA57F1279");
+		});
+
+		it("should return live location when RouteDetails is null or empty", async () => {
+			const minimalLiveRow = {
+				latitude: "12.916225",
+				longitude: "77.636513",
+				location: null,
+				lastrefreshon: "16-01-2026 03:12:34",
+				nextstop: null,
+				previousstop: null,
+				vehicleid: 21537,
+				vehiclenumber: "KA57F1837",
+				routeno: null,
+				servicetypeid: 73,
+				servicetype: null,
+				heading: null,
+				responsecode: 200,
+				trip_status: 1,
+				lastreceiveddatetimeflag: 1,
+			};
+
+			for (const routeDetails of [null, []] as const) {
+				mockPost.mockResolvedValue({
+					json: async () => ({
+						RouteDetails: routeDetails,
+						LiveLocation: [minimalLiveRow],
+						Message: "Success",
+						Issuccess: true,
+						exception: null,
+						RowCount: 1,
+						responsecode: 200,
+					}),
+				} as Response);
+
+				const result = await client.vehicles.getVehicleTrip({
+					vehicleId: "21537",
+				});
+
+				expect(result.routeStops.features).toHaveLength(0);
+				expect(result.vehicleLocation.features.length).toBeGreaterThanOrEqual(1);
+				const loc = result.vehicleLocation.features[0];
+				expect(loc.geometry.type).toBe("Point");
+				expect(loc.geometry.coordinates).toEqual([77.636513, 12.916225]);
+				expect(loc.properties.heading).toBe(0);
+			}
+		});
+
+		it("should return route stops when LiveLocation is null or empty", async () => {
+			const routeRow = {
+				rowid: 1,
+				tripid: 79897818,
+				routeno: "KIA-8E",
+				routename: "ELCW-KIA",
+				busno: "KA57F1837",
+				tripstatus: "Running",
+				tripstatusid: "1",
+				sourcestation: "Electronic City Wipro Main Gate",
+				destinationstation: "Kempegowda International Airport",
+				servicetype: "AC",
+				webservicetype: "AC",
+				servicetypeid: 73,
+				lastupdatedat: "16-01-2026 03:12:34",
+				stationname: "Electronic City Wipro Main Gate",
+				stationid: 20772,
+				actual_arrivaltime: null,
+				etastatus: "Skipped",
+				etastatusmapview: "N/A",
+				latitude: 12.83594,
+				longitude: 77.65742,
+				currentstop: "",
+				laststop: "SI Apartment HSR Layout (Towards Hebbala)",
+				weblaststop: "SI Apartment HSR Layout",
+				nextstop: "Depot-25 Gate (Towards Hebbala)",
+				currlatitude: 12.916225,
+				currlongitude: 77.636513,
+				sch_arrivaltime: "02:40",
+				sch_departuretime: "02:40",
+				eta: "",
+				actual_arrivaltime1: null,
+				actual_departudetime: null,
+				tripstarttime: "02:40",
+				tripendtime: "05:05",
+				routeid: 4420,
+				vehicleid: 21537,
+				responsecode: 200,
+				lastreceiveddatetimeflag: 1,
+				srno: 1876639805,
+				tripposition: 1,
+				stopstatus: 2,
+				stopstatus_distance: 999.0,
+				lastetaupdated: null,
+				minstopstatus_distance: 0.74,
+			};
+
+			for (const liveLocation of [null, []] as const) {
+				mockPost.mockResolvedValue({
+					json: async () => ({
+						RouteDetails: [routeRow],
+						LiveLocation: liveLocation,
+						Message: "Success",
+						Issuccess: true,
+						exception: null,
+						RowCount: 1,
+						responsecode: 200,
+					}),
+				} as Response);
+
+				const result = await client.vehicles.getVehicleTrip({
+					vehicleId: "21537",
+				});
+
+				expect(result.routeStops.features).toHaveLength(1);
+				expect(result.vehicleLocation.features).toHaveLength(0);
+			}
+		});
+
 		it("should validate input parameters and throw on invalid vehicleId", async () => {
 			await expect(
 				client.vehicles.getVehicleTrip({ vehicleId: "0" })
