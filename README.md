@@ -2,6 +2,8 @@
 
 A type-safe TypeScript SDK for Bengaluru public transit APIs with Zod validation and GeoJSON support.
 
+`BengaluruTransitClient` wraps the original transit API. `BengaluruTransitClientV2` wraps the current app API. The two clients use different hosts, headers, and route ids, and a value from one cannot be passed to the other.
+
 > **⚠️ Disclaimer**: This is an **unofficial** SDK. It is not affiliated with, endorsed by, or connected to any official transit authority. This project is developed independently to provide better API design and consumption patterns for transit data that deserves better tooling.
 
 ## Intent
@@ -18,7 +20,8 @@ This project is built with the intent of making public transit data more accessi
 
 - 🎯 **Type Safety**: Full TypeScript support with comprehensive type definitions
 - ✅ **Validation**: Runtime validation using Zod schemas
-- 🗺️ **GeoJSON**: Standard GeoJSON format for all spatial data (routes, stops, locations)
+- 🗺️ **GeoJSON**: Standard GeoJSON format for spatial data on `BengaluruTransitClient` (routes, stops, locations)
+- 🚌 **Current app API**: `BengaluruTransitClientV2` covers search, trip planning, live vehicles, nearby buses, and occupancy
 - 🚀 **Modern**: Built with modern TypeScript and ES modules
 - 📦 **Lightweight**: Minimal dependencies
 - 🔄 **Request Cancellation**: Optional AbortSignal support for canceling in-flight requests
@@ -31,9 +34,11 @@ npm install bengaluru-transit
 
 ## Browser / CORS
 
-> **CORS**: The underlying transit API does not allow cross-origin requests from browsers. Direct calls from frontend apps (React, Vue, etc.) will be blocked by CORS.
+`BengaluruTransitClientV2` can be called directly from a browser. Leave it on the default base URL, and do not enable credentialed requests. The server allows any origin only when cookies are not sent.
+
+> **CORS**: `BengaluruTransitClient` talks to an API that does not allow cross-origin requests from browsers. Direct calls from frontend apps (React, Vue, etc.) will be blocked by CORS.
 >
-> For web applications, use your own backend as a proxy and pass its URL to the client:
+> For web applications using the original client, use your own backend as a proxy and pass its URL to the client:
 
 ```typescript
 // Point the client at your proxy instead of the official API
@@ -66,7 +71,182 @@ const stops = await client.stops.findNearbyStops({
 console.log(stops.items.length, "stops found");
 ```
 
+## BengaluruTransitClientV2
+
+```typescript
+import { BengaluruTransitClientV2 } from "bengaluru-transit";
+
+const v2 = new BengaluruTransitClientV2();
+```
+
+Coordinates are `[latitude, longitude]`. Times of day are seconds from local midnight (`19:48` is `19 * 3600 + 48 * 60`). `day` is a lowercase weekday (`"tuesday"`). When `day` or `startTimeSeconds` is omitted, the client uses the current local time. Every method accepts an optional `signal` from `AbortController`.
+
+Route ids from this client are not the ids used by `BengaluruTransitClient`.
+
+### 1. Buses around you
+
+```typescript
+const nearby = await v2.getNearbyBuses({
+  coordinates: [12.97793, 77.6283],
+});
+
+const stop = nearby.stops[0];
+console.log(`${stop.stop.name} — ${stop.distanceKilometers} km`);
+
+stop.buses.forEach(bus => {
+  const live = bus.vehicles[0];
+  console.log(
+    `${bus.routeName} to ${bus.destinationName}`,
+    live ? `in ${live.etaSeconds}s (${live.number})` : "no live bus"
+  );
+});
+```
+
+Each stop includes the buses scheduled to call there. `arrivalTimeSeconds` is that scheduled arrival. `vehicles` is filled only when a bus on that route is being tracked, and `etaSeconds` on a vehicle is the live estimate. `distanceKilometers` is the distance from the coordinates you passed.
+
+### 2. Search
+
+Search returns routes, stops, and places. `filter` limits the query to `"routes"` or `"stops"`. Omit it to receive stops and places together. `day` for search is `DD-MM-YYYY`, not a weekday.
+
+```typescript
+const found = await v2.search({
+  query: "Majestic",
+  coordinates: [12.9716, 77.5946],
+});
+
+found.stops.forEach(stop => {
+  console.log(stop.name, stop.stopId, stop.stationType);
+});
+
+found.places.forEach(place => {
+  console.log(place.description);
+});
+
+const routes = await v2.search({
+  query: "500D",
+  coordinates: [12.9716, 77.5946],
+  filter: "routes",
+});
+
+const route = routes.routes[0];
+console.log(route.routeName, route.routeId, route.firstStopName, "→", route.lastStopName);
+```
+
+### 3. Plan a trip
+
+```typescript
+const trip = await v2.planTrip({
+  fromCoordinates: [12.97849, 77.63848],
+  toCoordinates: [12.97793, 77.57389],
+  startTimeSeconds: 19 * 3600 + 48 * 60,
+  day: "tuesday",
+});
+
+const best = trip.itineraries[0];
+console.log(`₹${best.totalFare}`, `${best.durationSeconds}s`);
+
+best.legs.forEach(leg => {
+  if (leg.mode === "BUS" || leg.mode === "METRO") {
+    console.log(`${leg.mode} ${leg.routeName}: ${leg.fromStopName} → ${leg.toStopName}`);
+  } else {
+    console.log(`${leg.mode} ${leg.distanceMeters ?? 0} m`);
+  }
+});
+```
+
+`itineraries` are the main options. `nearbyItineraries` holds extra options the API marks as nearby. A leg's `mode` is `BUS`, `METRO`, `WALK`, or `AUTO`. `totalFare` is in rupees. `durationSeconds` is the whole trip. `startTimeSeconds` and `endTimeSeconds` on a leg are seconds from midnight.
+
+### 4. Route details
+
+```typescript
+const details = await v2.getRouteDetails({
+  routeId: route.routeId,
+  day: "tuesday",
+});
+
+console.log(details.routeName, details.firstStop?.name, "→", details.lastStop?.name);
+console.log(details.stops.length, "stops");
+
+details.timetable.forEach(entry => {
+  console.log("departs", entry.startTimeSeconds);
+});
+```
+
+`stops` is the full stop sequence. `trips` are the scheduled trips for that day. `live` is whether the route is marked live. `ticketEnabled` is whether mobile ticketing is offered for it.
+
+### 5. Live vehicles
+
+`stopIds` is required. Pass the stop you care about, usually from `getRouteDetails` or `getNearbyBuses`.
+
+```typescript
+const live = await v2.getLiveVehicles({
+  routeId: details.routeId,
+  stopIds: [details.stops[0].stopId, details.lastStop!.stopId],
+});
+
+live.vehicles.forEach(vehicle => {
+  console.log(vehicle.number, vehicle.latitude, vehicle.longitude, vehicle.bearing);
+});
+
+live.arrivals.forEach(arrival => {
+  console.log(arrival.vehicleNumber, "at", arrival.stopId, "in", arrival.etaSeconds, "s");
+});
+```
+
+`vehicles` are current positions. `arrivals` are those vehicles measured against each stop id you passed. `distanceMeters` is the remaining distance, and `updatedAt` is epoch milliseconds.
+
+### 6. Arrivals for known stop and route pairs
+
+Use this when you already know the pairs and do not need the full route.
+
+```typescript
+const arrivals = await v2.getStopArrivals({
+  pairs: [{ stopId: "ArYFEPLj", routeId: details.routeId }],
+});
+
+arrivals.arrivals.forEach(arrival => {
+  console.log(arrival.routeName, arrival.vehicleNumber, arrival.etaSeconds);
+});
+```
+
+### 7. Occupancy
+
+Pass the live vehicle's registration number, `updatedAt`, route id, and stop id.
+
+```typescript
+const occupancy = await v2.getOccupancy({
+  vehicles: live.vehicles.flatMap(vehicle =>
+    vehicle.updatedAt === undefined
+      ? []
+      : [{
+          number: vehicle.number,
+          updatedAt: vehicle.updatedAt,
+          routeId: details.routeId,
+          stopId: details.stops[0].stopId,
+        }]
+  ),
+});
+
+occupancy.vehicles.forEach(vehicle => {
+  console.log(vehicle.number, vehicle.level);
+});
+```
+
+`level` is derived from the numeric `status`:
+
+| `status` | `level` |
+| --- | --- |
+| `-1` | `hidden` |
+| `0`, `3` | `seats-available` |
+| `1`, `4` | `standing-available` |
+| `2`, `5` | `overcrowded` |
+| anything else | `unknown` |
+
+The API does not return a passenger count. `hidden` and `unknown` are not shown as an icon in the app.
+
 ## Common Flows
+
+These examples use the `BengaluruTransitClient` from Quick Start.
 
 ### 1. Plan a Trip
 
