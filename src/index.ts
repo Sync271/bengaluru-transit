@@ -4,7 +4,9 @@
  */
 
 export { BengaluruTransitClient } from './client/transit-client';
+export { BengaluruTransitClientV2, occupancyLevel } from './client/v2-client';
 export type { BaseClientConfig } from './client/base-client';
+export type { BengaluruTransitClientV2Config } from './types/v2';
 
 // Export types
 export type * from './types';
