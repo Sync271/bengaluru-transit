@@ -221,6 +221,108 @@ describe("BengaluruTransitClientV2", () => {
 		expect(result.timetable).toHaveLength(1);
 	});
 
+	it("returns stops and the timetable when trip type is a number", async () => {
+		mockGet.mockResolvedValue({
+			json: async () => ({
+				route: {
+					route_id: "O8oSF0Jc",
+					route_name: "500-D",
+					agency_name: "BMTC",
+					isLive: "true",
+					mTicketEnabled: true,
+					stopSequenceWithDetails: [
+						{
+							stop_id: "gKWioTGb",
+							stop_name: "Majestic",
+							stop_lat: 12.977,
+							stop_lon: 77.572,
+						},
+					],
+				},
+				trips: [
+					{
+						trip_id: "trip-1",
+						start_time: 21600,
+						end_time: 25200,
+						trip_duration: 3600,
+						agency_name: "BMTC",
+						type: 0,
+						isFrequencyTrip: false,
+						extrapolated: false,
+					},
+				],
+				timings: [],
+				timeTable: [
+					{ start_time: 21600, isFrequency: false, extrapolated: false },
+				],
+			}),
+		});
+
+		const result = await client.getRouteDetails({
+			routeId: "O8oSF0Jc",
+			day: "tuesday",
+		});
+
+		expect(result.stops).toEqual([
+			expect.objectContaining({ stopId: "gKWioTGb", name: "Majestic" }),
+		]);
+		expect(result.timetable).toEqual([
+			{ startTimeSeconds: 21600, frequency: false, extrapolated: false },
+		]);
+		expect(result.trips[0]).toMatchObject({
+			tripId: "trip-1",
+			startTimeSeconds: 21600,
+			durationSeconds: 3600,
+		});
+		expect(result.trips[0].serviceType).toBeUndefined();
+	});
+
+	it("uses the scheduled span when a frequency leg reports travel_time 0", async () => {
+		mockGet.mockResolvedValue({
+			json: async () => ({
+				payload: {
+					itineraries: [
+						{
+							legs: [
+								{
+									mode: "METRO",
+									route_name: "Purple Line",
+									start_time: 36000,
+									end_time: 36690,
+									travel_time: 0,
+								},
+								{
+									mode: "BUS",
+									route_name: "500-D",
+									start_time: 36690,
+									end_time: 37200,
+									travel_time: 510,
+								},
+							],
+						},
+					],
+					nearbyItineraries: [],
+				},
+			}),
+		});
+
+		const result = await client.planTrip({
+			fromCoordinates: [12.97849, 77.63848],
+			toCoordinates: [12.97793, 77.57389],
+			startTimeSeconds: 35000,
+			day: "tuesday",
+		});
+
+		expect(result.itineraries[0].legs[0]).toMatchObject({
+			mode: "METRO",
+			routeName: "Purple Line",
+			startTimeSeconds: 36000,
+			endTimeSeconds: 36690,
+			travelTimeSeconds: 690,
+		});
+		expect(result.itineraries[0].legs[1].travelTimeSeconds).toBe(510);
+	});
+
 	it("parses live vehicle payloads", async () => {
 		mockGet.mockResolvedValue({
 			json: async () => ({

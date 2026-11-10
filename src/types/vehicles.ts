@@ -7,11 +7,11 @@ import type {
 	rawLiveLocationItemSchema,
 	rawSearchVehiclesResponseSchema,
 	rawVehicleTripResponseSchema,
-} from "../schemas/vehicles";
+} from "../schemas/vehicles.js";
 import type {
 	StopFeatureCollection,
 	LocationFeatureCollection,
-} from "./geojson";
+} from "./geojson.js";
 
 /**
  * Raw vehicle data item from BMTC API

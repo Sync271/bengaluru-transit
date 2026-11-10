@@ -3,13 +3,13 @@
  */
 
 import type { z } from "zod";
-import type { Coordinate } from "./coordinates";
+import type { Coordinate } from "./coordinates.js";
 import type {
 	rawAroundBusStopsResponseSchema,
 	rawNearbyBusStopsResponseSchema,
 	rawNearbyStationsResponseSchema,
-} from "../schemas/stops";
-import type { FacilityFeatureCollection } from "./geojson";
+} from "../schemas/stops.js";
+import type { FacilityFeatureCollection } from "./geojson.js";
 
 /**
  * Raw facility item from AroundBusStops API

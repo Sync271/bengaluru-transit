@@ -1,6 +1,6 @@
 import ky, { type KyInstance } from "ky";
-import { validate } from "../utils/validation";
-import { TransitValidationError } from "../utils/errors";
+import { validate } from "../utils/validation.js";
+import { TransitValidationError } from "../utils/errors.js";
 import {
 	v2EncodedVehicleSchema,
 	v2LiveVehiclesParamsSchema,
@@ -17,7 +17,7 @@ import {
 	v2StopArrivalsResponseSchema,
 	v2TripPlanParamsSchema,
 	v2TripPlanResponseSchema,
-} from "../schemas/v2";
+} from "../schemas/v2.js";
 import type {
 	BengaluruTransitClientV2Config,
 	V2Itinerary,
@@ -42,7 +42,7 @@ import type {
 	V2TripPlanResponse,
 	V2VehiclePosition,
 	V2Weekday,
-} from "../types/v2";
+} from "../types/v2.js";
 
 const DEFAULT_V2_BASE_URL = "https://chalo.com/app/api";
 const DEFAULT_CITY = "bengaluru";
@@ -124,6 +124,23 @@ function toStop(stop: {
 	};
 }
 
+function legTravelTimeSeconds(leg: {
+	start_time?: number;
+	end_time?: number;
+	travel_time?: number;
+}): number | undefined {
+	if (
+		leg.travel_time === 0 &&
+		leg.start_time !== undefined &&
+		leg.end_time !== undefined &&
+		leg.end_time >= leg.start_time
+	) {
+		return leg.end_time - leg.start_time;
+	}
+
+	return leg.travel_time;
+}
+
 function toLeg(leg: {
 	mode: string;
 	route_id?: string;
@@ -140,6 +157,7 @@ function toLeg(leg: {
 	start_place_name?: string;
 	end_place_name?: string;
 }): V2TripLeg {
+	const travelTimeSeconds = legTravelTimeSeconds(leg);
 	return {
 		mode: leg.mode,
 		...(leg.route_id ? { routeId: leg.route_id } : {}),
@@ -157,9 +175,7 @@ function toLeg(leg: {
 			? { startTimeSeconds: leg.start_time }
 			: {}),
 		...(leg.end_time !== undefined ? { endTimeSeconds: leg.end_time } : {}),
-		...(leg.travel_time !== undefined
-			? { travelTimeSeconds: leg.travel_time }
-			: {}),
+		...(travelTimeSeconds !== undefined ? { travelTimeSeconds } : {}),
 		...(leg.distance !== undefined ? { distanceMeters: leg.distance } : {}),
 	};
 }
@@ -464,7 +480,9 @@ export class BengaluruTransitClientV2 {
 					? { durationSeconds: trip.trip_duration }
 					: {}),
 				...(trip.agency_name ? { agencyName: trip.agency_name } : {}),
-				...(trip.type ? { serviceType: trip.type } : {}),
+				...(typeof trip.type === "string" && trip.type
+					? { serviceType: trip.type }
+					: {}),
 				frequencyTrip: trip.isFrequencyTrip ?? false,
 				extrapolated: trip.extrapolated ?? false,
 			})),

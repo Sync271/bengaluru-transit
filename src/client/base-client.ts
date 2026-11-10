@@ -3,7 +3,7 @@ import {
 	DEFAULT_BASE_URL,
 	DEFAULT_DEVICE_TYPE,
 	DEFAULT_AUTH_TOKEN,
-} from "../constants/api";
+} from "../constants/api.js";
 
 /**
  * Base HTTP client configuration for transit API

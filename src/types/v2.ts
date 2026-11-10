@@ -1,5 +1,5 @@
-import type { Coordinate } from "./coordinates";
-import type { RequestOptions } from "./api";
+import type { Coordinate } from "./coordinates.js";
+import type { RequestOptions } from "./api.js";
 
 /**
  * Weekday name sent to the current transit app API.

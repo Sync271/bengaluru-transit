@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { TransitValidationError } from './errors';
+import { TransitValidationError } from './errors.js';
 
 /**
  * Validation utility functions

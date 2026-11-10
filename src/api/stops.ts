@@ -1,4 +1,4 @@
-import { validate, parseId, stringifyId } from "../utils/validation";
+import { validate, parseId, stringifyId } from "../utils/validation.js";
 import {
 	rawAroundBusStopsResponseSchema,
 	aroundBusStopsParamsSchema,
@@ -6,14 +6,14 @@ import {
 	nearbyBusStopsParamsSchema,
 	rawNearbyStationsResponseSchema,
 	nearbyStationsParamsSchema,
-} from "../schemas/stops";
+} from "../schemas/stops.js";
 import {
 	createFacilityFeature,
 	createFeatureCollection,
-} from "../utils/geojson";
-import { BANGALORE_CENTER } from "../constants/api";
-import type { BaseClient } from "../client/base-client";
-import type { RequestOptions } from "../types/api";
+} from "../utils/geojson.js";
+import { BANGALORE_CENTER } from "../constants/api.js";
+import type { BaseClient } from "../client/base-client.js";
+import type { RequestOptions } from "../types/api.js";
 import type {
 	AroundBusStopsResponse,
 	RawAroundBusStopsResponse,
@@ -28,9 +28,9 @@ import type {
 	RawNearbyStationsResponse,
 	NearbyStationsParams,
 	NearbyStationItem,
-} from "../types/stops";
-import { stationTypeToNumber, transitCategoryToNumber } from "../types/stops";
-import type { FacilityFeature } from "../types/geojson";
+} from "../types/stops.js";
+import { stationTypeToNumber, transitCategoryToNumber } from "../types/stops.js";
+import type { FacilityFeature } from "../types/geojson.js";
 
 /**
  * Transform raw around bus stops API response to clean, normalized format

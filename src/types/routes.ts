@@ -20,14 +20,14 @@ import type {
 	rawPathDetailsResponseSchema,
 	rawTimetableByStationResponseSchema,
 	rawStationTripsResponseSchema,
-} from "../schemas/routes";
+} from "../schemas/routes.js";
 import type {
 	RouteFeatureCollection,
 	LocationFeatureCollection,
 	StopProperties,
-} from "./geojson";
+} from "./geojson.js";
 import type { Feature, FeatureCollection, Point } from "geojson";
-import type { Coordinate } from "./coordinates";
+import type { Coordinate } from "./coordinates.js";
 
 /**
  * Raw route point data item from BMTC API

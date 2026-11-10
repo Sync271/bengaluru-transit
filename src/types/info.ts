@@ -6,7 +6,7 @@ import type { z } from "zod";
 import type {
 	rawHelplineResponseSchema,
 	rawFareScrollMessagesResponseSchema,
-} from "../schemas/info";
+} from "../schemas/info.js";
 
 /**
  * Raw helpline data item from BMTC API

@@ -1,16 +1,16 @@
-import { validate } from "../utils/validation";
+import { validate } from "../utils/validation.js";
 import {
 	rawSearchPlacesResponseSchema,
 	searchPlacesParamsSchema,
-} from "../schemas/locations";
-import type { BaseClient } from "../client/base-client";
-import type { RequestOptions } from "../types/api";
+} from "../schemas/locations.js";
+import type { BaseClient } from "../client/base-client.js";
+import type { RequestOptions } from "../types/api.js";
 import type {
 	SearchPlacesResponse,
 	RawSearchPlacesResponse,
 	SearchPlacesParams,
 	PlaceItem,
-} from "../types/locations";
+} from "../types/locations.js";
 
 /**
  * Transform raw search places API response to clean, normalized format

@@ -1,9 +1,9 @@
-import { BaseClient, type BaseClientConfig } from "./base-client";
-import { InfoAPI } from "../api/info";
-import { VehiclesAPI } from "../api/vehicles";
-import { RoutesAPI } from "../api/routes";
-import { StopsAPI } from "../api/stops";
-import { LocationsAPI } from "../api/locations";
+import { BaseClient, type BaseClientConfig } from "./base-client.js";
+import { InfoAPI } from "../api/info.js";
+import { VehiclesAPI } from "../api/vehicles.js";
+import { RoutesAPI } from "../api/routes.js";
+import { StopsAPI } from "../api/stops.js";
+import { LocationsAPI } from "../api/locations.js";
 
 /**
  * Main Bengaluru Transit API client

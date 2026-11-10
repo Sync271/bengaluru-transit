@@ -7,13 +7,13 @@
  */
 
 // Base types
-export type { TransitApiError, RequestOptions } from "./api";
+export type { TransitApiError, RequestOptions } from "./api.js";
 
 // Coordinate types
-export * from "./coordinates";
+export * from "./coordinates.js";
 
 // GeoJSON types
-export * from "./geojson";
+export * from "./geojson.js";
 
 // Clean types from each module (raw types excluded)
 // Routes
@@ -63,7 +63,7 @@ export type {
 	StationTripItem,
 	StationTripsResponse,
 	StationTripsParams,
-} from "./routes";
+} from "./routes.js";
 
 // Vehicles
 export type {
@@ -72,7 +72,7 @@ export type {
 	SearchVehiclesParams,
 	VehicleTripResponse,
 	VehicleTripParams,
-} from "./vehicles";
+} from "./vehicles.js";
 
 // Stops
 export type {
@@ -88,7 +88,7 @@ export type {
 	NearbyStationItem,
 	NearbyStationsResponse,
 	NearbyStationsParams,
-} from "./stops";
+} from "./stops.js";
 
 // Info
 export type {
@@ -102,14 +102,14 @@ export type {
 	EmergencyMessagesResponse,
 	FareScrollMessageDataItem,
 	FareScrollMessagesResponse,
-} from "./info";
+} from "./info.js";
 
 // Locations
 export type {
 	PlaceItem,
 	SearchPlacesResponse,
 	SearchPlacesParams,
-} from "./locations";
+} from "./locations.js";
 
 export type {
 	V2Weekday,
@@ -145,4 +145,4 @@ export type {
 	V2OccupancyParams,
 	V2OccupancyItem,
 	V2Occupancy,
-} from "./v2";
+} from "./v2.js";

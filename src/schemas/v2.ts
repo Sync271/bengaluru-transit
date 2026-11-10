@@ -126,7 +126,7 @@ const v2ScheduledTripSchema = z
 		end_time: z.number().optional(),
 		trip_duration: z.number().optional(),
 		agency_name: z.string().optional(),
-		type: z.string().optional(),
+		type: z.union([z.string(), z.number()]).optional(),
 		isFrequencyTrip: z.boolean().optional(),
 		extrapolated: z.boolean().optional(),
 	})

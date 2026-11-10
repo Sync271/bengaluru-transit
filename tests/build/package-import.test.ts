@@ -4,6 +4,7 @@
  * This is run before publishing to verify the build is correct
  */
 
+import { execFileSync } from "node:child_process";
 import { describe, it, expect } from "vitest";
 
 // Import from dist/ to test the actual built output
@@ -38,6 +39,25 @@ describe("Package Import Tests (Built Package)", () => {
 		};
 		const client = new BengaluruTransitClient(config);
 		expect(client.getLanguage()).toBe("kn");
+	});
+
+	it("loads named exports as an ES module in Node", () => {
+		const output = execFileSync(
+			process.execPath,
+			[
+				"--input-type=module",
+				"-e",
+				[
+					'import { BengaluruTransitClient, BengaluruTransitClientV2 } from "./dist/index.js";',
+					'if (typeof BengaluruTransitClient !== "function") process.exit(1);',
+					'if (typeof BengaluruTransitClientV2 !== "function") process.exit(1);',
+					'console.log("esm");',
+				].join(""),
+			],
+			{ encoding: "utf8" }
+		);
+
+		expect(output.trim()).toBe("esm");
 	});
 
 	it("should export types correctly", () => {

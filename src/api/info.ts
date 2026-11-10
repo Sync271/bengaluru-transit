@@ -1,14 +1,14 @@
 import { z } from "zod";
-import { validate, stringifyId } from "../utils/validation";
+import { validate, stringifyId } from "../utils/validation.js";
 import {
 	rawHelplineResponseSchema,
 	rawServiceTypesResponseSchema,
 	rawAboutDataResponseSchema,
 	rawEmergencyMessagesResponseSchema,
 	rawFareScrollMessagesResponseSchema,
-} from "../schemas/info";
-import type { BaseClient } from "../client/base-client";
-import type { RequestOptions } from "../types/api";
+} from "../schemas/info.js";
+import type { BaseClient } from "../client/base-client.js";
+import type { RequestOptions } from "../types/api.js";
 import type {
 	HelplineResponse,
 	HelplineDataItem,
@@ -21,7 +21,7 @@ import type {
 	FareScrollMessagesResponse,
 	RawFareScrollMessagesResponse,
 	FareScrollMessageDataItem,
-} from "../types/info";
+} from "../types/info.js";
 type RawServiceTypesResponse = z.infer<typeof rawServiceTypesResponseSchema>;
 type RawAboutDataResponse = z.infer<typeof rawAboutDataResponseSchema>;
 type RawEmergencyMessagesResponse = z.infer<

@@ -32,6 +32,8 @@ This project is built with the intent of making public transit data more accessi
 npm install bengaluru-transit
 ```
 
+The package is native ESM (`"type": "module"`).
+
 ## Browser / CORS
 
 `BengaluruTransitClientV2` can be called directly from a browser. Leave it on the default base URL, and do not enable credentialed requests. The server allows any origin only when cookies are not sent.

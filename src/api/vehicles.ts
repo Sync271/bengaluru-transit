@@ -1,17 +1,17 @@
-import { validate, parseId, stringifyId } from "../utils/validation";
+import { validate, parseId, stringifyId } from "../utils/validation.js";
 import {
 	rawSearchVehiclesResponseSchema,
 	searchVehiclesParamsSchema,
 	rawVehicleTripResponseSchema,
 	vehicleTripParamsSchema,
-} from "../schemas/vehicles";
+} from "../schemas/vehicles.js";
 import {
 	createStopFeature,
 	createLocationFeature,
 	createFeatureCollection,
-} from "../utils/geojson";
-import type { BaseClient } from "../client/base-client";
-import type { RequestOptions } from "../types/api";
+} from "../utils/geojson.js";
+import type { BaseClient } from "../client/base-client.js";
+import type { RequestOptions } from "../types/api.js";
 import type {
 	SearchVehiclesResponse,
 	VehicleDataItem,
@@ -20,7 +20,7 @@ import type {
 	VehicleTripResponse,
 	RawVehicleTripResponse,
 	VehicleTripParams,
-} from "../types/vehicles";
+} from "../types/vehicles.js";
 
 /**
  * Transform raw search vehicles API response to clean, normalized format

@@ -3,7 +3,7 @@
  */
 
 import type { z } from "zod";
-import type { rawSearchPlacesResponseSchema } from "../schemas/locations";
+import type { rawSearchPlacesResponseSchema } from "../schemas/locations.js";
 
 /**
  * Raw place item from GetSearchPlaceData API

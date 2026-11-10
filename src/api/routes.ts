@@ -1,7 +1,7 @@
-import { validate, parseId, stringifyId } from "../utils/validation";
-import { TransitError } from "../utils/errors";
-import { formatDateTime, formatDate, formatISODate } from "../utils/date";
-import { DEFAULT_DEVICE_TYPE } from "../constants/api";
+import { validate, parseId, stringifyId } from "../utils/validation.js";
+import { TransitError } from "../utils/errors.js";
+import { formatDateTime, formatDate, formatISODate } from "../utils/date.js";
+import { DEFAULT_DEVICE_TYPE } from "../constants/api.js";
 import {
 	rawRoutePointsResponseSchema,
 	routePointsParamsSchema,
@@ -27,16 +27,16 @@ import {
 	timetableByStationRequestSchema,
 	rawStationTripsResponseSchema,
 	stationTripsParamsSchema,
-} from "../schemas/routes";
-import { WALK_ROUTE_PREFIX, WALK_PREFIX, EMPTY_SUBROUTE_ID } from "../constants/routes";
+} from "../schemas/routes.js";
+import { WALK_ROUTE_PREFIX, WALK_PREFIX, EMPTY_SUBROUTE_ID } from "../constants/routes.js";
 import {
 	createRouteFeature,
 	createFeatureCollection,
 	createLocationFeature,
-} from "../utils/geojson";
+} from "../utils/geojson.js";
 import { decode as hereDecode } from "@here/flexpolyline";
-import type { BaseClient } from "../client/base-client";
-import type { RequestOptions } from "../types/api";
+import type { BaseClient } from "../client/base-client.js";
+import type { RequestOptions } from "../types/api.js";
 import type {
 	RoutePointsResponse,
 	RawRoutePointsResponse,
@@ -89,13 +89,13 @@ import type {
 	StationTripsResponse,
 	RawStationTripsResponse,
 	StationTripItem,
-} from "../types/routes";
-import { tripPlannerFilterToNumber, stationTripTypeToNumber } from "../types/routes";
+} from "../types/routes.js";
+import { tripPlannerFilterToNumber, stationTripTypeToNumber } from "../types/routes.js";
 import type {
 	RouteFeature,
 	LocationFeature,
-} from "../types/geojson";
-import type { RouteDetailStationProperties } from "../types/routes";
+} from "../types/geojson.js";
+import type { RouteDetailStationProperties } from "../types/routes.js";
 import type { Position } from "geojson";
 
 /**

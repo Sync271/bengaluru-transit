@@ -12,7 +12,7 @@ import type {
   RouteProperties,
   StopFeature,
   StopProperties,
-} from '../types/geojson';
+} from '../types/geojson.js';
 
 /**
  * GeoJSON utility functions for BMTC data conversion
