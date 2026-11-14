@@ -1129,6 +1129,49 @@ describe("BengaluruTransitClientV2", () => {
 		});
 	});
 
+	it("lists supported cities", async () => {
+		mockGet.mockResolvedValue({
+			json: async () => ({
+				data: [
+					{
+						cityId: "BENGALURU",
+						cityDisplayName: "Bengaluru",
+						beta_mode: true,
+						isComingSoon: false,
+						isDisabled: false,
+						polyBound: [[12.9, 77.5]],
+					},
+					{
+						cityId: "MUMBAI",
+						cityDisplayName: "Mumbai",
+						beta_mode: false,
+						isComingSoon: false,
+					},
+				],
+			}),
+		});
+
+		const result = await client.listCities();
+
+		expect(mockGet.mock.calls[0][0]).toBe("scheduler_v4/cityList");
+		expect(result.cities).toEqual([
+			{
+				cityId: "bengaluru",
+				displayName: "Bengaluru",
+				beta: true,
+				comingSoon: false,
+				disabled: false,
+			},
+			{
+				cityId: "mumbai",
+				displayName: "Mumbai",
+				beta: false,
+				comingSoon: false,
+				disabled: false,
+			},
+		]);
+	});
+
 	it("rejects an empty search", async () => {
 		await expect(
 			client.search({ query: "  ", coordinates: [12.97, 77.59] })

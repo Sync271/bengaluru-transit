@@ -674,3 +674,22 @@ export interface V2OccupancyItem {
 export interface V2Occupancy {
 	vehicles: V2OccupancyItem[];
 }
+
+/**
+ * Supported Chalo cities (`GET scheduler_v4/cityList`).
+ * Omits the large `polyBound` polygon from the raw payload.
+ */
+export interface V2City {
+	/**
+	 * City id for API path segments, lowercased (e.g. `bengaluru`).
+	 */
+	cityId: string;
+	displayName: string;
+	beta: boolean;
+	comingSoon: boolean;
+	disabled: boolean;
+}
+
+export interface V2ListCitiesResponse {
+	cities: V2City[];
+}

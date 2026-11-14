@@ -308,6 +308,17 @@ occupancy.vehicles.forEach(vehicle => {
 
 The API does not return a passenger count. `hidden` and `unknown` are not shown as an icon in the app.
 
+### 9. City list
+
+```typescript
+const { cities } = await v2.listCities();
+cities.forEach(city => {
+  console.log(city.cityId, city.displayName, city.beta ? "(beta)" : "");
+});
+```
+
+`cityId` is lowercased for use as `new BengaluruTransitClientV2({ city })`. Boundary polygons from the API are not included.
+
 ## Common Flows
 
 These examples use the `BengaluruTransitClient` from Quick Start.

@@ -617,3 +617,20 @@ export const v2OccupancyResponseSchema = z.object({
 		.default([]),
 	vehicleCount: z.number().optional(),
 });
+
+export const v2ListCitiesResponseSchema = z.object({
+	data: z
+		.array(
+			z
+				.object({
+					cityId: z.string(),
+					cityDisplayName: z.string(),
+					beta_mode: z.boolean().optional(),
+					isComingSoon: z.boolean().optional(),
+					isDisabled: z.boolean().optional(),
+				})
+				.passthrough()
+		)
+		.optional()
+		.default([]),
+});

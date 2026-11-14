@@ -17,6 +17,7 @@ import {
 	v2RouteStopDetailsResponseSchema,
 	v2OccupancyParamsSchema,
 	v2OccupancyResponseSchema,
+	v2ListCitiesResponseSchema,
 	v2RouteDetailsParamsSchema,
 	v2RouteDetailsResponseSchema,
 	v2RouteDetailsBulkParamsSchema,
@@ -40,6 +41,7 @@ import {
 	v2TripPlanParamsSchema,
 	v2TripPlanResponseSchema,
 } from "../schemas/v2.js";
+import type { RequestOptions } from "../types/api.js";
 import type {
 	BengaluruTransitClientV2Config,
 	V2Itinerary,
@@ -60,6 +62,7 @@ import type {
 	V2Occupancy,
 	V2OccupancyLevel,
 	V2OccupancyParams,
+	V2ListCitiesResponse,
 	V2BulkRouteDetails,
 	V2RouteDetails,
 	V2RouteDetailsBulkParams,
@@ -1334,6 +1337,31 @@ export class BengaluruTransitClientV2 {
 					vehicles:
 						liveByPair.get(`${stop.stop_id}:${item.trip.route_id}`) ?? [],
 				})),
+			})),
+		};
+	}
+
+	/**
+	 * List cities supported by the Chalo scheduler (`GET scheduler_v4/cityList`).
+	 * Boundary polygons are omitted; use `cityId` (lowercased) as the client city.
+	 */
+	async listCities(options: RequestOptions = {}): Promise<V2ListCitiesResponse> {
+		const response = await this.client.get("scheduler_v4/cityList", {
+			signal: options.signal,
+		});
+		const raw = validate(
+			v2ListCitiesResponseSchema,
+			await response.json<unknown>(),
+			"Invalid city list response"
+		);
+
+		return {
+			cities: raw.data.map((city) => ({
+				cityId: city.cityId.toLowerCase(),
+				displayName: city.cityDisplayName,
+				beta: city.beta_mode ?? false,
+				comingSoon: city.isComingSoon ?? false,
+				disabled: city.isDisabled ?? false,
 			})),
 		};
 	}

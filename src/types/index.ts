@@ -176,4 +176,6 @@ export type {
 	V2OccupancyParams,
 	V2OccupancyItem,
 	V2Occupancy,
+	V2City,
+	V2ListCitiesResponse,
 } from "./v2.js";
