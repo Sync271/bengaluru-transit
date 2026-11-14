@@ -335,6 +335,28 @@ export const v2CityStopSchema = z
 
 export const v2ListStopsResponseSchema = z.array(v2CityStopSchema);
 
+export const v2RouteStopDetailsParamsSchema = z.object({
+	routeId: z.string().trim().min(1),
+	stopIds: z.array(z.string().trim().min(1)).min(1),
+});
+
+export const v2RouteStopDetailsItemSchema = z
+	.object({
+		stopId: z.string(),
+		stopName: z.string().optional(),
+		description: z.string().nullable().optional(),
+		imageUrlList: z.array(z.string()).nullable().optional(),
+		location: z.object({
+			lat: z.number(),
+			lon: z.number(),
+		}),
+	})
+	.passthrough();
+
+export const v2RouteStopDetailsResponseSchema = z.array(
+	v2RouteStopDetailsItemSchema
+);
+
 export const v2StopDetailsParamsSchema = z.object({
 	stopId: z.string().trim().min(1),
 	day: v2WeekdaySchema,

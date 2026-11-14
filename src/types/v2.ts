@@ -369,6 +369,28 @@ export interface V2ListStopsResponse {
 	stops: V2CityStop[];
 }
 
+/**
+ * Stop details for a route (`POST scheduler_v4/v4/{city}/stopDetails`).
+ * Distinct from {@link V2StopDetailsParams}, which is the stop timetable API.
+ */
+export interface V2RouteStopDetailsParams extends RequestOptions {
+	routeId: string;
+	stopIds: string[];
+}
+
+export interface V2RouteStopDetails {
+	stopId: string;
+	name: string;
+	latitude: number;
+	longitude: number;
+	description?: string;
+	imageUrls: string[];
+}
+
+export interface V2RouteStopDetailsResponse {
+	stops: V2RouteStopDetails[];
+}
+
 export interface V2StopDetailsParams extends RequestOptions {
 	stopId: string;
 	/**

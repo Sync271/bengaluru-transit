@@ -11,6 +11,8 @@ import {
 	v2NearbyStopsResponseSchema,
 	v2ListStopsParamsSchema,
 	v2ListStopsResponseSchema,
+	v2RouteStopDetailsParamsSchema,
+	v2RouteStopDetailsResponseSchema,
 	v2OccupancyParamsSchema,
 	v2OccupancyResponseSchema,
 	v2RouteDetailsParamsSchema,
@@ -40,6 +42,8 @@ import type {
 	V2NearbySummaryService,
 	V2ListStopsParams,
 	V2ListStopsResponse,
+	V2RouteStopDetailsParams,
+	V2RouteStopDetailsResponse,
 	V2NearbyStopsParams,
 	V2NearbyStopsResponse,
 	V2NearbyVehicle,
@@ -794,6 +798,48 @@ export class BengaluruTransitClientV2 {
 						: {}),
 				};
 			}),
+		};
+	}
+
+	/**
+	 * Get names, coordinates, and image URLs for stops on a route.
+	 * Distinct from {@link getStopDetails}, which returns a stop timetable.
+	 */
+	async getRouteStopDetails(
+		params: V2RouteStopDetailsParams
+	): Promise<V2RouteStopDetailsResponse> {
+		const { signal, ...rest } = params;
+		const validated = validate(
+			v2RouteStopDetailsParamsSchema,
+			rest,
+			"Invalid route stop details parameters"
+		);
+
+		const response = await this.client.post(
+			`scheduler_v4/v4/${this.city}/stopDetails`,
+			{
+				json: {
+					routeId: validated.routeId,
+					stopIds: validated.stopIds,
+				},
+				signal,
+			}
+		);
+		const raw = validate(
+			v2RouteStopDetailsResponseSchema,
+			await response.json<unknown>(),
+			"Invalid route stop details response"
+		);
+
+		return {
+			stops: raw.map((stop) => ({
+				stopId: stop.stopId,
+				name: stop.stopName ?? "",
+				latitude: stop.location.lat,
+				longitude: stop.location.lon,
+				...(stop.description ? { description: stop.description } : {}),
+				imageUrls: stop.imageUrlList ?? [],
+			})),
 		};
 	}
 

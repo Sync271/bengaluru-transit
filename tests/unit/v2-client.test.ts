@@ -825,6 +825,41 @@ describe("BengaluruTransitClientV2", () => {
 		expect(result.stops[1].distanceMeters).toBe(120);
 	});
 
+	it("gets route stop details", async () => {
+		mockPost.mockResolvedValue({
+			json: async () => [
+				{
+					imageUrlList: ["https://example.com/stop.jpg"],
+					stopId: "6YPIHIgA",
+					location: { lon: 77.66201, lat: 12.85049 },
+					stopName: "Electronic City KIA",
+					description: "Airport boarding point",
+				},
+			],
+		});
+
+		const result = await client.getRouteStopDetails({
+			routeId: "NsbPdEdi",
+			stopIds: ["6YPIHIgA"],
+		});
+
+		expect(mockPost.mock.calls[0][0]).toBe(
+			"scheduler_v4/v4/bengaluru/stopDetails"
+		);
+		expect(mockPost.mock.calls[0][1].json).toEqual({
+			routeId: "NsbPdEdi",
+			stopIds: ["6YPIHIgA"],
+		});
+		expect(result.stops[0]).toMatchObject({
+			stopId: "6YPIHIgA",
+			name: "Electronic City KIA",
+			latitude: 12.85049,
+			longitude: 77.66201,
+			description: "Airport boarding point",
+			imageUrls: ["https://example.com/stop.jpg"],
+		});
+	});
+
 	it("gets stop details timetable", async () => {
 		mockGet.mockResolvedValue({
 			json: async () => [
