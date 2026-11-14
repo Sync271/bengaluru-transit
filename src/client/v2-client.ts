@@ -213,16 +213,17 @@ function toLeg(leg: {
 function toItinerary(itinerary: {
 	total_fare?: number;
 	time_taken?: number;
+	travel_time?: number;
 	distance?: number;
 	legs?: Parameters<typeof toLeg>[0][];
 }): V2Itinerary {
+	// v4 uses time_taken; v5 uses travel_time at the itinerary level.
+	const durationSeconds = itinerary.time_taken ?? itinerary.travel_time;
 	return {
 		...(itinerary.total_fare !== undefined
 			? { totalFare: itinerary.total_fare }
 			: {}),
-		...(itinerary.time_taken !== undefined
-			? { durationSeconds: itinerary.time_taken }
-			: {}),
+		...(durationSeconds !== undefined ? { durationSeconds } : {}),
 		...(itinerary.distance !== undefined
 			? { distanceMeters: itinerary.distance }
 			: {}),
@@ -531,7 +532,7 @@ export class BengaluruTransitClientV2 {
 	}
 
 	/**
-	 * Plan a trip between two coordinates.
+	 * Plan a trip between two coordinates (`scheduler_v4/v5/{city}/tripplanner`).
 	 */
 	async planTrip(params: V2TripPlanParams): Promise<V2TripPlanResponse> {
 		const { signal, ...rest } = params;
@@ -558,7 +559,7 @@ export class BengaluruTransitClientV2 {
 		});
 
 		const response = await this.client.get(
-			`scheduler_v4/v4/${this.city}/tripplanner`,
+			`scheduler_v4/v5/${this.city}/tripplanner`,
 			{ searchParams, signal }
 		);
 		const raw = validate(

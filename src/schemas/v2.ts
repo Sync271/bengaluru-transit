@@ -143,7 +143,10 @@ const v2LegSchema = z
 const v2ItinerarySchema = z
 	.object({
 		total_fare: z.number().optional(),
+		/** Present on v4 trip planner responses. */
 		time_taken: z.number().optional(),
+		/** Present on v5 trip planner responses (itinerary duration). */
+		travel_time: z.number().optional(),
 		distance: z.number().optional(),
 		legs: z.array(v2LegSchema).optional().default([]),
 	})

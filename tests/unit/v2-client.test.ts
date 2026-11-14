@@ -223,10 +223,11 @@ describe("BengaluruTransitClientV2", () => {
 					itineraries: [
 						{
 							total_fare: 60,
-							time_taken: 2102,
-							distance: 0,
+							// v5 uses travel_time at itinerary level (v4 used time_taken)
+							travel_time: 2102,
+							distance: 6693,
 							legs: [
-								{ mode: "AUTO", distance: 1150 },
+								{ mode: "WALK", distance: 1150, travel_time: 199 },
 								{
 									mode: "BUS",
 									route_name: "314-D",
@@ -238,6 +239,7 @@ describe("BengaluruTransitClientV2", () => {
 									last_stop: { stop_name: "Kempegowda Bus Station" },
 									start_time: 71700,
 									end_time: 72812,
+									travel_time: 1112,
 									distance: 6693,
 								},
 							],
@@ -257,18 +259,21 @@ describe("BengaluruTransitClientV2", () => {
 
 		const params = mockGet.mock.calls[0][1].searchParams as URLSearchParams;
 		expect(mockGet.mock.calls[0][0]).toBe(
-			"scheduler_v4/v4/bengaluru/tripplanner"
+			"scheduler_v4/v5/bengaluru/tripplanner"
 		);
 		expect(params.get("from_lat")).toBe("12.97849");
 		expect(params.get("start_time")).toBe("71287");
 		expect(params.get("day")).toBe("tuesday");
 		expect(params.get("num_itineraries")).toBe("25");
 		expect(result.itineraries[0].totalFare).toBe(60);
+		expect(result.itineraries[0].durationSeconds).toBe(2102);
+		expect(result.itineraries[0].distanceMeters).toBe(6693);
 		expect(result.itineraries[0].legs[1]).toMatchObject({
 			mode: "BUS",
 			routeId: "eqr48yAH",
 			fromStopName: "Halasuru",
 			startTimeSeconds: 71700,
+			travelTimeSeconds: 1112,
 		});
 	});
 
