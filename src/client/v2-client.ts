@@ -15,6 +15,8 @@ import {
 	v2SearchResponseSchema,
 	v2StopArrivalsParamsSchema,
 	v2StopArrivalsResponseSchema,
+	v2StopDetailsParamsSchema,
+	v2StopDetailsResponseSchema,
 	v2TripPlanParamsSchema,
 	v2TripPlanResponseSchema,
 } from "../schemas/v2.js";
@@ -37,6 +39,8 @@ import type {
 	V2StopArrival,
 	V2StopArrivals,
 	V2StopArrivalsParams,
+	V2StopDetails,
+	V2StopDetailsParams,
 	V2TripLeg,
 	V2TripPlanParams,
 	V2TripPlanResponse,
@@ -490,6 +494,60 @@ export class BengaluruTransitClientV2 {
 				startTimeSeconds: entry.start_time,
 				frequency: entry.isFrequency ?? false,
 				extrapolated: entry.extrapolated ?? false,
+			})),
+		};
+	}
+
+	/**
+	 * Get the scheduled timetable for a stop from a given time of day.
+	 */
+	async getStopDetails(
+		params: V2StopDetailsParams
+	): Promise<V2StopDetails> {
+		const { signal, ...rest } = params;
+		const now = new Date();
+		const validated = validate(
+			v2StopDetailsParamsSchema,
+			{
+				...rest,
+				day: rest.day ?? WEEKDAYS[now.getDay()],
+				startTimeSeconds: rest.startTimeSeconds ?? secondsFromMidnight(now),
+			},
+			"Invalid stop details parameters"
+		);
+
+		const searchParams = new URLSearchParams({
+			stop_id: validated.stopId,
+			time: String(validated.startTimeSeconds),
+			day: validated.day,
+		});
+		const response = await this.client.get(
+			`scheduler_v4/v4/${this.city}/stopdetails`,
+			{ searchParams, signal }
+		);
+		const raw = validate(
+			v2StopDetailsResponseSchema,
+			await response.json<unknown>(),
+			"Invalid stop details response"
+		);
+
+		return {
+			timetable: raw.map((entry) => ({
+				tripId: entry.trip.trip_id,
+				routeId: entry.trip.route_id,
+				routeName: entry.trip.route_name,
+				agencyName: entry.trip.agency_name ?? "",
+				destinationName:
+					entry.trip.last_stop?.stop_name ??
+					entry.trip.direction_stop?.stop_name ??
+					"",
+				...(entry.trip.first_stop?.stop_name
+					? { firstStopName: entry.trip.first_stop.stop_name }
+					: {}),
+				arrivalTimeSeconds: entry.arrival_time,
+				frequencyTrip: entry.trip.isFrequencyTrip ?? false,
+				extrapolated: entry.trip.extrapolated ?? false,
+				serviceTypes: entry.trip.spf ?? [],
 			})),
 		};
 	}

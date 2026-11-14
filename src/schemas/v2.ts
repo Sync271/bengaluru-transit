@@ -164,6 +164,51 @@ export const v2RouteDetailsResponseSchema = z.object({
 	timeTable: z.array(v2TimetableSchema).optional().default([]),
 });
 
+export const v2StopDetailsParamsSchema = z.object({
+	stopId: z.string().trim().min(1),
+	day: v2WeekdaySchema,
+	startTimeSeconds: z.number().int().nonnegative(),
+});
+
+const v2StopDetailsTripSchema = z
+	.object({
+		trip_id: z.string(),
+		route_id: z.string(),
+		route_name: z.string(),
+		agency_name: z.string().optional(),
+		spf: z.array(z.string()).optional(),
+		isFrequencyTrip: z.boolean().optional(),
+		extrapolated: z.boolean().optional(),
+		first_stop: z
+			.object({
+				stop_name: z.string().optional(),
+			})
+			.passthrough()
+			.optional(),
+		last_stop: z
+			.object({
+				stop_name: z.string().optional(),
+			})
+			.passthrough()
+			.optional(),
+		direction_stop: z
+			.object({
+				stop_name: z.string().optional(),
+			})
+			.passthrough()
+			.optional(),
+	})
+	.passthrough();
+
+export const v2StopDetailsResponseSchema = z.array(
+	z
+		.object({
+			trip: v2StopDetailsTripSchema,
+			arrival_time: z.number(),
+		})
+		.passthrough()
+);
+
 export const v2LiveVehiclesParamsSchema = z.object({
 	routeId: z.string().trim().min(1),
 	stopIds: z.array(z.string().trim().min(1)).min(1),

@@ -182,6 +182,38 @@ export interface V2RouteDetails {
 	timetable: V2TimetableEntry[];
 }
 
+export interface V2StopDetailsParams extends RequestOptions {
+	stopId: string;
+	/**
+	 * Weekday. Defaults to today in local time.
+	 */
+	day?: V2Weekday;
+	/**
+	 * Time of day as seconds from local midnight. Defaults to the current local time.
+	 */
+	startTimeSeconds?: number;
+}
+
+export interface V2StopTimetableEntry {
+	tripId: string;
+	routeId: string;
+	routeName: string;
+	agencyName: string;
+	destinationName: string;
+	firstStopName?: string;
+	/**
+	 * Scheduled arrival at this stop as seconds from local midnight.
+	 */
+	arrivalTimeSeconds: number;
+	frequencyTrip: boolean;
+	extrapolated: boolean;
+	serviceTypes: string[];
+}
+
+export interface V2StopDetails {
+	timetable: V2StopTimetableEntry[];
+}
+
 export interface V2LiveVehiclesParams extends RequestOptions {
 	routeId: string;
 	/**

@@ -21,7 +21,7 @@ This project is built with the intent of making public transit data more accessi
 - 🎯 **Type Safety**: Full TypeScript support with comprehensive type definitions
 - ✅ **Validation**: Runtime validation using Zod schemas
 - 🗺️ **GeoJSON**: Standard GeoJSON format for spatial data on `BengaluruTransitClient` (routes, stops, locations)
-- 🚌 **Current app API**: `BengaluruTransitClientV2` covers search, trip planning, live vehicles, nearby buses, and occupancy
+- 🚌 **Current app API**: `BengaluruTransitClientV2` covers search, trip planning, route/stop timetables, live vehicles, nearby buses, and occupancy
 - 🚀 **Modern**: Built with modern TypeScript and ES modules
 - 📦 **Lightweight**: Minimal dependencies
 - 🔄 **Request Cancellation**: Optional AbortSignal support for canceling in-flight requests
@@ -176,7 +176,29 @@ details.timetable.forEach(entry => {
 
 `stops` is the full stop sequence. `trips` are the scheduled trips for that day. `live` is whether the route is marked live. `ticketEnabled` is whether mobile ticketing is offered for it.
 
-### 5. Live vehicles
+### 5. Stop timetable
+
+```typescript
+const stopDetails = await v2.getStopDetails({
+  stopId: "CAQCTt7Q",
+  day: "wednesday",
+  startTimeSeconds: 2919,
+});
+
+stopDetails.timetable.forEach(entry => {
+  console.log(
+    entry.routeName,
+    "to",
+    entry.destinationName,
+    "at",
+    entry.arrivalTimeSeconds
+  );
+});
+```
+
+Each entry is a scheduled arrival at that stop from the given time onward. `day` and `startTimeSeconds` default to now when omitted.
+
+### 6. Live vehicles
 
 `stopIds` is required. Pass the stop you care about, usually from `getRouteDetails` or `getNearbyBuses`.
 
@@ -197,7 +219,7 @@ live.arrivals.forEach(arrival => {
 
 `vehicles` are current positions. `arrivals` are those vehicles measured against each stop id you passed. `distanceMeters` is the remaining distance, and `updatedAt` is epoch milliseconds.
 
-### 6. Arrivals for known stop and route pairs
+### 7. Arrivals for known stop and route pairs
 
 Use this when you already know the pairs and do not need the full route.
 
@@ -211,7 +233,7 @@ arrivals.arrivals.forEach(arrival => {
 });
 ```
 
-### 7. Occupancy
+### 8. Occupancy
 
 Pass the live vehicle's registration number, `updatedAt`, route id, and stop id.
 

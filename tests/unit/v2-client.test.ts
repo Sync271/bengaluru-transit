@@ -540,6 +540,54 @@ describe("BengaluruTransitClientV2", () => {
 		});
 	});
 
+	it("gets stop details timetable", async () => {
+		mockGet.mockResolvedValue({
+			json: async () => [
+				{
+					arrival_time: 27384,
+					trip: {
+						trip_id: "OB36Mp8m",
+						route_id: "5h7NR3e9",
+						route_name: "317-VT",
+						agency_name: "BMTC",
+						spf: ["Ordinary"],
+						isFrequencyTrip: false,
+						extrapolated: true,
+						first_stop: { stop_name: "KR Market" },
+						last_stop: { stop_name: "Vagata" },
+						direction_stop: { stop_name: "Vagata" },
+					},
+				},
+			],
+		});
+
+		const result = await client.getStopDetails({
+			stopId: "CAQCTt7Q",
+			day: "wednesday",
+			startTimeSeconds: 2919,
+		});
+
+		const params = mockGet.mock.calls[0][1].searchParams as URLSearchParams;
+		expect(mockGet.mock.calls[0][0]).toBe(
+			"scheduler_v4/v4/bengaluru/stopdetails"
+		);
+		expect(params.get("stop_id")).toBe("CAQCTt7Q");
+		expect(params.get("time")).toBe("2919");
+		expect(params.get("day")).toBe("wednesday");
+		expect(result.timetable[0]).toMatchObject({
+			tripId: "OB36Mp8m",
+			routeId: "5h7NR3e9",
+			routeName: "317-VT",
+			agencyName: "BMTC",
+			destinationName: "Vagata",
+			firstStopName: "KR Market",
+			arrivalTimeSeconds: 27384,
+			frequencyTrip: false,
+			extrapolated: true,
+			serviceTypes: ["Ordinary"],
+		});
+	});
+
 	it("rejects an empty search", async () => {
 		await expect(
 			client.search({ query: "  ", coordinates: [12.97, 77.59] })
