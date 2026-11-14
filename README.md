@@ -331,6 +331,13 @@ meta.modes.forEach(mode => {
 });
 ```
 
+### 11. Server time
+
+```typescript
+const { timestamp } = await v2.getServerTime();
+console.log(new Date(timestamp).toISOString());
+```
+
 ## Common Flows
 
 These examples use the `BengaluruTransitClient` from Quick Start.

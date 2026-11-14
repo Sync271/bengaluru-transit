@@ -181,4 +181,5 @@ export type {
 	V2CityAgency,
 	V2CityMode,
 	V2CityMetadata,
+	V2ServerTime,
 } from "./v2.js";

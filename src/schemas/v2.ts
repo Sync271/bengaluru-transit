@@ -678,3 +678,9 @@ export const v2CityMetadataResponseSchema = z.object({
 		)
 		.min(1),
 });
+
+export const v2ServerTimeResponseSchema = z.object({
+	chaloTime: z.object({
+		timeStamp: z.number(),
+	}),
+});

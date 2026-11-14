@@ -19,6 +19,7 @@ import {
 	v2OccupancyResponseSchema,
 	v2ListCitiesResponseSchema,
 	v2CityMetadataResponseSchema,
+	v2ServerTimeResponseSchema,
 	v2RouteDetailsParamsSchema,
 	v2RouteDetailsResponseSchema,
 	v2RouteDetailsBulkParamsSchema,
@@ -65,6 +66,7 @@ import type {
 	V2OccupancyParams,
 	V2ListCitiesResponse,
 	V2CityMetadata,
+	V2ServerTime,
 	V2BulkRouteDetails,
 	V2RouteDetails,
 	V2RouteDetailsBulkParams,
@@ -1411,6 +1413,22 @@ export class BengaluruTransitClientV2 {
 				})),
 			})),
 		};
+	}
+
+	/**
+	 * Chalo server clock (`GET configuration/chalo-props/v1`).
+	 */
+	async getServerTime(options: RequestOptions = {}): Promise<V2ServerTime> {
+		const response = await this.client.get("configuration/chalo-props/v1", {
+			signal: options.signal,
+		});
+		const raw = validate(
+			v2ServerTimeResponseSchema,
+			await response.json<unknown>(),
+			"Invalid server time response"
+		);
+
+		return { timestamp: raw.chaloTime.timeStamp };
 	}
 
 	/**

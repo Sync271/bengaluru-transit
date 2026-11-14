@@ -724,3 +724,13 @@ export interface V2CityMetadata {
 	currencySymbol: string;
 	modes: V2CityMode[];
 }
+
+/**
+ * Chalo server clock (`GET configuration/chalo-props/v1`).
+ */
+export interface V2ServerTime {
+	/**
+	 * Server time as epoch milliseconds.
+	 */
+	timestamp: number;
+}

@@ -1264,6 +1264,19 @@ describe("BengaluruTransitClientV2", () => {
 		]);
 	});
 
+	it("gets server time", async () => {
+		mockGet.mockResolvedValue({
+			json: async () => ({
+				chaloTime: { timeStamp: 1794695229291 },
+			}),
+		});
+
+		const result = await client.getServerTime();
+
+		expect(mockGet.mock.calls[0][0]).toBe("configuration/chalo-props/v1");
+		expect(result).toEqual({ timestamp: 1794695229291 });
+	});
+
 	it("rejects an empty search", async () => {
 		await expect(
 			client.search({ query: "  ", coordinates: [12.97, 77.59] })
