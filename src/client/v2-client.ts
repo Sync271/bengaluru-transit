@@ -45,6 +45,7 @@ import {
 	v2StopDetailsParamsSchema,
 	v2StopDetailsResponseSchema,
 	v2TripPlanParamsSchema,
+	v2BusWiseTripParamsSchema,
 	v2TripPlanResponseSchema,
 } from "../schemas/v2.js";
 import type { RequestOptions } from "../types/api.js";
@@ -100,6 +101,7 @@ import type {
 	V2StopDetailsParams,
 	V2TripLeg,
 	V2TripPlanParams,
+	V2BusWiseTripParams,
 	V2TripPlanResponse,
 	V2VehiclePosition,
 	V2Weekday,
@@ -745,6 +747,45 @@ export class BengaluruTransitClientV2 {
 	}
 
 	/**
+	 * Bus-only trip plan between two stops
+	 * (`POST scheduler_v4/v6/{city}/tripplanner/bus-wise`).
+	 * Requires stop ids — coordinate-only requests fail on Chalo for Bengaluru.
+	 * Response shape matches {@link planTrip}.
+	 */
+	async planBusWiseTrip(
+		params: V2BusWiseTripParams
+	): Promise<V2TripPlanResponse> {
+		const { signal, ...rest } = params;
+		const validated = validate(
+			v2BusWiseTripParamsSchema,
+			rest,
+			"Invalid bus-wise trip parameters"
+		);
+
+		const response = await this.client.post(
+			`scheduler_v4/v6/${this.city}/tripplanner/bus-wise`,
+			{
+				json: {
+					fromStopId: validated.fromStopId,
+					toStopId: validated.toStopId,
+					startTimeMillis: validated.startTimeMillis ?? Date.now(),
+				},
+				signal,
+			}
+		);
+		const raw = validate(
+			v2TripPlanResponseSchema,
+			await response.json<unknown>(),
+			"Invalid bus-wise trip response"
+		);
+
+		return {
+			itineraries: raw.payload.itineraries.map(toItinerary),
+			nearbyItineraries: raw.payload.nearbyItineraries.map(toItinerary),
+		};
+	}
+
+	/**
 	 * Get the stop sequence, trips, timetable, and encoded polyline for a route
 	 * (`GET scheduler_v4/v4/{city}/routedetails`).
 	 * Prefer this over {@link getRouteDetailsLive}; on Chalo for Bengaluru both
@@ -1258,7 +1299,8 @@ export class BengaluruTransitClientV2 {
 	}
 
 	/**
-	 * Summarize nearby stops and the services scheduled there, with live vehicles when the API has them.
+	 * Summarize nearby stops and the services scheduled there, with live vehicles when the API has them
+	 * (`POST scheduler_v4/v5/{city}/summary` + ETA).
 	 * Distinct from {@link getNearbyStops}, which only returns stop locations.
 	 */
 	async getNearbySummary(
@@ -1288,17 +1330,28 @@ export class BengaluruTransitClientV2 {
 		if (validated.cardCount !== undefined) {
 			searchParams.set("cards", String(validated.cardCount));
 		}
-		const response = await this.client.get(
-			`scheduler_v4/v4/${this.city}/summary`,
-			{ searchParams, signal }
+		const response = await this.client.post(
+			`scheduler_v4/v5/${this.city}/summary`,
+			{
+				searchParams,
+				// Chalo requires this envelope; empty routesStatus is fine (SDK does not cache routes).
+				json: {
+					requiredFields: {
+						routesStatus: {},
+						tripSummary: { id: 0 },
+					},
+				},
+				signal,
+			}
 		);
 		const raw = validate(
 			v2NearbySummaryResponseSchema,
 			await response.json<unknown>(),
 			"Invalid nearby summary response"
 		);
+		const payload = raw.tripSummary?.data ?? [];
 
-		const pairs = raw.payload.flatMap((stop) =>
+		const pairs = payload.flatMap((stop) =>
 			stop.summary.map((item) => `${stop.stop_id}:${item.trip.route_id}`)
 		);
 		const liveByPair = new Map<string, V2NearbyVehicle[]>();
@@ -1331,7 +1384,7 @@ export class BengaluruTransitClientV2 {
 		}
 
 		return {
-			stops: raw.payload.map((stop) => ({
+			stops: payload.map((stop) => ({
 				stop: toStop(stop.stop),
 				...(stop.distance !== undefined
 					? { distanceKilometers: stop.distance }

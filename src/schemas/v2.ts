@@ -236,6 +236,12 @@ export const v2TripPlanParamsSchema = z.object({
 	itineraryCount: z.number().int().positive().default(25),
 });
 
+export const v2BusWiseTripParamsSchema = z.object({
+	fromStopId: z.string().trim().min(1),
+	toStopId: z.string().trim().min(1),
+	startTimeMillis: z.number().int().positive().optional(),
+});
+
 export const v2TripPlanResponseSchema = z.object({
 	payload: z.object({
 		itineraries: z.array(v2ItinerarySchema).optional().default([]),
@@ -578,19 +584,29 @@ export const v2NearbySummaryParamsSchema = z.object({
 	cardCount: z.number().int().positive().optional(),
 });
 
-export const v2NearbySummaryResponseSchema = z.object({
-	payload: z.array(
-		z
+const v2NearbySummaryStopSchema = z
+	.object({
+		stop_id: z.string(),
+		distance: z.number().optional(),
+		agency_name: z.string().optional(),
+		stop: v2StopSchema,
+		summary: z.array(v2SummaryTripSchema).optional().default([]),
+	})
+	.passthrough();
+
+/** v5 envelope (`POST …/v5/{city}/summary`). Empty `{}` / missing tripSummary → no stops. */
+export const v2NearbySummaryResponseSchema = z
+	.object({
+		routesStatus: z.array(z.unknown()).optional(),
+		tripSummary: z
 			.object({
-				stop_id: z.string(),
-				distance: z.number().optional(),
-				agency_name: z.string().optional(),
-				stop: v2StopSchema,
-				summary: z.array(v2SummaryTripSchema).optional().default([]),
+				status: z.string().optional(),
+				data: z.array(v2NearbySummaryStopSchema).optional().default([]),
 			})
 			.passthrough()
-	),
-});
+			.optional(),
+	})
+	.passthrough();
 
 export const v2OccupancyParamsSchema = z.object({
 	vehicles: z

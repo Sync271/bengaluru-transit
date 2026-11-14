@@ -106,7 +106,7 @@ stop.services.forEach(service => {
 });
 ```
 
-Each stop includes the services scheduled there. `arrivalTimeSeconds` is the scheduled arrival at that stop. `vehicles` is filled only when a bus on that route is being tracked, and `etaSeconds` on a vehicle is the live estimate. `distanceKilometers` is the distance from the coordinates you passed. Optional `radiusMeters` and `cardCount` widen or trim how many nearby stops come back; omit them to use the API defaults. Use `getNearbyStops` when you only need stop locations.
+Each stop includes the services scheduled there. `arrivalTimeSeconds` is the scheduled arrival at that stop. `vehicles` is filled only when a bus on that route is being tracked, and `etaSeconds` on a vehicle is the live estimate. `distanceKilometers` is the distance from the coordinates you passed. Optional `radiusMeters` and `cardCount` widen or trim how many nearby stops come back; omit them to use the API defaults. Uses the v5 summary endpoint under the hood. Use `getNearbyStops` when you only need stop locations.
 
 ### 2. Search
 
@@ -185,6 +185,16 @@ best.legs.forEach(leg => {
 ```
 
 `itineraries` are the main options. `nearbyItineraries` holds extra options the API marks as nearby. A leg's `mode` is `BUS`, `METRO`, `WALK`, or `AUTO`. `totalFare` is in rupees. `durationSeconds` is the whole trip. `startTimeSeconds` and `endTimeSeconds` on a leg are seconds from midnight.
+
+For bus-only options between known stop ids (no walk/metro legs), use `planBusWiseTrip`. Coordinates are not supported on this path.
+
+```typescript
+const busTrip = await v2.planBusWiseTrip({
+  fromStopId: "ArYFEPLj",
+  toStopId: "5zunAhWl",
+});
+console.log(busTrip.itineraries[0]?.legs[0]?.routeName);
+```
 
 ### 4. Route details
 

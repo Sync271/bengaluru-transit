@@ -65,6 +65,7 @@ Base URL: `https://chalo.com/app/api`
 ### Routes, stops, trips
 
 - [x] `GET scheduler_v4/v5/{city}/tripplanner` — `planTrip`
+- [x] `POST scheduler_v4/v6/{city}/tripplanner/bus-wise` — `planBusWiseTrip` (stop ids only)
 - [x] `GET scheduler_v4/v5/{city}/routesbetweenstops` — `getRoutesBetweenStops`
 - [x] `GET scheduler_v4/v4/{city}/routedetails` — `getRouteDetails` (polyline)
 - [x] `GET scheduler_v4/v4/{city}/routedetailslive` — `getRouteDetailsLive`
@@ -73,7 +74,7 @@ Base URL: `https://chalo.com/app/api`
 - [x] `GET scheduler_v4/v4/{city}/stops/id` — `listStops`
 - [x] `POST scheduler_v4/v4/{city}/stopDetails` — `getRouteStopDetails`
 - [x] `GET scheduler_v4/v4/{city}/stopdetails` — `getStopDetails`
-- [x] `GET scheduler_v4/v4/{city}/summary` — `getNearbySummary`
+- [x] `POST scheduler_v4/v5/{city}/summary` — `getNearbySummary` (upgraded from v4 GET)
 
 ### Live
 

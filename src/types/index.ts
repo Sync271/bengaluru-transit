@@ -135,6 +135,7 @@ export type {
 	V2RouteBetweenStops,
 	V2RoutesBetweenStopsResponse,
 	V2TripPlanParams,
+	V2BusWiseTripParams,
 	V2TripLeg,
 	V2Itinerary,
 	V2TripPlanResponse,

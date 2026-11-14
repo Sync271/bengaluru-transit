@@ -255,6 +255,20 @@ export interface V2TripPlanParams extends RequestOptions {
 	itineraryCount?: number;
 }
 
+/**
+ * Bus-only trip plan between stops
+ * (`POST scheduler_v4/v6/{city}/tripplanner/bus-wise`).
+ * Stop ids are required; coordinate-only requests 500 on Chalo for Bengaluru.
+ */
+export interface V2BusWiseTripParams extends RequestOptions {
+	fromStopId: string;
+	toStopId: string;
+	/**
+	 * Departure as epoch milliseconds. Defaults to `Date.now()`.
+	 */
+	startTimeMillis?: number;
+}
+
 export interface V2TripLeg {
 	mode: string;
 	routeId?: string;
@@ -602,7 +616,7 @@ export interface V2OccupancyParams extends RequestOptions {
 }
 
 /**
- * Nearby stop summary (`GET scheduler_v4/v4/{city}/summary` + live ETAs).
+ * Nearby stop summary (`POST scheduler_v4/v5/{city}/summary` + live ETAs).
  * Distinct from {@link V2NearbyStopsParams}, which only lists stops.
  */
 export interface V2NearbySummaryParams extends RequestOptions {

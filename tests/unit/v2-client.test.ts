@@ -384,6 +384,66 @@ describe("BengaluruTransitClientV2", () => {
 		});
 	});
 
+	it("plans a bus-wise trip between stops", async () => {
+		mockPost.mockResolvedValue({
+			json: async () => ({
+				payload: {
+					itineraries: [
+						{
+							total_fare: 30,
+							travel_time: 1292,
+							distance: 6693,
+							legs: [
+								{
+									mode: "BUS",
+									route_id: "hiDDxLaN",
+									route_name: "305-L",
+									first_stop_id: "ArYFEPLj",
+									last_stop_id: "5zunAhWl",
+									start_place_name: "Halasuru",
+									end_place_name: "Kempegowda Bus Station(Majestic/KBS)",
+									start_time: 18921,
+									end_time: 20213,
+									travel_time: 1292,
+								},
+							],
+						},
+					],
+					nearbyItineraries: [],
+				},
+			}),
+		});
+
+		const result = await client.planBusWiseTrip({
+			fromStopId: "ArYFEPLj",
+			toStopId: "5zunAhWl",
+			startTimeMillis: 1_700_000_000_000,
+		});
+
+		expect(mockPost).toHaveBeenCalledWith(
+			"scheduler_v4/v6/bengaluru/tripplanner/bus-wise",
+			expect.objectContaining({
+				json: {
+					fromStopId: "ArYFEPLj",
+					toStopId: "5zunAhWl",
+					startTimeMillis: 1_700_000_000_000,
+				},
+			})
+		);
+		expect(result.itineraries[0]).toMatchObject({
+			totalFare: 30,
+			durationSeconds: 1292,
+			distanceMeters: 6693,
+		});
+		expect(result.itineraries[0].legs[0]).toMatchObject({
+			mode: "BUS",
+			routeId: "hiDDxLaN",
+			routeName: "305-L",
+			fromStopName: "Halasuru",
+			travelTimeSeconds: 1292,
+		});
+	});
+
 	it("gets route details with polyline", async () => {
 		mockGet.mockResolvedValue({
 			json: async () => ({
@@ -863,51 +923,56 @@ describe("BengaluruTransitClientV2", () => {
 	});
 
 	it("lists nearby summary services and attaches live vehicles", async () => {
-		mockGet.mockResolvedValue({
-			json: async () => ({
-				payload: [
-					{
-						stop_id: "ArYFEPLj",
-						distance: 0,
-						agency_name: "BMTC",
-						stop: {
-							stop_id: "ArYFEPLj",
-							stop_name: "Halasuru",
-							stop_lat: 12.97793,
-							stop_lon: 77.6283,
-							short_id: 27342,
-						},
-						summary: [
+		mockPost
+			.mockResolvedValueOnce({
+				json: async () => ({
+					routesStatus: [],
+					tripSummary: {
+						status: "OK",
+						data: [
 							{
-								arrival_time: 73560,
-								trip: {
-									trip_id: "eIV8es3k",
-									route_id: "VE5C8LL8",
-									route_name: "304-P",
-									agency_name: "BMTC",
-									last_stop: { stop_name: "KR Market" },
+								stop_id: "ArYFEPLj",
+								distance: 0,
+								agency_name: "BMTC",
+								stop: {
+									stop_id: "ArYFEPLj",
+									stop_name: "Halasuru",
+									stop_lat: 12.97793,
+									stop_lon: 77.6283,
+									short_id: 27342,
 								},
+								summary: [
+									{
+										arrival_time: 73560,
+										trip: {
+											trip_id: "eIV8es3k",
+											route_id: "VE5C8LL8",
+											route_name: "304-P",
+											agency_name: "BMTC",
+											last_stop: { stop_name: "KR Market" },
+										},
+									},
+								],
 							},
 						],
 					},
-				],
-			}),
-		});
-		mockPost.mockResolvedValue({
-			json: async () => ({
-				stopRouteEtas: {
-					"ArYFEPLj:VE5C8LL8": {
-						bus1: JSON.stringify({
-							vNo: "KA57F3131",
-							eta: 1390,
-							dist: 5710,
-							isHalted: false,
-							rN: "314-P",
-						}),
+				}),
+			})
+			.mockResolvedValueOnce({
+				json: async () => ({
+					stopRouteEtas: {
+						"ArYFEPLj:VE5C8LL8": {
+							bus1: JSON.stringify({
+								vNo: "KA57F3131",
+								eta: 1390,
+								dist: 5710,
+								isHalted: false,
+								rN: "314-P",
+							}),
+						},
 					},
-				},
-			}),
-		});
+				}),
+			});
 
 		const result = await client.getNearbySummary({
 			coordinates: [12.97793, 77.6283],
@@ -917,12 +982,19 @@ describe("BengaluruTransitClientV2", () => {
 			cardCount: 5,
 		});
 
-		const params = mockGet.mock.calls[0][1].searchParams as URLSearchParams;
-		expect(mockGet.mock.calls[0][0]).toBe("scheduler_v4/v4/bengaluru/summary");
+		expect(mockPost.mock.calls[0][0]).toBe("scheduler_v4/v5/bengaluru/summary");
+		const summaryOpts = mockPost.mock.calls[0][1];
+		const params = summaryOpts.searchParams as URLSearchParams;
 		expect(params.get("lat")).toBe("12.97793");
 		expect(params.get("time")).toBe("73500");
 		expect(params.get("radius")).toBe("2000");
 		expect(params.get("cards")).toBe("5");
+		expect(summaryOpts.json).toEqual({
+			requiredFields: {
+				routesStatus: {},
+				tripSummary: { id: 0 },
+			},
+		});
 		expect(mockPost).toHaveBeenCalledWith(
 			"vasudha/cities/bengaluru/stop-route-eta",
 			expect.objectContaining({
@@ -943,8 +1015,8 @@ describe("BengaluruTransitClientV2", () => {
 	});
 
 	it("omits radius and cards from nearby summary when not provided", async () => {
-		mockGet.mockResolvedValue({
-			json: async () => ({ payload: [] }),
+		mockPost.mockResolvedValue({
+			json: async () => ({ tripSummary: { data: [] } }),
 		});
 
 		await client.getNearbySummary({
@@ -953,7 +1025,7 @@ describe("BengaluruTransitClientV2", () => {
 			startTimeSeconds: 73500,
 		});
 
-		const params = mockGet.mock.calls[0][1].searchParams as URLSearchParams;
+		const params = mockPost.mock.calls[0][1].searchParams as URLSearchParams;
 		expect(params.has("radius")).toBe(false);
 		expect(params.has("cards")).toBe(false);
 	});
