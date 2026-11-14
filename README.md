@@ -153,7 +153,14 @@ const details = await v2.getPlaceDetails({
   searchPartner: places.places[0].searchPartner,
 });
 console.log(details.address, details.latitude, details.longitude);
+
+const city = await v2.reverseGeocode({
+  coordinates: [12.97793, 77.6283],
+});
+console.log(city.cities[0]?.cityId); // "bengaluru"
 ```
+
+`reverseGeocode` tells you which Chalo city covers a point — it is not street-level reverse geocoding.
 
 ### 3. Plan a trip
 

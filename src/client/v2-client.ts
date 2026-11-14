@@ -25,6 +25,8 @@ import {
 	v2SearchPlacesResponseSchema,
 	v2PlaceDetailsParamsSchema,
 	v2PlaceDetailsResponseSchema,
+	v2ReverseGeocodeParamsSchema,
+	v2ReverseGeocodeResponseSchema,
 	v2SearchRoutesParamsSchema,
 	v2SearchRoutesResponseSchema,
 	v2RoutesBetweenStopsParamsSchema,
@@ -65,6 +67,8 @@ import type {
 	V2SearchPlacesResponse,
 	V2PlaceDetailsParams,
 	V2PlaceDetails,
+	V2ReverseGeocodeParams,
+	V2ReverseGeocodeResponse,
 	V2SearchRoutesParams,
 	V2SearchRoutesResponse,
 	V2RoutesBetweenStopsParams,
@@ -526,6 +530,42 @@ export class BengaluruTransitClientV2 {
 			address: raw.result.formatted_address,
 			latitude: raw.result.geometry.location.lat,
 			longitude: raw.result.geometry.location.lng,
+		};
+	}
+
+	/**
+	 * Resolve coordinates to Chalo city ids (`GET scheduler_v4/geocode/reverse`).
+	 * Returns which Chalo cities cover the point — not a street address.
+	 */
+	async reverseGeocode(
+		params: V2ReverseGeocodeParams
+	): Promise<V2ReverseGeocodeResponse> {
+		const { signal, ...rest } = params;
+		const validated = validate(
+			v2ReverseGeocodeParamsSchema,
+			rest,
+			"Invalid reverse geocode parameters"
+		);
+
+		const searchParams = new URLSearchParams({
+			lat: String(validated.coordinates[0]),
+			lon: String(validated.coordinates[1]),
+		});
+		const response = await this.client.get("scheduler_v4/geocode/reverse", {
+			searchParams,
+			signal,
+		});
+		const raw = validate(
+			v2ReverseGeocodeResponseSchema,
+			await response.json<unknown>(),
+			"Invalid reverse geocode response"
+		);
+
+		return {
+			cities: raw.cities.map((city) => ({
+				cityId: city.cityId,
+				displayName: city.cityDisplayName,
+			})),
 		};
 	}
 

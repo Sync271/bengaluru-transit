@@ -102,6 +102,24 @@ export const v2PlaceDetailsResponseSchema = z.object({
 		.passthrough(),
 });
 
+export const v2ReverseGeocodeParamsSchema = z.object({
+	coordinates: v2CoordinateSchema,
+});
+
+export const v2ReverseGeocodeResponseSchema = z.object({
+	cities: z
+		.array(
+			z
+				.object({
+					cityId: z.string(),
+					cityDisplayName: z.string(),
+				})
+				.passthrough()
+		)
+		.optional()
+		.default([]),
+});
+
 export const v2SearchRoutesParamsSchema = z.object({
 	query: z.string().trim().min(1),
 	day: v2WeekdaySchema,

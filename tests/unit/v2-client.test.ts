@@ -182,6 +182,28 @@ describe("BengaluruTransitClientV2", () => {
 		});
 	});
 
+	it("reverse geocodes coordinates to Chalo cities", async () => {
+		mockGet.mockResolvedValue({
+			json: async () => ({
+				cities: [
+					{ cityId: "bengaluru", cityDisplayName: "Bengaluru" },
+				],
+			}),
+		});
+
+		const result = await client.reverseGeocode({
+			coordinates: [12.97793, 77.6283],
+		});
+
+		expect(mockGet.mock.calls[0][0]).toBe("scheduler_v4/geocode/reverse");
+		const params = mockGet.mock.calls[0][1].searchParams as URLSearchParams;
+		expect(params.get("lat")).toBe("12.97793");
+		expect(params.get("lon")).toBe("77.6283");
+		expect(result.cities).toEqual([
+			{ cityId: "bengaluru", displayName: "Bengaluru" },
+		]);
+	});
+
 	it("autocompletes routes by name", async () => {
 		mockGet.mockResolvedValue({
 			json: async () => [

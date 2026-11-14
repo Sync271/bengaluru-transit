@@ -153,6 +153,26 @@ export interface V2PlaceDetails {
 }
 
 /**
+ * Resolve coordinates to Chalo city ids (`GET scheduler_v4/geocode/reverse`).
+ * This is city coverage lookup, not street-level reverse geocoding.
+ */
+export interface V2ReverseGeocodeParams extends RequestOptions {
+	/**
+	 * Point as [latitude, longitude].
+	 */
+	coordinates: Coordinate;
+}
+
+export interface V2ReverseGeocodeCity {
+	cityId: string;
+	displayName: string;
+}
+
+export interface V2ReverseGeocodeResponse {
+	cities: V2ReverseGeocodeCity[];
+}
+
+/**
  * Route-name autocomplete (`scheduler_v4/v4/{city}/autocomplete/route`).
  * Unlike {@link V2SearchParams}, this does not need coordinates.
  */
