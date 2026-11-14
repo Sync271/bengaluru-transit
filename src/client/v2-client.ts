@@ -921,29 +921,29 @@ export class BengaluruTransitClientV2 {
 		);
 
 		const routes: V2BulkRouteDetails[] = raw.routes.map((route) => {
-			const staticData = route.staticData ?? {};
-			const liveData = route.liveData ?? {};
+			const staticData = route.staticData;
+			const liveData = route.liveData;
 			return {
 				routeId: route.routeId,
-				routeName: staticData.route_name ?? "",
-				agencyName: staticData.agency_name ?? "",
-				...(staticData.direction ? { direction: staticData.direction } : {}),
+				routeName: staticData?.route_name ?? "",
+				agencyName: staticData?.agency_name ?? "",
+				...(staticData?.direction ? { direction: staticData.direction } : {}),
 				status: route.status ?? "",
 				version: route.version ?? 0,
-				ticketEnabled: liveData.mTicketEnabled ?? false,
-				passEnabled: liveData.routePassEnabled ?? false,
-				freeRide: liveData.isFreeRide ?? false,
-				airportRoute: liveData.isAirportRoute ?? false,
-				premiumBusRoute: liveData.isPremiumBusRoute ?? false,
-				specialFeatures: staticData.specialFeatures ?? [],
-				stationType: staticData.stationType ?? "",
-				stops: (staticData.stopSequenceWithDetails ?? []).map(toStop),
-				timetable: (staticData.timeTable ?? []).map((entry) => ({
+				ticketEnabled: liveData?.mTicketEnabled ?? false,
+				passEnabled: liveData?.routePassEnabled ?? false,
+				freeRide: liveData?.isFreeRide ?? false,
+				airportRoute: liveData?.isAirportRoute ?? false,
+				premiumBusRoute: liveData?.isPremiumBusRoute ?? false,
+				specialFeatures: staticData?.specialFeatures ?? [],
+				stationType: staticData?.stationType ?? "",
+				stops: (staticData?.stopSequenceWithDetails ?? []).map(toStop),
+				timetable: (staticData?.timeTable ?? []).map((entry) => ({
 					startTimeSeconds: entry.start_time,
 					frequency: entry.isFrequency ?? false,
 					extrapolated: entry.extrapolated ?? false,
 				})),
-				polyline: staticData.polyline ?? "",
+				polyline: staticData?.polyline ?? "",
 			};
 		});
 
@@ -1216,8 +1216,12 @@ export class BengaluruTransitClientV2 {
 		let json: unknown;
 		try {
 			json = JSON.parse(text) as unknown;
-		} catch {
-			throw new TransitValidationError("Invalid bus location response");
+		} catch (error) {
+			throw new TransitValidationError(
+				"Invalid bus location response",
+				[{ path: "body", message: "Response is not JSON" }],
+				error instanceof Error ? error : undefined
+			);
 		}
 
 		const raw = validate(
