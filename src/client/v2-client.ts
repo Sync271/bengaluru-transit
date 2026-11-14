@@ -5,6 +5,8 @@ import {
 	v2EncodedVehicleSchema,
 	v2LiveVehiclesParamsSchema,
 	v2LiveVehiclesResponseSchema,
+	v2BusLocationParamsSchema,
+	v2BusLocationResponseSchema,
 	v2NearbySummaryParamsSchema,
 	v2NearbySummaryResponseSchema,
 	v2NearbyStopsParamsSchema,
@@ -43,6 +45,8 @@ import type {
 	V2Itinerary,
 	V2LiveVehicles,
 	V2LiveVehiclesParams,
+	V2BusLocationParams,
+	V2BusLocation,
 	V2NearbySummary,
 	V2NearbySummaryParams,
 	V2NearbySummaryService,
@@ -1127,6 +1131,59 @@ export class BengaluruTransitClientV2 {
 		}
 
 		return { vehicles, arrivals };
+	}
+
+	/**
+	 * Live GPS for one registration number
+	 * (`GET vasudha/location/{city}/{agency}/bus/{busNo}`).
+	 * Returns `null` when the API has no position for that bus (empty body).
+	 */
+	async getBusLocation(
+		params: V2BusLocationParams
+	): Promise<V2BusLocation | null> {
+		const { signal, ...rest } = params;
+		const validated = validate(
+			v2BusLocationParamsSchema,
+			rest,
+			"Invalid bus location parameters"
+		);
+
+		const response = await this.client.get(
+			`vasudha/location/${this.city}/${validated.agency}/bus/${encodeURIComponent(validated.busNumber)}`,
+			{ signal }
+		);
+		const text = await response.text();
+		if (!text.trim()) {
+			return null;
+		}
+
+		let json: unknown;
+		try {
+			json = JSON.parse(text) as unknown;
+		} catch {
+			throw new TransitValidationError("Invalid bus location response");
+		}
+
+		const raw = validate(
+			v2BusLocationResponseSchema,
+			json,
+			"Invalid bus location response"
+		);
+
+		const haltState = raw.hS?.hS;
+		return {
+			busNumber: validated.busNumber,
+			agencyName: raw.ag ?? validated.agency,
+			latitude: raw.lP.lt,
+			longitude: raw.lP.ln,
+			...(raw.bearing !== undefined ? { bearing: raw.bearing } : {}),
+			...(raw.sp !== undefined ? { speed: raw.sp } : {}),
+			...(raw.nS ? { nextStopId: raw.nS } : {}),
+			halted: haltState !== undefined && haltState !== "NO_HALT",
+			...(raw.lP.tS !== undefined ? { updatedAt: raw.lP.tS } : {}),
+			...(raw.md ? { mode: raw.md } : {}),
+			...(raw.ct ? { cityId: raw.ct } : {}),
+		};
 	}
 
 	/**

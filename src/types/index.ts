@@ -162,6 +162,8 @@ export type {
 	V2VehiclePosition,
 	V2StopArrival,
 	V2LiveVehicles,
+	V2BusLocationParams,
+	V2BusLocation,
 	V2StopRoutePair,
 	V2StopArrivalsParams,
 	V2StopArrivals,

@@ -481,6 +481,37 @@ export const v2LiveVehiclesParamsSchema = z.object({
 	stopIds: z.array(z.string().trim().min(1)).min(1),
 });
 
+export const v2BusLocationParamsSchema = z.object({
+	busNumber: z.string().trim().min(1),
+	agency: z.string().trim().min(1).default("bmtc"),
+});
+
+export const v2BusLocationResponseSchema = z
+	.object({
+		lP: z
+			.object({
+				lt: z.number(),
+				ln: z.number(),
+				tS: z.number().optional(),
+				pSp: z.number().optional(),
+				ac: z.number().optional(),
+			})
+			.passthrough(),
+		nS: z.string().optional(),
+		ag: z.string().optional(),
+		bearing: z.number().optional(),
+		sp: z.number().optional(),
+		md: z.string().optional(),
+		ct: z.string().optional(),
+		hS: z
+			.object({
+				hS: z.string().optional(),
+			})
+			.passthrough()
+			.optional(),
+	})
+	.passthrough();
+
 export const v2EncodedVehicleSchema = z
 	.object({
 		vNo: z.string(),

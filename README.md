@@ -248,6 +248,17 @@ live.arrivals.forEach(arrival => {
 
 `vehicles` are current positions. `arrivals` are those vehicles measured against each stop id you passed. `distanceMeters` is the remaining distance, and `updatedAt` is epoch milliseconds.
 
+To follow one registration number:
+
+```typescript
+const bus = await v2.getBusLocation({ busNumber: "KA57F1838" });
+if (bus) {
+  console.log(bus.latitude, bus.longitude, bus.bearing, bus.nextStopId);
+}
+```
+
+Returns `null` when that bus is not currently tracked.
+
 ### 7. Arrivals for known stop and route pairs
 
 Use this when you already know the pairs and do not need the full route.

@@ -720,6 +720,60 @@ describe("BengaluruTransitClientV2", () => {
 		});
 	});
 
+	it("gets live GPS for one bus number", async () => {
+		mockGet.mockResolvedValue({
+			text: async () =>
+				JSON.stringify({
+					lP: {
+						ln: 77.69767,
+						lt: 12.94283,
+						pSp: 35,
+						tS: 1794694413000,
+					},
+					nS: "Dq0KLkq8",
+					ag: "bmtc",
+					bearing: 208.09,
+					sp: 14.4,
+					md: "bus",
+					ct: "bengaluru",
+					hS: { hS: "NO_HALT" },
+				}),
+		});
+
+		const result = await client.getBusLocation({
+			busNumber: "KA57F1838",
+		});
+
+		expect(mockGet.mock.calls[0][0]).toBe(
+			"vasudha/location/bengaluru/bmtc/bus/KA57F1838"
+		);
+		expect(result).toMatchObject({
+			busNumber: "KA57F1838",
+			agencyName: "bmtc",
+			latitude: 12.94283,
+			longitude: 77.69767,
+			bearing: 208.09,
+			speed: 14.4,
+			nextStopId: "Dq0KLkq8",
+			halted: false,
+			updatedAt: 1794694413000,
+			mode: "bus",
+			cityId: "bengaluru",
+		});
+	});
+
+	it("returns null when bus location body is empty", async () => {
+		mockGet.mockResolvedValue({
+			text: async () => "",
+		});
+
+		const result = await client.getBusLocation({
+			busNumber: "KA01F1234",
+		});
+
+		expect(result).toBeNull();
+	});
+
 	it("requests stop arrivals as stopId:routeId", async () => {
 		mockPost.mockResolvedValue({
 			json: async () => ({

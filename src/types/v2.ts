@@ -542,6 +542,38 @@ export interface V2LiveVehicles {
 	arrivals: V2StopArrival[];
 }
 
+/**
+ * Live GPS for one registration number
+ * (`GET vasudha/location/{city}/{agency}/bus/{busNo}`).
+ */
+export interface V2BusLocationParams extends RequestOptions {
+	/**
+	 * Fleet / registration number (e.g. `KA57F1838`).
+	 */
+	busNumber: string;
+	/**
+	 * Agency path segment. Defaults to `bmtc`.
+	 */
+	agency?: string;
+}
+
+export interface V2BusLocation {
+	busNumber: string;
+	agencyName: string;
+	latitude: number;
+	longitude: number;
+	bearing?: number;
+	/**
+	 * Speed from the feed, when present.
+	 */
+	speed?: number;
+	nextStopId?: string;
+	halted: boolean;
+	updatedAt?: number;
+	mode?: string;
+	cityId?: string;
+}
+
 export interface V2StopRoutePair {
 	stopId: string;
 	routeId: string;
