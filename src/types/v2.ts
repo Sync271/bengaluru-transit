@@ -693,3 +693,34 @@ export interface V2City {
 export interface V2ListCitiesResponse {
 	cities: V2City[];
 }
+
+/**
+ * City metadata (`GET scheduler_v4/v1/{city}/metadataprops`).
+ * Thin subset: identity, centre, currency, and mode/agency flags.
+ */
+export interface V2CityAgency {
+	name: string;
+	ticketBooking: boolean;
+	liveDataAvailable: boolean;
+	serviceCategories: string[];
+}
+
+export interface V2CityMode {
+	mode: string;
+	agencies: V2CityAgency[];
+}
+
+export interface V2CityMetadata {
+	cityId: string;
+	displayName: string;
+	timezone: string;
+	countryId: string;
+	stateCode: string;
+	beta: boolean;
+	operational: boolean;
+	latitude: number;
+	longitude: number;
+	currency: string;
+	currencySymbol: string;
+	modes: V2CityMode[];
+}

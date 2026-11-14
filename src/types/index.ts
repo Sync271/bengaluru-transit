@@ -178,4 +178,7 @@ export type {
 	V2Occupancy,
 	V2City,
 	V2ListCitiesResponse,
+	V2CityAgency,
+	V2CityMode,
+	V2CityMetadata,
 } from "./v2.js";

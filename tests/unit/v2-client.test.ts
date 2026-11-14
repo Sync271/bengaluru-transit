@@ -1172,6 +1172,98 @@ describe("BengaluruTransitClientV2", () => {
 		]);
 	});
 
+	it("gets thin city metadata", async () => {
+		mockGet.mockResolvedValue({
+			json: async () => ({
+				data: [
+					{
+						city: "BENGALURU",
+						city_display_name: "Bengaluru",
+						tz: "Asia/Kolkata",
+						countryId: "IND",
+						defaultStateCode: "KA",
+						beta_mode: true,
+						isOperational: true,
+						currency: "INR",
+						currencySymbol: "₹",
+						cityCentre: { lat: 12.92134, lon: 77.553423 },
+						modes_map: [
+							{
+								mode: "BUS",
+								agencies: [
+									{
+										agencyName: "BMTC",
+										ticketBooking: false,
+										liveDataAvailable: false,
+										serviceCategories: {
+											VJ: { displayName: "Vajra" },
+											OD: { displayName: "Ordinary" },
+										},
+									},
+								],
+							},
+							{
+								mode: "METRO",
+								agencies: [
+									{
+										agencyName: "BMRCL",
+										ticketBooking: true,
+										liveDataAvailable: false,
+									},
+								],
+							},
+						],
+						polyBound: [[12.9, 77.5]],
+					},
+				],
+				cityList: [],
+			}),
+		});
+
+		const result = await client.getCityMetadata();
+
+		expect(mockGet.mock.calls[0][0]).toBe(
+			"scheduler_v4/v1/bengaluru/metadataprops"
+		);
+		expect(result).toMatchObject({
+			cityId: "bengaluru",
+			displayName: "Bengaluru",
+			timezone: "Asia/Kolkata",
+			countryId: "IND",
+			stateCode: "KA",
+			beta: true,
+			operational: true,
+			latitude: 12.92134,
+			longitude: 77.553423,
+			currency: "INR",
+			currencySymbol: "₹",
+		});
+		expect(result.modes).toEqual([
+			{
+				mode: "BUS",
+				agencies: [
+					{
+						name: "BMTC",
+						ticketBooking: false,
+						liveDataAvailable: false,
+						serviceCategories: ["VJ", "OD"],
+					},
+				],
+			},
+			{
+				mode: "METRO",
+				agencies: [
+					{
+						name: "BMRCL",
+						ticketBooking: true,
+						liveDataAvailable: false,
+						serviceCategories: [],
+					},
+				],
+			},
+		]);
+	});
+
 	it("rejects an empty search", async () => {
 		await expect(
 			client.search({ query: "  ", coordinates: [12.97, 77.59] })

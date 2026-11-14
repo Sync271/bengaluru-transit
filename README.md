@@ -319,6 +319,18 @@ cities.forEach(city => {
 
 `cityId` is lowercased for use as `new BengaluruTransitClientV2({ city })`. Boundary polygons from the API are not included.
 
+### 10. City metadata
+
+Thin identity, centre, currency, and modes for the configured city. Product catalogues and polygons are omitted.
+
+```typescript
+const meta = await v2.getCityMetadata();
+console.log(meta.displayName, meta.timezone, meta.latitude, meta.longitude);
+meta.modes.forEach(mode => {
+  console.log(mode.mode, mode.agencies.map(a => a.name).join(", "));
+});
+```
+
 ## Common Flows
 
 These examples use the `BengaluruTransitClient` from Quick Start.

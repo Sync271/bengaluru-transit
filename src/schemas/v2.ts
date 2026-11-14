@@ -634,3 +634,47 @@ export const v2ListCitiesResponseSchema = z.object({
 		.optional()
 		.default([]),
 });
+
+const v2CityMetadataAgencySchema = z
+	.object({
+		agencyName: z.string(),
+		ticketBooking: z.boolean().optional(),
+		liveDataAvailable: z.boolean().optional(),
+		serviceCategories: z.record(z.unknown()).optional(),
+	})
+	.passthrough();
+
+const v2CityMetadataModeSchema = z
+	.object({
+		mode: z.string(),
+		agencies: z.array(v2CityMetadataAgencySchema).optional().default([]),
+	})
+	.passthrough();
+
+export const v2CityMetadataResponseSchema = z.object({
+	data: z
+		.array(
+			z
+				.object({
+					city: z.string(),
+					city_display_name: z.string(),
+					tz: z.string().optional(),
+					countryId: z.string().optional(),
+					defaultStateCode: z.string().optional(),
+					beta_mode: z.boolean().optional(),
+					isOperational: z.boolean().optional(),
+					currency: z.string().optional(),
+					currencySymbol: z.string().optional(),
+					cityCentre: z
+						.object({
+							lat: z.number(),
+							lon: z.number(),
+						})
+						.passthrough()
+						.optional(),
+					modes_map: z.array(v2CityMetadataModeSchema).optional().default([]),
+				})
+				.passthrough()
+		)
+		.min(1),
+});

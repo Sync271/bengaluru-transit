@@ -18,6 +18,7 @@ import {
 	v2OccupancyParamsSchema,
 	v2OccupancyResponseSchema,
 	v2ListCitiesResponseSchema,
+	v2CityMetadataResponseSchema,
 	v2RouteDetailsParamsSchema,
 	v2RouteDetailsResponseSchema,
 	v2RouteDetailsBulkParamsSchema,
@@ -63,6 +64,7 @@ import type {
 	V2OccupancyLevel,
 	V2OccupancyParams,
 	V2ListCitiesResponse,
+	V2CityMetadata,
 	V2BulkRouteDetails,
 	V2RouteDetails,
 	V2RouteDetailsBulkParams,
@@ -1362,6 +1364,51 @@ export class BengaluruTransitClientV2 {
 				beta: city.beta_mode ?? false,
 				comingSoon: city.isComingSoon ?? false,
 				disabled: city.isDisabled ?? false,
+			})),
+		};
+	}
+
+	/**
+	 * Thin city metadata for the configured city
+	 * (`GET scheduler_v4/v1/{city}/metadataprops`).
+	 * Includes centre, timezone, currency, and mode/agency flags — not polygons
+	 * or product catalogues.
+	 */
+	async getCityMetadata(
+		options: RequestOptions = {}
+	): Promise<V2CityMetadata> {
+		const response = await this.client.get(
+			`scheduler_v4/v1/${this.city}/metadataprops`,
+			{ signal: options.signal }
+		);
+		const raw = validate(
+			v2CityMetadataResponseSchema,
+			await response.json<unknown>(),
+			"Invalid city metadata response"
+		);
+		const city = raw.data[0]!;
+		const centre = city.cityCentre;
+
+		return {
+			cityId: city.city.toLowerCase(),
+			displayName: city.city_display_name,
+			timezone: city.tz ?? "",
+			countryId: city.countryId ?? "",
+			stateCode: city.defaultStateCode ?? "",
+			beta: city.beta_mode ?? false,
+			operational: city.isOperational ?? false,
+			latitude: centre?.lat ?? 0,
+			longitude: centre?.lon ?? 0,
+			currency: city.currency ?? "",
+			currencySymbol: city.currencySymbol ?? "",
+			modes: city.modes_map.map((mode) => ({
+				mode: mode.mode,
+				agencies: mode.agencies.map((agency) => ({
+					name: agency.agencyName,
+					ticketBooking: agency.ticketBooking ?? false,
+					liveDataAvailable: agency.liveDataAvailable ?? false,
+					serviceCategories: Object.keys(agency.serviceCategories ?? {}),
+				})),
 			})),
 		};
 	}
