@@ -737,6 +737,46 @@ describe("BengaluruTransitClientV2", () => {
 		});
 	});
 
+	it("lists city stops", async () => {
+		mockGet.mockResolvedValue({
+			json: async () => [
+				{
+					stop_id: "3F3DT3Wp",
+					stop_lat: 13.11213,
+					stop_lon: 77.39275,
+					stop_name: "Nelamangala Railway Station",
+					short_id: 28313,
+					transport_type: "bus",
+					station_type: "BUS",
+					city: "BENGALURU",
+					stateCode: "KA",
+					localeMap: {
+						kn: { stop_name: "ನೆಲಮಂಗಲ ರೈಲ್ವೇ ಸ್ಟೇಷನ್" },
+					},
+				},
+			],
+		});
+
+		const result = await client.listStops({ transitMode: "bus" });
+
+		const [, options] = mockGet.mock.calls[0];
+		const params = options.searchParams as URLSearchParams;
+		expect(mockGet.mock.calls[0][0]).toBe("scheduler_v4/v4/bengaluru/stops/id");
+		expect(params.get("mode")).toBe("bus");
+		expect(result.stops[0]).toMatchObject({
+			stopId: "3F3DT3Wp",
+			name: "Nelamangala Railway Station",
+			latitude: 13.11213,
+			longitude: 77.39275,
+			shortId: 28313,
+			stationType: "BUS",
+			transportType: "bus",
+			city: "BENGALURU",
+			stateCode: "KA",
+			localizedNames: { kn: "ನೆಲಮಂಗಲ ರೈಲ್ವೇ ಸ್ಟೇಷನ್" },
+		});
+	});
+
 	it("finds nearby stops", async () => {
 		mockGet.mockResolvedValue({
 			json: async () => [

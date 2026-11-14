@@ -296,6 +296,45 @@ export const v2NearbyStopHitSchema = z
 
 export const v2NearbyStopsResponseSchema = z.array(v2NearbyStopHitSchema);
 
+export const v2ListStopsParamsSchema = z.object({
+	transitMode: z
+		.enum([
+			"bus",
+			"railway",
+			"metro",
+			"monorail",
+			"ferry",
+			"cab",
+			"transit",
+		])
+		.default("bus"),
+});
+
+export const v2CityStopSchema = z
+	.object({
+		stop_id: z.string(),
+		stop_name: z.string(),
+		stop_lat: z.number(),
+		stop_lon: z.number(),
+		short_id: z.number().optional(),
+		station_type: z.string().optional(),
+		transport_type: z.string().optional(),
+		city: z.string().optional(),
+		stateCode: z.string().optional(),
+		localeMap: z
+			.record(
+				z
+					.object({
+						stop_name: z.string().optional(),
+					})
+					.passthrough()
+			)
+			.optional(),
+	})
+	.passthrough();
+
+export const v2ListStopsResponseSchema = z.array(v2CityStopSchema);
+
 export const v2StopDetailsParamsSchema = z.object({
 	stopId: z.string().trim().min(1),
 	day: v2WeekdaySchema,

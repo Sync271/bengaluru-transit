@@ -9,6 +9,8 @@ import {
 	v2NearbySummaryResponseSchema,
 	v2NearbyStopsParamsSchema,
 	v2NearbyStopsResponseSchema,
+	v2ListStopsParamsSchema,
+	v2ListStopsResponseSchema,
 	v2OccupancyParamsSchema,
 	v2OccupancyResponseSchema,
 	v2RouteDetailsParamsSchema,
@@ -36,6 +38,8 @@ import type {
 	V2NearbySummary,
 	V2NearbySummaryParams,
 	V2NearbySummaryService,
+	V2ListStopsParams,
+	V2ListStopsResponse,
 	V2NearbyStopsParams,
 	V2NearbyStopsResponse,
 	V2NearbyVehicle,
@@ -734,6 +738,62 @@ export class BengaluruTransitClientV2 {
 				stationType: stop.station_type ?? "",
 				distanceMeters: stop.distance,
 			})),
+		};
+	}
+
+	/**
+	 * List all stops in the city for a transit mode.
+	 * Bus mode returns the full catalogue (thousands of stops).
+	 */
+	async listStops(params: V2ListStopsParams = {}): Promise<V2ListStopsResponse> {
+		const { signal, ...rest } = params;
+		const validated = validate(
+			v2ListStopsParamsSchema,
+			rest,
+			"Invalid list stops parameters"
+		);
+
+		const searchParams = new URLSearchParams({
+			mode: validated.transitMode,
+		});
+		const response = await this.client.get(
+			`scheduler_v4/v4/${this.city}/stops/id`,
+			{ searchParams, signal }
+		);
+		const raw = validate(
+			v2ListStopsResponseSchema,
+			await response.json<unknown>(),
+			"Invalid list stops response"
+		);
+
+		return {
+			stops: raw.map((stop) => {
+				const localizedNames = stop.localeMap
+					? Object.fromEntries(
+							Object.entries(stop.localeMap)
+								.map(([locale, value]) => [locale, value.stop_name])
+								.filter(
+									(entry): entry is [string, string] =>
+										typeof entry[1] === "string" && entry[1].length > 0
+								)
+						)
+					: undefined;
+
+				return {
+					stopId: stop.stop_id,
+					name: stop.stop_name,
+					latitude: stop.stop_lat,
+					longitude: stop.stop_lon,
+					...(stop.short_id !== undefined ? { shortId: stop.short_id } : {}),
+					stationType: stop.station_type ?? "",
+					transportType: stop.transport_type ?? "",
+					...(stop.city ? { city: stop.city } : {}),
+					...(stop.stateCode ? { stateCode: stop.stateCode } : {}),
+					...(localizedNames && Object.keys(localizedNames).length > 0
+						? { localizedNames }
+						: {}),
+				};
+			}),
 		};
 	}
 

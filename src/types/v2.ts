@@ -331,6 +331,44 @@ export interface V2NearbyStopsResponse {
 	stops: V2NearbyStopHit[];
 }
 
+/**
+ * Full city stop catalogue (`GET scheduler_v4/v4/{city}/stops/id`).
+ * The trailing `id` path segment is literal.
+ */
+export interface V2ListStopsParams extends RequestOptions {
+	/**
+	 * Transit mode filter. Defaults to `"bus"`.
+	 */
+	transitMode?:
+		| "bus"
+		| "railway"
+		| "metro"
+		| "monorail"
+		| "ferry"
+		| "cab"
+		| "transit";
+}
+
+export interface V2CityStop {
+	stopId: string;
+	name: string;
+	latitude: number;
+	longitude: number;
+	shortId?: number;
+	stationType: string;
+	transportType: string;
+	city?: string;
+	stateCode?: string;
+	/**
+	 * Localized stop names keyed by locale code (e.g. `kn`).
+	 */
+	localizedNames?: Record<string, string>;
+}
+
+export interface V2ListStopsResponse {
+	stops: V2CityStop[];
+}
+
 export interface V2StopDetailsParams extends RequestOptions {
 	stopId: string;
 	/**
