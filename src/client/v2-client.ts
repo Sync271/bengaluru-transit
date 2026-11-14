@@ -7,6 +7,8 @@ import {
 	v2LiveVehiclesResponseSchema,
 	v2NearbyBusesParamsSchema,
 	v2NearbyBusesResponseSchema,
+	v2NearbyStopsParamsSchema,
+	v2NearbyStopsResponseSchema,
 	v2OccupancyParamsSchema,
 	v2OccupancyResponseSchema,
 	v2RouteDetailsParamsSchema,
@@ -33,6 +35,8 @@ import type {
 	V2LiveVehiclesParams,
 	V2NearbyBuses,
 	V2NearbyBusesParams,
+	V2NearbyStopsParams,
+	V2NearbyStopsResponse,
 	V2NearbyVehicle,
 	V2Occupancy,
 	V2OccupancyLevel,
@@ -691,6 +695,44 @@ export class BengaluruTransitClientV2 {
 		return {
 			catalogueVersion: raw.version ?? 0,
 			routes,
+		};
+	}
+
+	/**
+	 * Find stops near a coordinate.
+	 * Distance is returned in metres.
+	 */
+	async getNearbyStops(
+		params: V2NearbyStopsParams
+	): Promise<V2NearbyStopsResponse> {
+		const { signal, ...rest } = params;
+		const validated = validate(
+			v2NearbyStopsParamsSchema,
+			rest,
+			"Invalid nearby stops parameters"
+		);
+
+		const searchParams = new URLSearchParams({
+			lat: String(validated.coordinates[0]),
+			lon: String(validated.coordinates[1]),
+			transitMode: validated.transitMode,
+		});
+		const response = await this.client.get(
+			`scheduler_v4/v4/${this.city}/nearby/stops`,
+			{ searchParams, signal }
+		);
+		const raw = validate(
+			v2NearbyStopsResponseSchema,
+			await response.json<unknown>(),
+			"Invalid nearby stops response"
+		);
+
+		return {
+			stops: raw.map((stop) => ({
+				stop: toStop(stop),
+				stationType: stop.station_type ?? "",
+				distanceMeters: stop.distance,
+			})),
 		};
 	}
 

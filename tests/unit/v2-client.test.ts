@@ -737,6 +737,54 @@ describe("BengaluruTransitClientV2", () => {
 		});
 	});
 
+	it("finds nearby stops", async () => {
+		mockGet.mockResolvedValue({
+			json: async () => [
+				{
+					stop_id: "ArYFEPLj",
+					stop_lat: 12.97793,
+					stop_lon: 77.6283,
+					station_type: "BUS",
+					stop_name: "Halasuru",
+					distance: 0,
+				},
+				{
+					stop_id: "other",
+					stop_lat: 12.978,
+					stop_lon: 77.629,
+					station_type: "BUS",
+					stop_name: "Nearby Stop",
+					distance: 120,
+				},
+			],
+		});
+
+		const result = await client.getNearbyStops({
+			coordinates: [12.97793, 77.6283],
+		});
+
+		const [, options] = mockGet.mock.calls[0];
+		const params = options.searchParams as URLSearchParams;
+		expect(mockGet.mock.calls[0][0]).toBe(
+			"scheduler_v4/v4/bengaluru/nearby/stops"
+		);
+		expect(params.get("lat")).toBe("12.97793");
+		expect(params.get("lon")).toBe("77.6283");
+		expect(params.get("transitMode")).toBe("bus");
+		expect(result.stops).toHaveLength(2);
+		expect(result.stops[0]).toMatchObject({
+			stop: {
+				stopId: "ArYFEPLj",
+				name: "Halasuru",
+				latitude: 12.97793,
+				longitude: 77.6283,
+			},
+			stationType: "BUS",
+			distanceMeters: 0,
+		});
+		expect(result.stops[1].distanceMeters).toBe(120);
+	});
+
 	it("gets stop details timetable", async () => {
 		mockGet.mockResolvedValue({
 			json: async () => [

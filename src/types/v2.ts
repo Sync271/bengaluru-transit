@@ -297,6 +297,40 @@ export interface V2RouteDetailsBulkResponse {
 	routes: V2BulkRouteDetails[];
 }
 
+/**
+ * Stops near a coordinate (`GET scheduler_v4/v4/{city}/nearby/stops`).
+ */
+export interface V2NearbyStopsParams extends RequestOptions {
+	/**
+	 * Search center as [latitude, longitude].
+	 */
+	coordinates: Coordinate;
+	/**
+	 * Transit mode filter. Defaults to `"bus"`.
+	 */
+	transitMode?:
+		| "bus"
+		| "railway"
+		| "metro"
+		| "monorail"
+		| "ferry"
+		| "cab"
+		| "transit";
+}
+
+export interface V2NearbyStopHit {
+	stop: V2Stop;
+	stationType: string;
+	/**
+	 * Distance from the search center, in metres.
+	 */
+	distanceMeters: number;
+}
+
+export interface V2NearbyStopsResponse {
+	stops: V2NearbyStopHit[];
+}
+
 export interface V2StopDetailsParams extends RequestOptions {
 	stopId: string;
 	/**

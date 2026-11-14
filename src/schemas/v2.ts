@@ -267,6 +267,35 @@ export const v2RouteDetailsBulkResponseSchema = z.object({
 	version: z.number().optional(),
 });
 
+export const v2NearbyStopsParamsSchema = z.object({
+	coordinates: v2CoordinateSchema,
+	transitMode: z
+		.enum([
+			"bus",
+			"railway",
+			"metro",
+			"monorail",
+			"ferry",
+			"cab",
+			"transit",
+		])
+		.default("bus"),
+});
+
+export const v2NearbyStopHitSchema = z
+	.object({
+		stop_id: z.string(),
+		stop_name: z.string(),
+		stop_lat: z.number(),
+		stop_lon: z.number(),
+		station_type: z.string().optional(),
+		distance: z.number(),
+		short_id: z.number().optional(),
+	})
+	.passthrough();
+
+export const v2NearbyStopsResponseSchema = z.array(v2NearbyStopHitSchema);
+
 export const v2StopDetailsParamsSchema = z.object({
 	stopId: z.string().trim().min(1),
 	day: v2WeekdaySchema,
