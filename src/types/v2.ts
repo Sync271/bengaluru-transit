@@ -248,6 +248,55 @@ export interface V2RouteDetails {
 	timetable: V2TimetableEntry[];
 }
 
+/**
+ * Bulk route details (`POST scheduler_v4/v5/{city}/routedetails`).
+ * Sends cached versions so the server can return only updated routes.
+ */
+export interface V2RouteDetailsBulkParams extends RequestOptions {
+	/**
+	 * Route ids to fetch. Each is sent with version `0` unless overridden in `versions`.
+	 */
+	routeIds: string[];
+	/**
+	 * Optional cached version per route id.
+	 */
+	versions?: Record<string, number>;
+	/**
+	 * Whether this is a background sync. Defaults to false.
+	 */
+	backgroundSync?: boolean;
+}
+
+export interface V2BulkRouteDetails {
+	routeId: string;
+	routeName: string;
+	agencyName: string;
+	direction?: string;
+	status: string;
+	version: number;
+	ticketEnabled: boolean;
+	passEnabled: boolean;
+	freeRide: boolean;
+	airportRoute: boolean;
+	premiumBusRoute: boolean;
+	specialFeatures: string[];
+	stationType: string;
+	stops: V2Stop[];
+	timetable: V2TimetableEntry[];
+	/**
+	 * Encoded route polyline as returned by the API.
+	 */
+	polyline: string;
+}
+
+export interface V2RouteDetailsBulkResponse {
+	/**
+	 * Catalogue version from the bulk response.
+	 */
+	catalogueVersion: number;
+	routes: V2BulkRouteDetails[];
+}
+
 export interface V2StopDetailsParams extends RequestOptions {
 	stopId: string;
 	/**

@@ -225,6 +225,48 @@ export const v2RouteDetailsResponseSchema = z.object({
 	timeTable: z.array(v2TimetableSchema).optional().default([]),
 });
 
+export const v2RouteDetailsBulkParamsSchema = z.object({
+	routeIds: z.array(z.string().trim().min(1)).min(1),
+	versions: z.record(z.number().int().nonnegative()).optional(),
+	backgroundSync: z.boolean().default(false),
+});
+
+export const v2BulkRouteDetailsSchema = z
+	.object({
+		routeId: z.string(),
+		status: z.string().optional(),
+		version: z.number().optional(),
+		staticData: z
+			.object({
+				route_name: z.string().optional(),
+				agency_name: z.string().optional(),
+				direction: z.string().optional(),
+				stationType: z.string().optional(),
+				specialFeatures: z.array(z.string()).optional(),
+				polyline: z.string().optional(),
+				stopSequenceWithDetails: z.array(v2StopSchema).optional().default([]),
+				timeTable: z.array(v2TimetableSchema).optional().default([]),
+			})
+			.passthrough()
+			.optional(),
+		liveData: z
+			.object({
+				mTicketEnabled: z.boolean().optional(),
+				routePassEnabled: z.boolean().optional(),
+				isFreeRide: z.boolean().optional(),
+				isAirportRoute: z.boolean().optional(),
+				isPremiumBusRoute: z.boolean().optional(),
+			})
+			.passthrough()
+			.optional(),
+	})
+	.passthrough();
+
+export const v2RouteDetailsBulkResponseSchema = z.object({
+	routes: z.array(v2BulkRouteDetailsSchema).optional().default([]),
+	version: z.number().optional(),
+});
+
 export const v2StopDetailsParamsSchema = z.object({
 	stopId: z.string().trim().min(1),
 	day: v2WeekdaySchema,

@@ -340,6 +340,84 @@ describe("BengaluruTransitClientV2", () => {
 		expect(result.timetable).toHaveLength(1);
 	});
 
+	it("fetches route details in bulk with polyline", async () => {
+		mockPost.mockResolvedValue({
+			json: async () => ({
+				version: 112,
+				routes: [
+					{
+						routeId: "NsbPdEdi",
+						status: "UPDATED",
+						version: 0,
+						staticData: {
+							route_name: "KIA-8E",
+							agency_name: "BMTC",
+							direction: "UP",
+							stationType: "BUS",
+							specialFeatures: ["Vayu Vajra"],
+							polyline: "s_jmA{m~xM",
+							stopSequenceWithDetails: [
+								{
+									stop_id: "uPOlfcFT",
+									stop_name: "Electronic City Wipro Main Gate",
+									stop_lat: 12.83594,
+									stop_lon: 77.65742,
+									short_id: 38209,
+								},
+							],
+							timeTable: [
+								{
+									start_time: 16800,
+									isFrequency: false,
+									extrapolated: true,
+								},
+							],
+						},
+						liveData: {
+							mTicketEnabled: true,
+							routePassEnabled: false,
+							isFreeRide: false,
+							isAirportRoute: false,
+							isPremiumBusRoute: false,
+						},
+					},
+				],
+			}),
+		});
+
+		const result = await client.getRouteDetailsBulk({
+			routeIds: ["NsbPdEdi"],
+		});
+
+		expect(mockPost.mock.calls[0][0]).toBe(
+			"scheduler_v4/v5/bengaluru/routedetails"
+		);
+		const [, options] = mockPost.mock.calls[0];
+		expect(options.searchParams.get("isBackgroundSync")).toBe("false");
+		expect(options.json).toEqual({
+			routeIdsToVersionMap: { NsbPdEdi: 0 },
+		});
+		expect(result.catalogueVersion).toBe(112);
+		expect(result.routes[0]).toMatchObject({
+			routeId: "NsbPdEdi",
+			routeName: "KIA-8E",
+			agencyName: "BMTC",
+			direction: "UP",
+			status: "UPDATED",
+			ticketEnabled: true,
+			specialFeatures: ["Vayu Vajra"],
+			polyline: "s_jmA{m~xM",
+			stops: [
+				{
+					stopId: "uPOlfcFT",
+					name: "Electronic City Wipro Main Gate",
+					shortId: 38209,
+				},
+			],
+			timetable: [{ startTimeSeconds: 16800, extrapolated: true }],
+		});
+	});
+
 	it("returns stops and the timetable when trip type is a number", async () => {
 		mockGet.mockResolvedValue({
 			json: async () => ({

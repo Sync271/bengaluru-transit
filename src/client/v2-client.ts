@@ -11,6 +11,8 @@ import {
 	v2OccupancyResponseSchema,
 	v2RouteDetailsParamsSchema,
 	v2RouteDetailsResponseSchema,
+	v2RouteDetailsBulkParamsSchema,
+	v2RouteDetailsBulkResponseSchema,
 	v2SearchParamsSchema,
 	v2SearchResponseSchema,
 	v2SearchRoutesParamsSchema,
@@ -35,7 +37,10 @@ import type {
 	V2Occupancy,
 	V2OccupancyLevel,
 	V2OccupancyParams,
+	V2BulkRouteDetails,
 	V2RouteDetails,
+	V2RouteDetailsBulkParams,
+	V2RouteDetailsBulkResponse,
 	V2RouteDetailsParams,
 	V2SearchParams,
 	V2SearchResponse,
@@ -616,6 +621,76 @@ export class BengaluruTransitClientV2 {
 				frequency: entry.isFrequency ?? false,
 				extrapolated: entry.extrapolated ?? false,
 			})),
+		};
+	}
+
+	/**
+	 * Fetch route details for one or more route ids in bulk.
+	 * Includes stop sequence, timetable, and encoded polyline.
+	 * Pass `versions` to skip routes the client already has at that version.
+	 */
+	async getRouteDetailsBulk(
+		params: V2RouteDetailsBulkParams
+	): Promise<V2RouteDetailsBulkResponse> {
+		const { signal, ...rest } = params;
+		const validated = validate(
+			v2RouteDetailsBulkParamsSchema,
+			rest,
+			"Invalid bulk route details parameters"
+		);
+
+		const routeIdsToVersionMap: Record<string, number> = {};
+		for (const routeId of validated.routeIds) {
+			routeIdsToVersionMap[routeId] = validated.versions?.[routeId] ?? 0;
+		}
+
+		const searchParams = new URLSearchParams({
+			isBackgroundSync: String(validated.backgroundSync),
+		});
+		const response = await this.client.post(
+			`scheduler_v4/v5/${this.city}/routedetails`,
+			{
+				searchParams,
+				json: { routeIdsToVersionMap },
+				signal,
+			}
+		);
+		const raw = validate(
+			v2RouteDetailsBulkResponseSchema,
+			await response.json<unknown>(),
+			"Invalid bulk route details response"
+		);
+
+		const routes: V2BulkRouteDetails[] = raw.routes.map((route) => {
+			const staticData = route.staticData ?? {};
+			const liveData = route.liveData ?? {};
+			return {
+				routeId: route.routeId,
+				routeName: staticData.route_name ?? "",
+				agencyName: staticData.agency_name ?? "",
+				...(staticData.direction ? { direction: staticData.direction } : {}),
+				status: route.status ?? "",
+				version: route.version ?? 0,
+				ticketEnabled: liveData.mTicketEnabled ?? false,
+				passEnabled: liveData.routePassEnabled ?? false,
+				freeRide: liveData.isFreeRide ?? false,
+				airportRoute: liveData.isAirportRoute ?? false,
+				premiumBusRoute: liveData.isPremiumBusRoute ?? false,
+				specialFeatures: staticData.specialFeatures ?? [],
+				stationType: staticData.stationType ?? "",
+				stops: (staticData.stopSequenceWithDetails ?? []).map(toStop),
+				timetable: (staticData.timeTable ?? []).map((entry) => ({
+					startTimeSeconds: entry.start_time,
+					frequency: entry.isFrequency ?? false,
+					extrapolated: entry.extrapolated ?? false,
+				})),
+				polyline: staticData.polyline ?? "",
+			};
+		});
+
+		return {
+			catalogueVersion: raw.version ?? 0,
+			routes,
 		};
 	}
 
