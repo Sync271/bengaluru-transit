@@ -717,12 +717,16 @@ describe("BengaluruTransitClientV2", () => {
 			coordinates: [12.97793, 77.6283],
 			day: "tuesday",
 			startTimeSeconds: 73500,
+			radiusMeters: 2000,
+			cardCount: 5,
 		});
 
 		const params = mockGet.mock.calls[0][1].searchParams as URLSearchParams;
 		expect(mockGet.mock.calls[0][0]).toBe("scheduler_v4/v4/bengaluru/summary");
 		expect(params.get("lat")).toBe("12.97793");
 		expect(params.get("time")).toBe("73500");
+		expect(params.get("radius")).toBe("2000");
+		expect(params.get("cards")).toBe("5");
 		expect(mockPost).toHaveBeenCalledWith(
 			"vasudha/cities/bengaluru/stop-route-eta",
 			expect.objectContaining({
@@ -740,6 +744,22 @@ describe("BengaluruTransitClientV2", () => {
 			etaSeconds: 1390,
 			distanceMeters: 5710,
 		});
+	});
+
+	it("omits radius and cards from nearby summary when not provided", async () => {
+		mockGet.mockResolvedValue({
+			json: async () => ({ payload: [] }),
+		});
+
+		await client.getNearbySummary({
+			coordinates: [12.97793, 77.6283],
+			day: "tuesday",
+			startTimeSeconds: 73500,
+		});
+
+		const params = mockGet.mock.calls[0][1].searchParams as URLSearchParams;
+		expect(params.has("radius")).toBe(false);
+		expect(params.has("cards")).toBe(false);
 	});
 
 	it("lists city stops", async () => {

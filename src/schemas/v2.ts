@@ -472,6 +472,8 @@ export const v2NearbySummaryParamsSchema = z.object({
 	coordinates: v2CoordinateSchema,
 	day: v2WeekdaySchema,
 	startTimeSeconds: z.number().int().nonnegative(),
+	radiusMeters: z.number().int().positive().optional(),
+	cardCount: z.number().int().positive().optional(),
 });
 
 export const v2NearbySummaryResponseSchema = z.object({

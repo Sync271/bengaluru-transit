@@ -1025,6 +1025,12 @@ export class BengaluruTransitClientV2 {
 			time: String(validated.startTimeSeconds),
 			day: validated.day,
 		});
+		if (validated.radiusMeters !== undefined) {
+			searchParams.set("radius", String(validated.radiusMeters));
+		}
+		if (validated.cardCount !== undefined) {
+			searchParams.set("cards", String(validated.cardCount));
+		}
 		const response = await this.client.get(
 			`scheduler_v4/v4/${this.city}/summary`,
 			{ searchParams, signal }

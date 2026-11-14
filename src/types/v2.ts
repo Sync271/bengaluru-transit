@@ -504,6 +504,16 @@ export interface V2NearbySummaryParams extends RequestOptions {
 	 * Time of day as seconds from local midnight. Defaults to the current local time.
 	 */
 	startTimeSeconds?: number;
+	/**
+	 * Search radius in metres. When omitted, the API applies its own default.
+	 * Captured Chalo requests commonly use `2000`.
+	 */
+	radiusMeters?: number;
+	/**
+	 * Max stop “cards” to return. When omitted, the API applies its own default.
+	 * Captured Chalo requests commonly use `5`.
+	 */
+	cardCount?: number;
 }
 
 export interface V2NearbyVehicle {

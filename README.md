@@ -90,6 +90,8 @@ Route ids from this client are not the ids used by `BengaluruTransitClient`.
 ```typescript
 const nearby = await v2.getNearbySummary({
   coordinates: [12.97793, 77.6283],
+  radiusMeters: 2000,
+  cardCount: 5,
 });
 
 const stop = nearby.stops[0];
@@ -104,7 +106,7 @@ stop.services.forEach(service => {
 });
 ```
 
-Each stop includes the services scheduled there. `arrivalTimeSeconds` is the scheduled arrival at that stop. `vehicles` is filled only when a bus on that route is being tracked, and `etaSeconds` on a vehicle is the live estimate. `distanceKilometers` is the distance from the coordinates you passed. Use `getNearbyStops` when you only need stop locations.
+Each stop includes the services scheduled there. `arrivalTimeSeconds` is the scheduled arrival at that stop. `vehicles` is filled only when a bus on that route is being tracked, and `etaSeconds` on a vehicle is the live estimate. `distanceKilometers` is the distance from the coordinates you passed. Optional `radiusMeters` and `cardCount` widen or trim how many nearby stops come back; omit them to use the API defaults. Use `getNearbyStops` when you only need stop locations.
 
 ### 2. Search
 
