@@ -94,6 +94,43 @@ export interface V2SearchResponse {
 	places: V2PlaceSummary[];
 }
 
+/**
+ * Route-name autocomplete (`scheduler_v4/v4/{city}/autocomplete/route`).
+ * Unlike {@link V2SearchParams}, this does not need coordinates.
+ */
+export interface V2SearchRoutesParams extends RequestOptions {
+	/**
+	 * Route number or name fragment (sent as `str`).
+	 */
+	query: string;
+	/**
+	 * Weekday used for the active catalogue. Defaults to today in local time.
+	 */
+	day?: V2Weekday;
+}
+
+export interface V2RouteMatch {
+	routeId: string;
+	routeName: string;
+	agencyName: string;
+	firstStopName: string;
+	lastStopName: string;
+	directionStopName: string;
+	serviceTypes: string[];
+	ticketEnabled: boolean;
+	passEnabled: boolean;
+	freeRide: boolean;
+	transportType: string;
+	stationType: string;
+	direction?: string;
+	totalStops?: number;
+	totalStages?: number;
+}
+
+export interface V2SearchRoutesResponse {
+	routes: V2RouteMatch[];
+}
+
 export interface V2TripPlanParams extends RequestOptions {
 	fromCoordinates: Coordinate;
 	toCoordinates: Coordinate;

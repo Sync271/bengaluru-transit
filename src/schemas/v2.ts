@@ -50,6 +50,33 @@ export const v2SearchResponseSchema = z.object({
 	}),
 });
 
+export const v2SearchRoutesParamsSchema = z.object({
+	query: z.string().trim().min(1),
+	day: v2WeekdaySchema,
+});
+
+export const v2RouteMatchSchema = z
+	.object({
+		route_id: z.string(),
+		route_name: z.string(),
+		agency_name: z.string().optional(),
+		first_stop_name: z.string().optional(),
+		last_stop_name: z.string().optional(),
+		direction_stop_name: z.string().optional(),
+		spf: z.array(z.string()).optional(),
+		mTicketEnabled: z.boolean().optional(),
+		routePassEnabled: z.boolean().optional(),
+		isFreeRide: z.boolean().optional(),
+		transport_type: z.string().optional(),
+		station_type: z.string().optional(),
+		direction: z.string().optional(),
+		total_stops: z.number().optional(),
+		total_stages: z.number().optional(),
+	})
+	.passthrough();
+
+export const v2SearchRoutesResponseSchema = z.array(v2RouteMatchSchema);
+
 const v2LegSchema = z
 	.object({
 		mode: z.string(),

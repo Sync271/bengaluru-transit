@@ -13,6 +13,8 @@ import {
 	v2RouteDetailsResponseSchema,
 	v2SearchParamsSchema,
 	v2SearchResponseSchema,
+	v2SearchRoutesParamsSchema,
+	v2SearchRoutesResponseSchema,
 	v2StopArrivalsParamsSchema,
 	v2StopArrivalsResponseSchema,
 	v2StopDetailsParamsSchema,
@@ -35,6 +37,8 @@ import type {
 	V2RouteDetailsParams,
 	V2SearchParams,
 	V2SearchResponse,
+	V2SearchRoutesParams,
+	V2SearchRoutesResponse,
 	V2Stop,
 	V2StopArrival,
 	V2StopArrivals,
@@ -389,6 +393,64 @@ export class BengaluruTransitClientV2 {
 		}
 
 		return { routes, stops, places };
+	}
+
+	/**
+	 * Autocomplete routes by number or name.
+	 * Calls `scheduler_v4/v4/{city}/autocomplete/route` with `str`.
+	 * A query is required so the client does not download the full catalogue.
+	 */
+	async searchRoutes(
+		params: V2SearchRoutesParams
+	): Promise<V2SearchRoutesResponse> {
+		const { signal, ...rest } = params;
+		const now = new Date();
+		const validated = validate(
+			v2SearchRoutesParamsSchema,
+			{
+				...rest,
+				day: rest.day ?? WEEKDAYS[now.getDay()],
+			},
+			"Invalid route search parameters"
+		);
+
+		const searchParams = new URLSearchParams({
+			day: validated.day,
+			str: validated.query,
+		});
+		const response = await this.client.get(
+			`scheduler_v4/v4/${this.city}/autocomplete/route`,
+			{ searchParams, signal }
+		);
+		const raw = validate(
+			v2SearchRoutesResponseSchema,
+			await response.json<unknown>(),
+			"Invalid route search response"
+		);
+
+		return {
+			routes: raw.map((route) => ({
+				routeId: route.route_id,
+				routeName: route.route_name,
+				agencyName: route.agency_name ?? "",
+				firstStopName: route.first_stop_name ?? "",
+				lastStopName: route.last_stop_name ?? "",
+				directionStopName: route.direction_stop_name ?? "",
+				serviceTypes: route.spf ?? [],
+				ticketEnabled: route.mTicketEnabled ?? false,
+				passEnabled: route.routePassEnabled ?? false,
+				freeRide: route.isFreeRide ?? false,
+				transportType: route.transport_type ?? "",
+				stationType: route.station_type ?? "",
+				...(route.direction ? { direction: route.direction } : {}),
+				...(route.total_stops !== undefined
+					? { totalStops: route.total_stops }
+					: {}),
+				...(route.total_stages !== undefined
+					? { totalStages: route.total_stages }
+					: {}),
+			})),
+		};
 	}
 
 	/**

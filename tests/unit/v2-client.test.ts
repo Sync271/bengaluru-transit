@@ -97,6 +97,58 @@ describe("BengaluruTransitClientV2", () => {
 		expect(result.places[0].description).toBe("Majestic, Bengaluru");
 	});
 
+	it("autocompletes routes by name", async () => {
+		mockGet.mockResolvedValue({
+			json: async () => [
+				{
+					route_id: "BfHeErB4",
+					route_name: "V-500D",
+					agency_name: "BMTC",
+					first_stop_name: "Central Silk Board",
+					last_stop_name: "Hebbala",
+					direction_stop_name: "Hebbala",
+					spf: ["Vajra"],
+					mTicketEnabled: true,
+					routePassEnabled: false,
+					isFreeRide: false,
+					transport_type: "bus",
+					station_type: "bus",
+					direction: "UP",
+					total_stops: 35,
+					total_stages: 18,
+				},
+			],
+		});
+
+		const result = await client.searchRoutes({
+			query: "500D",
+			day: "sunday",
+		});
+
+		const [, options] = mockGet.mock.calls[0];
+		const params = options.searchParams as URLSearchParams;
+		expect(mockGet.mock.calls[0][0]).toBe(
+			"scheduler_v4/v4/bengaluru/autocomplete/route"
+		);
+		expect(params.get("str")).toBe("500D");
+		expect(params.get("day")).toBe("sunday");
+		expect(result.routes[0]).toMatchObject({
+			routeId: "BfHeErB4",
+			routeName: "V-500D",
+			agencyName: "BMTC",
+			firstStopName: "Central Silk Board",
+			lastStopName: "Hebbala",
+			serviceTypes: ["Vajra"],
+			ticketEnabled: true,
+			passEnabled: false,
+			freeRide: false,
+			transportType: "bus",
+			direction: "UP",
+			totalStops: 35,
+			totalStages: 18,
+		});
+	});
+
 	it("plans a trip", async () => {
 		mockGet.mockResolvedValue({
 			json: async () => ({
