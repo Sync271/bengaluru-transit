@@ -661,7 +661,7 @@ describe("BengaluruTransitClientV2", () => {
 		expect(occupancyLevel(9)).toBe("unknown");
 	});
 
-	it("lists nearby stops and attaches live vehicles", async () => {
+	it("lists nearby summary services and attaches live vehicles", async () => {
 		mockGet.mockResolvedValue({
 			json: async () => ({
 				payload: [
@@ -708,7 +708,7 @@ describe("BengaluruTransitClientV2", () => {
 			}),
 		});
 
-		const result = await client.getNearbyBuses({
+		const result = await client.getNearbySummary({
 			coordinates: [12.97793, 77.6283],
 			day: "tuesday",
 			startTimeSeconds: 73500,
@@ -725,12 +725,12 @@ describe("BengaluruTransitClientV2", () => {
 			})
 		);
 		expect(result.stops[0].stop.name).toBe("Halasuru");
-		expect(result.stops[0].buses[0]).toMatchObject({
+		expect(result.stops[0].services[0]).toMatchObject({
 			routeName: "304-P",
 			destinationName: "KR Market",
 			arrivalTimeSeconds: 73560,
 		});
-		expect(result.stops[0].buses[0].vehicles[0]).toMatchObject({
+		expect(result.stops[0].services[0].vehicles[0]).toMatchObject({
 			number: "KA57F3131",
 			etaSeconds: 1390,
 			distanceMeters: 5710,

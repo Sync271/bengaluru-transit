@@ -427,7 +427,11 @@ export interface V2OccupancyParams extends RequestOptions {
 	vehicles: V2OccupancyVehicle[];
 }
 
-export interface V2NearbyBusesParams extends RequestOptions {
+/**
+ * Nearby stop summary (`GET scheduler_v4/v4/{city}/summary` + live ETAs).
+ * Distinct from {@link V2NearbyStopsParams}, which only lists stops.
+ */
+export interface V2NearbySummaryParams extends RequestOptions {
 	/**
 	 * Search center as [latitude, longitude].
 	 */
@@ -450,31 +454,31 @@ export interface V2NearbyVehicle {
 	halted: boolean;
 }
 
-export interface V2NearbyBus {
+export interface V2NearbySummaryService {
 	routeId: string;
 	routeName: string;
 	tripId: string;
 	agencyName: string;
 	destinationName: string;
 	/**
-	 * Scheduled arrival as seconds from local midnight.
+	 * Scheduled arrival at the stop as seconds from local midnight.
 	 */
 	arrivalTimeSeconds?: number;
 	vehicles: V2NearbyVehicle[];
 }
 
-export interface V2NearbyStop {
+export interface V2NearbySummaryStop {
 	stop: V2Stop;
 	/**
 	 * Distance from the search center, in kilometers, as returned by the API.
 	 */
 	distanceKilometers?: number;
 	agencyName: string;
-	buses: V2NearbyBus[];
+	services: V2NearbySummaryService[];
 }
 
-export interface V2NearbyBuses {
-	stops: V2NearbyStop[];
+export interface V2NearbySummary {
+	stops: V2NearbySummaryStop[];
 }
 
 export interface V2OccupancyItem {

@@ -21,7 +21,7 @@ This project is built with the intent of making public transit data more accessi
 - 🎯 **Type Safety**: Full TypeScript support with comprehensive type definitions
 - ✅ **Validation**: Runtime validation using Zod schemas
 - 🗺️ **GeoJSON**: Standard GeoJSON format for spatial data on `BengaluruTransitClient` (routes, stops, locations)
-- 🚌 **Current app API**: `BengaluruTransitClientV2` covers search, trip planning, route/stop timetables, live vehicles, nearby buses, and occupancy
+- 🚌 **Current app API**: `BengaluruTransitClientV2` covers search, trip planning, route/stop timetables, live vehicles, nearby summary, and occupancy
 - 🚀 **Modern**: Built with modern TypeScript and ES modules
 - 📦 **Lightweight**: Minimal dependencies
 - 🔄 **Request Cancellation**: Optional AbortSignal support for canceling in-flight requests
@@ -85,26 +85,26 @@ Coordinates are `[latitude, longitude]`. Times of day are seconds from local mid
 
 Route ids from this client are not the ids used by `BengaluruTransitClient`.
 
-### 1. Buses around you
+### 1. Nearby summary
 
 ```typescript
-const nearby = await v2.getNearbyBuses({
+const nearby = await v2.getNearbySummary({
   coordinates: [12.97793, 77.6283],
 });
 
 const stop = nearby.stops[0];
 console.log(`${stop.stop.name} — ${stop.distanceKilometers} km`);
 
-stop.buses.forEach(bus => {
-  const live = bus.vehicles[0];
+stop.services.forEach(service => {
+  const live = service.vehicles[0];
   console.log(
-    `${bus.routeName} to ${bus.destinationName}`,
+    `${service.routeName} to ${service.destinationName}`,
     live ? `in ${live.etaSeconds}s (${live.number})` : "no live bus"
   );
 });
 ```
 
-Each stop includes the buses scheduled to call there. `arrivalTimeSeconds` is that scheduled arrival. `vehicles` is filled only when a bus on that route is being tracked, and `etaSeconds` on a vehicle is the live estimate. `distanceKilometers` is the distance from the coordinates you passed.
+Each stop includes the services scheduled there. `arrivalTimeSeconds` is the scheduled arrival at that stop. `vehicles` is filled only when a bus on that route is being tracked, and `etaSeconds` on a vehicle is the live estimate. `distanceKilometers` is the distance from the coordinates you passed. Use `getNearbyStops` when you only need stop locations.
 
 ### 2. Search
 
@@ -200,7 +200,7 @@ Each entry is a scheduled arrival at that stop from the given time onward. `day`
 
 ### 6. Live vehicles
 
-`stopIds` is required. Pass the stop you care about, usually from `getRouteDetails` or `getNearbyBuses`.
+`stopIds` is required. Pass the stop you care about, usually from `getRouteDetails` or `getNearbySummary`.
 
 ```typescript
 const live = await v2.getLiveVehicles({

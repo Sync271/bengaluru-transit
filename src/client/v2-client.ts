@@ -5,8 +5,8 @@ import {
 	v2EncodedVehicleSchema,
 	v2LiveVehiclesParamsSchema,
 	v2LiveVehiclesResponseSchema,
-	v2NearbyBusesParamsSchema,
-	v2NearbyBusesResponseSchema,
+	v2NearbySummaryParamsSchema,
+	v2NearbySummaryResponseSchema,
 	v2NearbyStopsParamsSchema,
 	v2NearbyStopsResponseSchema,
 	v2OccupancyParamsSchema,
@@ -33,8 +33,9 @@ import type {
 	V2Itinerary,
 	V2LiveVehicles,
 	V2LiveVehiclesParams,
-	V2NearbyBuses,
-	V2NearbyBusesParams,
+	V2NearbySummary,
+	V2NearbySummaryParams,
+	V2NearbySummaryService,
 	V2NearbyStopsParams,
 	V2NearbyStopsResponse,
 	V2NearbyVehicle,
@@ -893,19 +894,22 @@ export class BengaluruTransitClientV2 {
 	}
 
 	/**
-	 * List nearby stops and the buses scheduled there, with live vehicles when the API has them.
+	 * Summarize nearby stops and the services scheduled there, with live vehicles when the API has them.
+	 * Distinct from {@link getNearbyStops}, which only returns stop locations.
 	 */
-	async getNearbyBuses(params: V2NearbyBusesParams): Promise<V2NearbyBuses> {
+	async getNearbySummary(
+		params: V2NearbySummaryParams
+	): Promise<V2NearbySummary> {
 		const { signal, ...rest } = params;
 		const now = new Date();
 		const validated = validate(
-			v2NearbyBusesParamsSchema,
+			v2NearbySummaryParamsSchema,
 			{
 				...rest,
 				day: rest.day ?? WEEKDAYS[now.getDay()],
 				startTimeSeconds: rest.startTimeSeconds ?? secondsFromMidnight(now),
 			},
-			"Invalid nearby buses parameters"
+			"Invalid nearby summary parameters"
 		);
 
 		const searchParams = new URLSearchParams({
@@ -919,9 +923,9 @@ export class BengaluruTransitClientV2 {
 			{ searchParams, signal }
 		);
 		const raw = validate(
-			v2NearbyBusesResponseSchema,
+			v2NearbySummaryResponseSchema,
 			await response.json<unknown>(),
-			"Invalid nearby buses response"
+			"Invalid nearby summary response"
 		);
 
 		const pairs = raw.payload.flatMap((stop) =>
@@ -936,7 +940,7 @@ export class BengaluruTransitClientV2 {
 			const eta = validate(
 				v2StopArrivalsResponseSchema,
 				await etaResponse.json<unknown>(),
-				"Invalid nearby buses response"
+				"Invalid nearby summary response"
 			);
 			for (const [pair, vehiclesById] of Object.entries(eta.stopRouteEtas)) {
 				const vehicles: V2NearbyVehicle[] = [];
@@ -963,7 +967,7 @@ export class BengaluruTransitClientV2 {
 					? { distanceKilometers: stop.distance }
 					: {}),
 				agencyName: stop.agency_name ?? "",
-				buses: stop.summary.map((item) => ({
+				services: stop.summary.map((item): V2NearbySummaryService => ({
 					routeId: item.trip.route_id,
 					routeName: item.trip.route_name,
 					tripId: item.trip.trip_id,

@@ -404,13 +404,13 @@ const v2SummaryTripSchema = z
 	})
 	.passthrough();
 
-export const v2NearbyBusesParamsSchema = z.object({
+export const v2NearbySummaryParamsSchema = z.object({
 	coordinates: v2CoordinateSchema,
 	day: v2WeekdaySchema,
 	startTimeSeconds: z.number().int().nonnegative(),
 });
 
-export const v2NearbyBusesResponseSchema = z.object({
+export const v2NearbySummaryResponseSchema = z.object({
 	payload: z.array(
 		z
 			.object({
