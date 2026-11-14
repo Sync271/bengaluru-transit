@@ -50,6 +50,37 @@ export const v2SearchResponseSchema = z.object({
 	}),
 });
 
+export const v2SearchPlacesParamsSchema = z.object({
+	query: z.string().trim().min(1),
+	coordinates: v2CoordinateSchema.optional(),
+	searchSource: z.string().trim().min(1).default("HOME_SEARCH"),
+	countryId: z.string().trim().min(1).default("IN"),
+});
+
+const v2PlaceSearchHitSchema = z
+	.object({
+		result_type: z.string(),
+		place_id: z.string().optional(),
+		description: z.string().optional(),
+		searchPartner: z.string().optional(),
+		location: z
+			.object({
+				lat: z.number(),
+				lng: z.number(),
+			})
+			.passthrough()
+			.optional(),
+	})
+	.passthrough();
+
+export const v2SearchPlacesResponseSchema = z.object({
+	data: z
+		.object({
+			stopsAndPlaces: z.array(v2PlaceSearchHitSchema).optional().default([]),
+		})
+		.passthrough(),
+});
+
 export const v2SearchRoutesParamsSchema = z.object({
 	query: z.string().trim().min(1),
 	day: v2WeekdaySchema,

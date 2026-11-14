@@ -21,6 +21,8 @@ import {
 	v2RouteDetailsBulkResponseSchema,
 	v2SearchParamsSchema,
 	v2SearchResponseSchema,
+	v2SearchPlacesParamsSchema,
+	v2SearchPlacesResponseSchema,
 	v2SearchRoutesParamsSchema,
 	v2SearchRoutesResponseSchema,
 	v2RoutesBetweenStopsParamsSchema,
@@ -57,6 +59,8 @@ import type {
 	V2RouteDetailsParams,
 	V2SearchParams,
 	V2SearchResponse,
+	V2SearchPlacesParams,
+	V2SearchPlacesResponse,
 	V2SearchRoutesParams,
 	V2SearchRoutesResponse,
 	V2RoutesBetweenStopsParams,
@@ -416,6 +420,78 @@ export class BengaluruTransitClientV2 {
 		}
 
 		return { routes, stops, places };
+	}
+
+	/**
+	 * Autocomplete places with coordinates (`GET scheduler_v4/v5/search/place`).
+	 * Distinct from {@link search}, which can return place descriptions without lat/lon.
+	 * Use `searchPartner` + `placeId` with place details when you need a follow-up lookup.
+	 */
+	async searchPlaces(
+		params: V2SearchPlacesParams
+	): Promise<V2SearchPlacesResponse> {
+		const { signal, ...rest } = params;
+		const validated = validate(
+			v2SearchPlacesParamsSchema,
+			rest,
+			"Invalid place search parameters"
+		);
+
+		const searchParams = new URLSearchParams({
+			searchSource: validated.searchSource,
+			str: validated.query,
+			meta: JSON.stringify({
+				city: this.city,
+				osVersion: 35,
+				language: "en",
+				androidModel: "generic-client",
+				androidVersionCode: 1340,
+			}),
+		});
+		if (validated.coordinates) {
+			searchParams.set(
+				"location",
+				JSON.stringify({
+					lat: validated.coordinates[0],
+					lon: validated.coordinates[1],
+				})
+			);
+		}
+
+		const response = await this.client.get("scheduler_v4/v5/search/place", {
+			searchParams,
+			headers: { countryId: validated.countryId },
+			signal,
+		});
+		const raw = validate(
+			v2SearchPlacesResponseSchema,
+			await response.json<unknown>(),
+			"Invalid place search response"
+		);
+
+		const places = raw.data.stopsAndPlaces.flatMap((hit) => {
+			if (
+				hit.result_type !== "PLACE" ||
+				!hit.place_id ||
+				!hit.description ||
+				!hit.searchPartner ||
+				hit.location?.lat === undefined ||
+				hit.location?.lng === undefined
+			) {
+				return [];
+			}
+			return [
+				{
+					placeId: hit.place_id,
+					description: hit.description,
+					latitude: hit.location.lat,
+					longitude: hit.location.lng,
+					searchPartner: hit.searchPartner,
+				},
+			];
+		});
+
+		return { places };
 	}
 
 	/**

@@ -97,6 +97,56 @@ describe("BengaluruTransitClientV2", () => {
 		expect(result.places[0].description).toBe("Majestic, Bengaluru");
 	});
 
+	it("searches places with coordinates", async () => {
+		mockGet.mockResolvedValue({
+			json: async () => ({
+				data: {
+					stopsAndPlaces: [
+						{
+							result_type: "PLACE",
+							searchPartner: "heremaps",
+							description:
+								"Majestic, Majestic Bus Stand Road, Kempegowda, Majestic, Bengaluru 560023, India",
+							location: { lng: 77.57258, lat: 12.97763 },
+							place_id: "here:pds:place:356tdr1v-0fb7e70570f4440e8e23bb6e1e9ac521",
+						},
+						{
+							result_type: "STOP",
+							stop_id: "ignored",
+						},
+					],
+				},
+			}),
+		});
+
+		const result = await client.searchPlaces({
+			query: "Majestic",
+			coordinates: [12.9716, 77.5946],
+		});
+
+		expect(mockGet.mock.calls[0][0]).toBe("scheduler_v4/v5/search/place");
+		const options = mockGet.mock.calls[0][1];
+		const params = options.searchParams as URLSearchParams;
+		expect(params.get("str")).toBe("Majestic");
+		expect(params.get("searchSource")).toBe("HOME_SEARCH");
+		expect(params.get("location")).toBe(
+			JSON.stringify({ lat: 12.9716, lon: 77.5946 })
+		);
+		expect(JSON.parse(params.get("meta")!)).toMatchObject({
+			city: "bengaluru",
+		});
+		expect(options.headers).toMatchObject({ countryId: "IN" });
+		expect(result.places).toHaveLength(1);
+		expect(result.places[0]).toMatchObject({
+			placeId: "here:pds:place:356tdr1v-0fb7e70570f4440e8e23bb6e1e9ac521",
+			description:
+				"Majestic, Majestic Bus Stand Road, Kempegowda, Majestic, Bengaluru 560023, India",
+			latitude: 12.97763,
+			longitude: 77.57258,
+			searchPartner: "heremaps",
+		});
+	});
+
 	it("autocompletes routes by name", async () => {
 		mockGet.mockResolvedValue({
 			json: async () => [

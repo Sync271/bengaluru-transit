@@ -136,6 +136,19 @@ const route = routes.routes[0];
 console.log(route.routeName, route.routeId, route.firstStopName, "→", route.lastStopName);
 ```
 
+For geocoded place suggestions (with lat/lon and a `searchPartner` for details), use `searchPlaces`:
+
+```typescript
+const places = await v2.searchPlaces({
+  query: "Majestic",
+  coordinates: [12.9716, 77.5946],
+});
+
+places.places.forEach(place => {
+  console.log(place.description, place.latitude, place.longitude, place.searchPartner);
+});
+```
+
 ### 3. Plan a trip
 
 ```typescript

@@ -95,6 +95,44 @@ export interface V2SearchResponse {
 }
 
 /**
+ * Place autocomplete (`GET scheduler_v4/v5/search/place`).
+ * Returns geocoded places (with coordinates), unlike city `search` place hits.
+ */
+export interface V2SearchPlacesParams extends RequestOptions {
+	/**
+	 * Free-text place query.
+	 */
+	query: string;
+	/**
+	 * Optional bias point as [latitude, longitude].
+	 */
+	coordinates?: Coordinate;
+	/**
+	 * Search surface sent as `searchSource`. Defaults to `HOME_SEARCH`.
+	 */
+	searchSource?: string;
+	/**
+	 * Country header (`countryId`). Defaults to `IN`.
+	 */
+	countryId?: string;
+}
+
+export interface V2PlaceHit {
+	placeId: string;
+	description: string;
+	latitude: number;
+	longitude: number;
+	/**
+	 * Provider that issued `placeId` (needed for place details).
+	 */
+	searchPartner: string;
+}
+
+export interface V2SearchPlacesResponse {
+	places: V2PlaceHit[];
+}
+
+/**
  * Route-name autocomplete (`scheduler_v4/v4/{city}/autocomplete/route`).
  * Unlike {@link V2SearchParams}, this does not need coordinates.
  */
