@@ -182,4 +182,6 @@ export type {
 	V2CityMode,
 	V2CityMetadata,
 	V2ServerTime,
+	V2RemoteConfigParams,
+	V2RemoteConfig,
 } from "./v2.js";

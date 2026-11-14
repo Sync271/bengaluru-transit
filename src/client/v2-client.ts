@@ -20,6 +20,8 @@ import {
 	v2ListCitiesResponseSchema,
 	v2CityMetadataResponseSchema,
 	v2ServerTimeResponseSchema,
+	v2RemoteConfigParamsSchema,
+	v2RemoteConfigResponseSchema,
 	v2RouteDetailsParamsSchema,
 	v2RouteDetailsResponseSchema,
 	v2RouteDetailsBulkParamsSchema,
@@ -67,6 +69,8 @@ import type {
 	V2ListCitiesResponse,
 	V2CityMetadata,
 	V2ServerTime,
+	V2RemoteConfigParams,
+	V2RemoteConfig,
 	V2BulkRouteDetails,
 	V2RouteDetails,
 	V2RouteDetailsBulkParams,
@@ -1429,6 +1433,43 @@ export class BengaluruTransitClientV2 {
 		);
 
 		return { timestamp: raw.chaloTime.timeStamp };
+	}
+
+	/**
+	 * Remote config / feature-flag blob (`GET configuration/rc/v2`).
+	 * Returns string values only. Pass `keys` to avoid keeping the full catalogue.
+	 */
+	async getRemoteConfig(
+		params: V2RemoteConfigParams = {}
+	): Promise<V2RemoteConfig> {
+		const { signal, ...rest } = params;
+		const validated = validate(
+			v2RemoteConfigParamsSchema,
+			rest,
+			"Invalid remote config parameters"
+		);
+
+		const response = await this.client.get("configuration/rc/v2", { signal });
+		const raw = validate(
+			v2RemoteConfigResponseSchema,
+			await response.json<unknown>(),
+			"Invalid remote config response"
+		);
+
+		const values: Record<string, string> = {};
+		const wanted = validated.keys ? new Set(validated.keys) : null;
+		for (const [key, entry] of Object.entries(raw.response.data)) {
+			if (wanted && !wanted.has(key)) {
+				continue;
+			}
+			values[key] = entry.v;
+		}
+
+		return {
+			version: raw.response.metadata.versionNumber ?? "",
+			updatedAt: raw.response.metadata.updateTime ?? "",
+			values,
+		};
 	}
 
 	/**

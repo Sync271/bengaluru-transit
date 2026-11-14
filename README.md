@@ -338,6 +338,17 @@ const { timestamp } = await v2.getServerTime();
 console.log(new Date(timestamp).toISOString());
 ```
 
+### 12. Remote config
+
+Large feature-flag blob. Prefer `keys` so you only keep the entries you need (values are raw strings).
+
+```typescript
+const config = await v2.getRemoteConfig({
+  keys: ["nearbyStopsRadius", "syncTime"],
+});
+console.log(config.version, config.values.nearbyStopsRadius);
+```
+
 ## Common Flows
 
 These examples use the `BengaluruTransitClient` from Quick Start.

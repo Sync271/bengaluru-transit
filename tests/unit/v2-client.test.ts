@@ -1277,6 +1277,39 @@ describe("BengaluruTransitClientV2", () => {
 		expect(result).toEqual({ timestamp: 1794695229291 });
 	});
 
+	it("gets remote config values with optional key filter", async () => {
+		mockGet.mockResolvedValue({
+			json: async () => ({
+				status: true,
+				response: {
+					metadata: {
+						versionNumber: "1136",
+						updateTime: "2026-11-14T09:31:40.636488Z",
+					},
+					data: {
+						nearbyStopsRadius: { v: "100" },
+						syncTime: { v: "300000" },
+						unusedFlag: { v: "true" },
+					},
+				},
+			}),
+		});
+
+		const result = await client.getRemoteConfig({
+			keys: ["nearbyStopsRadius", "syncTime"],
+		});
+
+		expect(mockGet.mock.calls[0][0]).toBe("configuration/rc/v2");
+		expect(result).toEqual({
+			version: "1136",
+			updatedAt: "2026-11-14T09:31:40.636488Z",
+			values: {
+				nearbyStopsRadius: "100",
+				syncTime: "300000",
+			},
+		});
+	});
+
 	it("rejects an empty search", async () => {
 		await expect(
 			client.search({ query: "  ", coordinates: [12.97, 77.59] })

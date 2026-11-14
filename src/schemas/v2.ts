@@ -684,3 +684,26 @@ export const v2ServerTimeResponseSchema = z.object({
 		timeStamp: z.number(),
 	}),
 });
+
+export const v2RemoteConfigParamsSchema = z.object({
+	keys: z.array(z.string().trim().min(1)).optional(),
+});
+
+export const v2RemoteConfigResponseSchema = z.object({
+	status: z.boolean().optional(),
+	response: z.object({
+		metadata: z
+			.object({
+				versionNumber: z.string().optional(),
+				updateTime: z.string().optional(),
+			})
+			.passthrough(),
+		data: z.record(
+			z
+				.object({
+					v: z.string(),
+				})
+				.passthrough()
+		),
+	}),
+});

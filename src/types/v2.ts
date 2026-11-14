@@ -734,3 +734,26 @@ export interface V2ServerTime {
 	 */
 	timestamp: number;
 }
+
+/**
+ * Remote config / feature flags (`GET configuration/rc/v2`).
+ * Large blob (~300+ string entries); pass `keys` to keep only what you need.
+ */
+export interface V2RemoteConfigParams extends RequestOptions {
+	/**
+	 * Optional subset of config keys to return. Omit to receive all values.
+	 */
+	keys?: string[];
+}
+
+export interface V2RemoteConfig {
+	version: string;
+	/**
+	 * Config update time as an ISO-8601 string from the API.
+	 */
+	updatedAt: string;
+	/**
+	 * Raw string values keyed by config name (the API’s `v` field).
+	 */
+	values: Record<string, string>;
+}
