@@ -81,6 +81,27 @@ export const v2SearchPlacesResponseSchema = z.object({
 		.passthrough(),
 });
 
+export const v2PlaceDetailsParamsSchema = z.object({
+	placeId: z.string().trim().min(1),
+	searchPartner: z.string().trim().min(1),
+});
+
+export const v2PlaceDetailsResponseSchema = z.object({
+	result: z
+		.object({
+			formatted_address: z.string(),
+			geometry: z
+				.object({
+					location: z.object({
+						lat: z.number(),
+						lng: z.number(),
+					}),
+				})
+				.passthrough(),
+		})
+		.passthrough(),
+});
+
 export const v2SearchRoutesParamsSchema = z.object({
 	query: z.string().trim().min(1),
 	day: v2WeekdaySchema,

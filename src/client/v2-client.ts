@@ -23,6 +23,8 @@ import {
 	v2SearchResponseSchema,
 	v2SearchPlacesParamsSchema,
 	v2SearchPlacesResponseSchema,
+	v2PlaceDetailsParamsSchema,
+	v2PlaceDetailsResponseSchema,
 	v2SearchRoutesParamsSchema,
 	v2SearchRoutesResponseSchema,
 	v2RoutesBetweenStopsParamsSchema,
@@ -61,6 +63,8 @@ import type {
 	V2SearchResponse,
 	V2SearchPlacesParams,
 	V2SearchPlacesResponse,
+	V2PlaceDetailsParams,
+	V2PlaceDetails,
 	V2SearchRoutesParams,
 	V2SearchRoutesResponse,
 	V2RoutesBetweenStopsParams,
@@ -440,13 +444,7 @@ export class BengaluruTransitClientV2 {
 		const searchParams = new URLSearchParams({
 			searchSource: validated.searchSource,
 			str: validated.query,
-			meta: JSON.stringify({
-				city: this.city,
-				osVersion: 35,
-				language: "en",
-				androidModel: "generic-client",
-				androidVersionCode: 1340,
-			}),
+			meta: this.placeClientMeta(),
 		});
 		if (validated.coordinates) {
 			searchParams.set(
@@ -492,6 +490,43 @@ export class BengaluruTransitClientV2 {
 		});
 
 		return { places };
+	}
+
+	/**
+	 * Resolve a place id to address and coordinates
+	 * (`GET scheduler_v4/v5/place/details`).
+	 * Pass `placeId` and `searchPartner` from {@link searchPlaces}.
+	 */
+	async getPlaceDetails(
+		params: V2PlaceDetailsParams
+	): Promise<V2PlaceDetails> {
+		const { signal, ...rest } = params;
+		const validated = validate(
+			v2PlaceDetailsParamsSchema,
+			rest,
+			"Invalid place details parameters"
+		);
+
+		const searchParams = new URLSearchParams({
+			placeid: validated.placeId,
+			searchPartner: validated.searchPartner,
+			meta: this.placeClientMeta(),
+		});
+		const response = await this.client.get("scheduler_v4/v5/place/details", {
+			searchParams,
+			signal,
+		});
+		const raw = validate(
+			v2PlaceDetailsResponseSchema,
+			await response.json<unknown>(),
+			"Invalid place details response"
+		);
+
+		return {
+			address: raw.result.formatted_address,
+			latitude: raw.result.geometry.location.lat,
+			longitude: raw.result.geometry.location.lng,
+		};
 	}
 
 	/**
@@ -676,6 +711,16 @@ export class BengaluruTransitClientV2 {
 			`scheduler_v4/v4/${this.city}/routedetailslive`,
 			params
 		);
+	}
+
+	private placeClientMeta(): string {
+		return JSON.stringify({
+			city: this.city,
+			osVersion: 35,
+			language: "en",
+			androidModel: "generic-client",
+			androidVersionCode: 1340,
+		});
 	}
 
 	private async fetchRouteDetails(

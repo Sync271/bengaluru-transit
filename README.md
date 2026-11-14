@@ -147,6 +147,12 @@ const places = await v2.searchPlaces({
 places.places.forEach(place => {
   console.log(place.description, place.latitude, place.longitude, place.searchPartner);
 });
+
+const details = await v2.getPlaceDetails({
+  placeId: places.places[0].placeId,
+  searchPartner: places.places[0].searchPartner,
+});
+console.log(details.address, details.latitude, details.longitude);
 ```
 
 ### 3. Plan a trip

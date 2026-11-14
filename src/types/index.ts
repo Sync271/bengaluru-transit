@@ -123,6 +123,8 @@ export type {
 	V2SearchPlacesParams,
 	V2PlaceHit,
 	V2SearchPlacesResponse,
+	V2PlaceDetailsParams,
+	V2PlaceDetails,
 	V2SearchRoutesParams,
 	V2RouteMatch,
 	V2SearchRoutesResponse,

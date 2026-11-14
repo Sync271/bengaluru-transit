@@ -133,6 +133,26 @@ export interface V2SearchPlacesResponse {
 }
 
 /**
+ * Resolve a place id (`GET scheduler_v4/v5/place/details`).
+ */
+export interface V2PlaceDetailsParams extends RequestOptions {
+	/**
+	 * Place id from {@link V2PlaceHit.placeId} / `searchPlaces`.
+	 */
+	placeId: string;
+	/**
+	 * Provider that issued the place id (e.g. `heremaps`).
+	 */
+	searchPartner: string;
+}
+
+export interface V2PlaceDetails {
+	address: string;
+	latitude: number;
+	longitude: number;
+}
+
+/**
  * Route-name autocomplete (`scheduler_v4/v4/{city}/autocomplete/route`).
  * Unlike {@link V2SearchParams}, this does not need coordinates.
  */

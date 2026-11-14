@@ -147,6 +147,41 @@ describe("BengaluruTransitClientV2", () => {
 		});
 	});
 
+	it("resolves place details from place id", async () => {
+		mockGet.mockResolvedValue({
+			json: async () => ({
+				result: {
+					formatted_address:
+						"Majestic, Majestic Bus Stand Road, Kempegowda, Majestic, Bengaluru 560023, India",
+					geometry: {
+						location: { lng: 77.57258, lat: 12.97763 },
+					},
+				},
+			}),
+		});
+
+		const result = await client.getPlaceDetails({
+			placeId: "here:pds:place:356tdr1v-0fb7e70570f4440e8e23bb6e1e9ac521",
+			searchPartner: "heremaps",
+		});
+
+		expect(mockGet.mock.calls[0][0]).toBe("scheduler_v4/v5/place/details");
+		const params = mockGet.mock.calls[0][1].searchParams as URLSearchParams;
+		expect(params.get("placeid")).toBe(
+			"here:pds:place:356tdr1v-0fb7e70570f4440e8e23bb6e1e9ac521"
+		);
+		expect(params.get("searchPartner")).toBe("heremaps");
+		expect(JSON.parse(params.get("meta")!)).toMatchObject({
+			city: "bengaluru",
+		});
+		expect(result).toEqual({
+			address:
+				"Majestic, Majestic Bus Stand Road, Kempegowda, Majestic, Bengaluru 560023, India",
+			latitude: 12.97763,
+			longitude: 77.57258,
+		});
+	});
+
 	it("autocompletes routes by name", async () => {
 		mockGet.mockResolvedValue({
 			json: async () => [
