@@ -277,28 +277,29 @@ describe("BengaluruTransitClientV2", () => {
 		});
 	});
 
-	it("gets route details", async () => {
+	it("gets route details with polyline", async () => {
 		mockGet.mockResolvedValue({
 			json: async () => ({
 				route: {
-					route_id: "F6JRDbGN",
-					route_name: "304-J",
+					route_id: "6m1UKdZn",
+					route_name: "KIA-4",
 					agency_name: "BMTC",
 					direction: "UP",
 					isLive: "false",
 					mTicketEnabled: true,
+					polyline: "s_jmA{m~xM",
 					first_stop: {
 						stop_id: "s324jmdZ",
-						stop_name: "Kalkunte Agrahara",
-						stop_lat: 12.93275,
-						stop_lon: 77.84092,
+						stop_name: "HAL Main Gate",
+						stop_lat: 12.958,
+						stop_lon: 77.668,
 						short_id: 34883,
 					},
 					last_stop: {
-						stop_id: "5zunAhWl",
-						stop_name: "Kempegowda Bus Station(Majestic/KBS)",
-						stop_lat: 12.97749,
-						stop_lon: 77.57327,
+						stop_id: "dXF9lhdh",
+						stop_name: "Kempegowda International Airport",
+						stop_lat: 13.19916,
+						stop_lon: 77.70774,
 					},
 					stopSequenceWithDetails: [
 						{
@@ -330,12 +331,16 @@ describe("BengaluruTransitClientV2", () => {
 		});
 
 		const result = await client.getRouteDetails({
-			routeId: "F6JRDbGN",
+			routeId: "6m1UKdZn",
 			day: "tuesday",
 		});
 
-		expect(result.routeName).toBe("304-J");
+		expect(mockGet.mock.calls[0][0]).toBe(
+			"scheduler_v4/v4/bengaluru/routedetails"
+		);
+		expect(result.routeName).toBe("KIA-4");
 		expect(result.live).toBe(false);
+		expect(result.polyline).toBe("s_jmA{m~xM");
 		expect(result.stops[0]).toMatchObject({
 			stopId: "ArYFEPLj",
 			name: "Halasuru",
@@ -343,6 +348,36 @@ describe("BengaluruTransitClientV2", () => {
 		});
 		expect(result.trips[0].startTimeSeconds).toBe(23400);
 		expect(result.timetable).toHaveLength(1);
+	});
+
+	it("gets route details via the live path", async () => {
+		mockGet.mockResolvedValue({
+			json: async () => ({
+				route: {
+					route_id: "6m1UKdZn",
+					route_name: "KIA-4",
+					agency_name: "BMTC",
+					isLive: "true",
+					mTicketEnabled: false,
+					polyline: "abc",
+					stopSequenceWithDetails: [],
+				},
+				trips: [],
+				timings: [],
+				timeTable: [],
+			}),
+		});
+
+		const result = await client.getRouteDetailsLive({
+			routeId: "6m1UKdZn",
+			day: "sunday",
+		});
+
+		expect(mockGet.mock.calls[0][0]).toBe(
+			"scheduler_v4/v4/bengaluru/routedetailslive"
+		);
+		expect(result.live).toBe(true);
+		expect(result.polyline).toBe("abc");
 	});
 
 	it("fetches route details in bulk with polyline", async () => {

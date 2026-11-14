@@ -218,6 +218,7 @@ export const v2RouteDetailsResponseSchema = z.object({
 			direction: z.string().optional(),
 			isLive: z.string().optional(),
 			mTicketEnabled: z.boolean().optional(),
+			polyline: z.string().optional(),
 			first_stop: v2StopSchema.optional(),
 			last_stop: v2StopSchema.optional(),
 			stopSequenceWithDetails: z.array(v2StopSchema).optional().default([]),

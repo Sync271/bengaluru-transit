@@ -575,9 +575,35 @@ export class BengaluruTransitClientV2 {
 	}
 
 	/**
-	 * Get the stop sequence, trips, and timetable for a route.
+	 * Get the stop sequence, trips, timetable, and encoded polyline for a route
+	 * (`GET scheduler_v4/v4/{city}/routedetails`).
+	 * Prefer this over {@link getRouteDetailsLive}; on Chalo for Bengaluru both
+	 * paths currently return the same payload (including polyline).
 	 */
 	async getRouteDetails(
+		params: V2RouteDetailsParams
+	): Promise<V2RouteDetails> {
+		return this.fetchRouteDetails(
+			`scheduler_v4/v4/${this.city}/routedetails`,
+			params
+		);
+	}
+
+	/**
+	 * Same shape as {@link getRouteDetails}, via `routedetailslive`.
+	 * Kept for callers that specifically need that path.
+	 */
+	async getRouteDetailsLive(
+		params: V2RouteDetailsParams
+	): Promise<V2RouteDetails> {
+		return this.fetchRouteDetails(
+			`scheduler_v4/v4/${this.city}/routedetailslive`,
+			params
+		);
+	}
+
+	private async fetchRouteDetails(
+		path: string,
 		params: V2RouteDetailsParams
 	): Promise<V2RouteDetails> {
 		const { signal, ...rest } = params;
@@ -591,10 +617,7 @@ export class BengaluruTransitClientV2 {
 			route_id: validated.routeId,
 			day: validated.day,
 		});
-		const response = await this.client.get(
-			`scheduler_v4/v4/${this.city}/routedetailslive`,
-			{ searchParams, signal }
-		);
+		const response = await this.client.get(path, { searchParams, signal });
 		const raw = validate(
 			v2RouteDetailsResponseSchema,
 			await response.json<unknown>(),
@@ -635,6 +658,7 @@ export class BengaluruTransitClientV2 {
 				frequency: entry.isFrequency ?? false,
 				extrapolated: entry.extrapolated ?? false,
 			})),
+			polyline: raw.route.polyline ?? "",
 		};
 	}
 

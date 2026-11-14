@@ -246,6 +246,10 @@ export interface V2RouteDetails {
 	stops: V2Stop[];
 	trips: V2Trip[];
 	timetable: V2TimetableEntry[];
+	/**
+	 * Encoded route polyline as returned by the API (empty when absent).
+	 */
+	polyline: string;
 }
 
 /**

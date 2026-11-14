@@ -170,13 +170,14 @@ const details = await v2.getRouteDetails({
 
 console.log(details.routeName, details.firstStop?.name, "→", details.lastStop?.name);
 console.log(details.stops.length, "stops");
+console.log("polyline length", details.polyline.length);
 
 details.timetable.forEach(entry => {
   console.log("departs", entry.startTimeSeconds);
 });
 ```
 
-`stops` is the full stop sequence. `trips` are the scheduled trips for that day. `live` is whether the route is marked live. `ticketEnabled` is whether mobile ticketing is offered for it.
+`stops` is the full stop sequence. `trips` are the scheduled trips for that day. `polyline` is the encoded route geometry. `live` is whether the route is marked live. `ticketEnabled` is whether mobile ticketing is offered for it. Use `getRouteDetailsLive` only if you specifically need the `routedetailslive` path (same shape on Chalo today).
 
 ### 5. Stop timetable
 
