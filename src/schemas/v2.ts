@@ -707,3 +707,19 @@ export const v2RemoteConfigResponseSchema = z.object({
 		),
 	}),
 });
+
+export const v2ValidateFareParamsSchema = z.object({
+	routeId: z.string().trim().min(1),
+	fromStopId: z.string().trim().min(1),
+	toStopId: z.string().trim().min(1),
+	fareRupees: z.number().positive(),
+	adultCount: z.number().int().positive().default(1),
+});
+
+export const v2ValidateFareResponseSchema = z.object({
+	isValid: z.boolean(),
+	finalFareCalculated: z.number().optional(),
+	finalFare: z.number().optional(),
+	pprFare: z.number().optional(),
+	totalPassengers: z.number().optional(),
+});

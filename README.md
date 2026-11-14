@@ -349,6 +349,20 @@ const config = await v2.getRemoteConfig({
 console.log(config.version, config.values.nearbyStopsRadius);
 ```
 
+### 13. Validate fare
+
+Check whether a mobile-ticket fare quote is still accepted for a route and stop pair. Pass rupees; the client sends paise.
+
+```typescript
+const fare = await v2.validateFare({
+  routeId: "SHwjoGlU",
+  fromStopId: "qih5mR2N",
+  toStopId: "4RS7uUdv",
+  fareRupees: 50,
+});
+console.log(fare.valid, fare.fareRupees);
+```
+
 ## Common Flows
 
 These examples use the `BengaluruTransitClient` from Quick Start.

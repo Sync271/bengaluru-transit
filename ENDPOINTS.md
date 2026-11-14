@@ -47,3 +47,48 @@ None currently.
 ---
 
 Last updated: After implementing getMobileTripsData endpoint
+
+---
+
+## V2 Public (Chalo / `BengaluruTransitClientV2`)
+
+Base URL: `https://chalo.com/app/api`
+
+### Search & geocoding
+
+- [x] `GET scheduler_v4/v5/{city}/search` — `search`
+- [x] `GET scheduler_v4/v4/{city}/autocomplete/route` — `searchRoutes`
+- [x] `GET scheduler_v4/v5/search/place` — `searchPlaces`
+- [x] `GET scheduler_v4/v5/place/details` — `getPlaceDetails`
+- [x] `GET scheduler_v4/geocode/reverse` — `reverseGeocode`
+
+### Routes, stops, trips
+
+- [x] `GET scheduler_v4/v5/{city}/tripplanner` — `planTrip`
+- [x] `GET scheduler_v4/v5/{city}/routesbetweenstops` — `getRoutesBetweenStops`
+- [x] `GET scheduler_v4/v4/{city}/routedetails` — `getRouteDetails` (polyline)
+- [x] `GET scheduler_v4/v4/{city}/routedetailslive` — `getRouteDetailsLive`
+- [x] `POST scheduler_v4/v5/{city}/routedetails` — `getRouteDetailsBulk`
+- [x] `GET scheduler_v4/v4/{city}/nearby/stops` — `getNearbyStops`
+- [x] `GET scheduler_v4/v4/{city}/stops/id` — `listStops`
+- [x] `POST scheduler_v4/v4/{city}/stopDetails` — `getRouteStopDetails`
+- [x] `GET scheduler_v4/v4/{city}/stopdetails` — `getStopDetails`
+- [x] `GET scheduler_v4/v4/{city}/summary` — `getNearbySummary`
+
+### Live
+
+- [x] `GET vasudha/track/route-live-info/{city}/{routeId}` — `getLiveVehicles`
+- [x] `POST vasudha/cities/{city}/stop-route-eta` — `getStopArrivals`
+- [x] `GET vasudha/location/{city}/{agency}/bus/{busNo}` — `getBusLocation`
+- [x] `POST seat/availability` — `getOccupancy`
+- [ ] `POST nearbybus/v2/city/{city}` — **skip** (empty `buses` for Bengaluru)
+- [ ] Socket live config / helper — **skip for now**
+
+### Fares & config
+
+- [x] `POST mticketing/v2/mobile-ticket/validate-fare` — `validateFare`
+- [x] `GET scheduler_v4/cityList` — `listCities`
+- [x] `GET scheduler_v4/v1/{city}/metadataprops` — `getCityMetadata`
+- [x] `GET configuration/chalo-props/v1` — `getServerTime`
+- [x] `GET configuration/rc/v2` — `getRemoteConfig`
+- [ ] ONDC / TUB fare surfaces — **skip for Bengaluru**

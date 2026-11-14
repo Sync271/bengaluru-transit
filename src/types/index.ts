@@ -184,4 +184,6 @@ export type {
 	V2ServerTime,
 	V2RemoteConfigParams,
 	V2RemoteConfig,
+	V2ValidateFareParams,
+	V2ValidateFareResult,
 } from "./v2.js";

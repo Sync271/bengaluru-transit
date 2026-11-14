@@ -22,6 +22,8 @@ import {
 	v2ServerTimeResponseSchema,
 	v2RemoteConfigParamsSchema,
 	v2RemoteConfigResponseSchema,
+	v2ValidateFareParamsSchema,
+	v2ValidateFareResponseSchema,
 	v2RouteDetailsParamsSchema,
 	v2RouteDetailsResponseSchema,
 	v2RouteDetailsBulkParamsSchema,
@@ -71,6 +73,8 @@ import type {
 	V2ServerTime,
 	V2RemoteConfigParams,
 	V2RemoteConfig,
+	V2ValidateFareParams,
+	V2ValidateFareResult,
 	V2BulkRouteDetails,
 	V2RouteDetails,
 	V2RouteDetailsBulkParams,
@@ -1469,6 +1473,53 @@ export class BengaluruTransitClientV2 {
 			version: raw.response.metadata.versionNumber ?? "",
 			updatedAt: raw.response.metadata.updateTime ?? "",
 			values,
+		};
+	}
+
+	/**
+	 * Validate a mobile-ticket fare quote
+	 * (`POST mticketing/v2/mobile-ticket/validate-fare`).
+	 * `fareRupees` is converted to paise for the API. Returns whether the quote
+	 * is still accepted for the given route and stop pair.
+	 */
+	async validateFare(
+		params: V2ValidateFareParams
+	): Promise<V2ValidateFareResult> {
+		const { signal, ...rest } = params;
+		const validated = validate(
+			v2ValidateFareParamsSchema,
+			rest,
+			"Invalid fare validation parameters"
+		);
+
+		const farePaise = Math.round(validated.fareRupees * 100);
+		const response = await this.client.post(
+			"mticketing/v2/mobile-ticket/validate-fare",
+			{
+				json: {
+					city: this.city,
+					finalFare: farePaise,
+					passengerDetails: [{ id: "adult", count: validated.adultCount }],
+					tripDetail: {
+						routeId: validated.routeId,
+						startStopId: validated.fromStopId,
+						endStopId: validated.toStopId,
+					},
+				},
+				signal,
+			}
+		);
+		const raw = validate(
+			v2ValidateFareResponseSchema,
+			await response.json<unknown>(),
+			"Invalid fare validation response"
+		);
+
+		return {
+			valid: raw.isValid,
+			fareRupees: raw.finalFareCalculated ?? validated.fareRupees,
+			farePaise: raw.finalFare ?? farePaise,
+			passengerCount: raw.totalPassengers ?? validated.adultCount,
 		};
 	}
 

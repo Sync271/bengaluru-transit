@@ -1277,6 +1277,47 @@ describe("BengaluruTransitClientV2", () => {
 		expect(result).toEqual({ timestamp: 1794695229291 });
 	});
 
+	it("validates a mobile ticket fare quote", async () => {
+		mockPost.mockResolvedValue({
+			json: async () => ({
+				finalFareCalculated: 50,
+				totalPassengers: 1,
+				pprFare: 5000,
+				finalFare: 5000,
+				isValid: true,
+			}),
+		});
+
+		const result = await client.validateFare({
+			routeId: "SHwjoGlU",
+			fromStopId: "qih5mR2N",
+			toStopId: "4RS7uUdv",
+			fareRupees: 50,
+		});
+
+		expect(mockPost).toHaveBeenCalledWith(
+			"mticketing/v2/mobile-ticket/validate-fare",
+			expect.objectContaining({
+				json: {
+					city: "bengaluru",
+					finalFare: 5000,
+					passengerDetails: [{ id: "adult", count: 1 }],
+					tripDetail: {
+						routeId: "SHwjoGlU",
+						startStopId: "qih5mR2N",
+						endStopId: "4RS7uUdv",
+					},
+				},
+			})
+		);
+		expect(result).toEqual({
+			valid: true,
+			fareRupees: 50,
+			farePaise: 5000,
+			passengerCount: 1,
+		});
+	});
+
 	it("gets remote config values with optional key filter", async () => {
 		mockGet.mockResolvedValue({
 			json: async () => ({

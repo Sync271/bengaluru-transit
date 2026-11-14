@@ -757,3 +757,34 @@ export interface V2RemoteConfig {
 	 */
 	values: Record<string, string>;
 }
+
+/**
+ * Validate a mobile-ticket fare quote
+ * (`POST mticketing/v2/mobile-ticket/validate-fare`).
+ */
+export interface V2ValidateFareParams extends RequestOptions {
+	routeId: string;
+	fromStopId: string;
+	toStopId: string;
+	/**
+	 * Quoted fare in rupees (sent to the API as paise).
+	 */
+	fareRupees: number;
+	/**
+	 * Adult passenger count. Defaults to `1`.
+	 */
+	adultCount?: number;
+}
+
+export interface V2ValidateFareResult {
+	valid: boolean;
+	/**
+	 * Fare the server accepted, in rupees.
+	 */
+	fareRupees: number;
+	/**
+	 * Fare in paise as echoed by the API.
+	 */
+	farePaise: number;
+	passengerCount: number;
+}
