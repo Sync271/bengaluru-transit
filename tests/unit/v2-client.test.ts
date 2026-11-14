@@ -149,6 +149,73 @@ describe("BengaluruTransitClientV2", () => {
 		});
 	});
 
+	it("lists routes between two stops", async () => {
+		mockGet.mockResolvedValue({
+			json: async () => [
+				{
+					specialFeatures: [],
+					fromStop: {
+						name: "Halasuru",
+						lon: 77.6283,
+						id: "ArYFEPLj",
+						lat: 12.97793,
+					},
+					routeId: "5p8YE8Xl",
+					toStop: {
+						name: "Kempegowda Bus Station(Majestic/KBS)",
+						lon: 77.57327,
+						id: "5zunAhWl",
+						lat: 12.97749,
+					},
+					spf: ["Vajra"],
+					lastStop: {
+						name: "Kempegowda Bus Station(Majestic/KBS)",
+						lon: 77.57327,
+						id: "5zunAhWl",
+						lat: 12.97749,
+					},
+					serviceCategory: "VJ",
+					firstStop: {
+						name: "Hosakote Old  Bus Stand",
+						lon: 77.78774,
+						id: "DILko2Ic",
+						lat: 13.0787,
+					},
+					routeName: "V-317A",
+				},
+			],
+		});
+
+		const result = await client.getRoutesBetweenStops({
+			fromStopId: "ArYFEPLj",
+			toStopId: "5zunAhWl",
+		});
+
+		const [, options] = mockGet.mock.calls[0];
+		const params = options.searchParams as URLSearchParams;
+		expect(mockGet.mock.calls[0][0]).toBe(
+			"scheduler_v4/v5/bengaluru/routesbetweenstops"
+		);
+		expect(params.get("fromStopId")).toBe("ArYFEPLj");
+		expect(params.get("toStopId")).toBe("5zunAhWl");
+		expect(params.get("mTicketEnabled")).toBe("true");
+		expect(result.routes[0]).toMatchObject({
+			routeId: "5p8YE8Xl",
+			routeName: "V-317A",
+			serviceTypes: ["Vajra"],
+			serviceCategory: "VJ",
+			fromStop: {
+				stopId: "ArYFEPLj",
+				name: "Halasuru",
+				latitude: 12.97793,
+				longitude: 77.6283,
+			},
+			toStop: { stopId: "5zunAhWl" },
+			firstStop: { stopId: "DILko2Ic" },
+			lastStop: { stopId: "5zunAhWl" },
+		});
+	});
+
 	it("plans a trip", async () => {
 		mockGet.mockResolvedValue({
 			json: async () => ({

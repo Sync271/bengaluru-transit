@@ -15,6 +15,8 @@ import {
 	v2SearchResponseSchema,
 	v2SearchRoutesParamsSchema,
 	v2SearchRoutesResponseSchema,
+	v2RoutesBetweenStopsParamsSchema,
+	v2RoutesBetweenStopsResponseSchema,
 	v2StopArrivalsParamsSchema,
 	v2StopArrivalsResponseSchema,
 	v2StopDetailsParamsSchema,
@@ -39,6 +41,8 @@ import type {
 	V2SearchResponse,
 	V2SearchRoutesParams,
 	V2SearchRoutesResponse,
+	V2RoutesBetweenStopsParams,
+	V2RoutesBetweenStopsResponse,
 	V2Stop,
 	V2StopArrival,
 	V2StopArrivals,
@@ -449,6 +453,61 @@ export class BengaluruTransitClientV2 {
 				...(route.total_stages !== undefined
 					? { totalStages: route.total_stages }
 					: {}),
+			})),
+		};
+	}
+
+	/**
+	 * List direct routes that serve both stops.
+	 */
+	async getRoutesBetweenStops(
+		params: V2RoutesBetweenStopsParams
+	): Promise<V2RoutesBetweenStopsResponse> {
+		const { signal, ...rest } = params;
+		const validated = validate(
+			v2RoutesBetweenStopsParamsSchema,
+			rest,
+			"Invalid routes-between-stops parameters"
+		);
+
+		const searchParams = new URLSearchParams({
+			fromStopId: validated.fromStopId,
+			toStopId: validated.toStopId,
+			mTicketEnabled: String(validated.ticketEnabled),
+		});
+		const response = await this.client.get(
+			`scheduler_v4/v5/${this.city}/routesbetweenstops`,
+			{ searchParams, signal }
+		);
+		const raw = validate(
+			v2RoutesBetweenStopsResponseSchema,
+			await response.json<unknown>(),
+			"Invalid routes-between-stops response"
+		);
+
+		const toStop = (stop: {
+			id: string;
+			name: string;
+			lat: number;
+			lon: number;
+		}): V2Stop => ({
+			stopId: stop.id,
+			name: stop.name,
+			latitude: stop.lat,
+			longitude: stop.lon,
+		});
+
+		return {
+			routes: raw.map((route) => ({
+				routeId: route.routeId,
+				routeName: route.routeName,
+				serviceTypes: route.spf ?? [],
+				serviceCategory: route.serviceCategory ?? "",
+				specialFeatures: route.specialFeatures ?? route.specialFeature ?? [],
+				fromStop: toStop(route.fromStop),
+				toStop: toStop(route.toStop),
+				firstStop: toStop(route.firstStop),
+				lastStop: toStop(route.lastStop),
 			})),
 		};
 	}

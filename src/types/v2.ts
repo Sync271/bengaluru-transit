@@ -131,6 +131,35 @@ export interface V2SearchRoutesResponse {
 	routes: V2RouteMatch[];
 }
 
+/**
+ * Direct routes between two stops (`scheduler_v4/v5/{city}/routesbetweenstops`).
+ */
+export interface V2RoutesBetweenStopsParams extends RequestOptions {
+	fromStopId: string;
+	toStopId: string;
+	/**
+	 * When true, the API is asked for mobile-ticketable routes.
+	 * Defaults to true to match the app.
+	 */
+	ticketEnabled?: boolean;
+}
+
+export interface V2RouteBetweenStops {
+	routeId: string;
+	routeName: string;
+	serviceTypes: string[];
+	serviceCategory: string;
+	specialFeatures: string[];
+	fromStop: V2Stop;
+	toStop: V2Stop;
+	firstStop: V2Stop;
+	lastStop: V2Stop;
+}
+
+export interface V2RoutesBetweenStopsResponse {
+	routes: V2RouteBetweenStops[];
+}
+
 export interface V2TripPlanParams extends RequestOptions {
 	fromCoordinates: Coordinate;
 	toCoordinates: Coordinate;

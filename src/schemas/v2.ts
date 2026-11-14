@@ -77,6 +77,40 @@ export const v2RouteMatchSchema = z
 
 export const v2SearchRoutesResponseSchema = z.array(v2RouteMatchSchema);
 
+export const v2RoutesBetweenStopsParamsSchema = z.object({
+	fromStopId: z.string().trim().min(1),
+	toStopId: z.string().trim().min(1),
+	ticketEnabled: z.boolean().default(true),
+});
+
+const v2OriginDestinationStopSchema = z
+	.object({
+		id: z.string(),
+		name: z.string(),
+		lat: z.number(),
+		lon: z.number(),
+	})
+	.passthrough();
+
+export const v2RouteBetweenStopsSchema = z
+	.object({
+		routeId: z.string(),
+		routeName: z.string(),
+		spf: z.array(z.string()).optional(),
+		serviceCategory: z.string().optional(),
+		specialFeatures: z.array(z.string()).optional(),
+		specialFeature: z.array(z.string()).optional(),
+		fromStop: v2OriginDestinationStopSchema,
+		toStop: v2OriginDestinationStopSchema,
+		firstStop: v2OriginDestinationStopSchema,
+		lastStop: v2OriginDestinationStopSchema,
+	})
+	.passthrough();
+
+export const v2RoutesBetweenStopsResponseSchema = z.array(
+	v2RouteBetweenStopsSchema
+);
+
 const v2LegSchema = z
 	.object({
 		mode: z.string(),
